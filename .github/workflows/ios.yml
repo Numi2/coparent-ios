@@ -7,6 +7,13 @@ on:
     branches: [ "main", "develop" ]
   workflow_dispatch:
 
+# Add permissions for test reporter
+permissions:
+  contents: read
+  actions: read
+  checks: write
+  pull-requests: write
+
 env:
   DEVELOPER_DIR: /Applications/Xcode_16.2.app/Contents/Developer
   SCHEME: coparent
@@ -20,10 +27,11 @@ jobs:
     strategy:
       matrix:
         destination: 
-          - platform=iOS Simulator,name=iPhone 15 Pro,OS=17.5
-          - platform=iOS Simulator,name=iPhone 14,OS=17.5
-          - platform=iOS Simulator,name=iPad Pro (12.9-inch) (6th generation),OS=17.5
-    
+          # Use actual available simulators
+          - platform=iOS Simulator,name=iPhone 16 Pro,OS=18.4
+          - platform=iOS Simulator,name=iPad Pro 13-inch (M4),OS=18.4
+      fail-fast: false  # Continue other jobs even if one fails
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -59,6 +67,23 @@ jobs:
         run: |
           xcrun simctl list devices available
 
+      - name: Create simulator if needed
+        run: |
+          # Extract device name and OS from destination
+          DEVICE_NAME=$(echo "${{ matrix.destination }}" | sed -n 's/.*name=\([^,]*\).*/\1/p')
+          OS_VERSION=$(echo "${{ matrix.destination }}" | sed -n 's/.*OS=\([^,]*\).*/\1/p')
+          
+          # Check if simulator exists, create if not
+          if ! xcrun simctl list devices available | grep -q "$DEVICE_NAME.*$OS_VERSION"; then
+            echo "Creating simulator: $DEVICE_NAME with iOS $OS_VERSION"
+            DEVICE_TYPE=$(xcrun simctl list devicetypes | grep "$DEVICE_NAME" | head -1 | grep -o 'com\.apple\.CoreSimulator\.SimDeviceType\.[^)]*')
+            RUNTIME=$(xcrun simctl list runtimes | grep "iOS $OS_VERSION" | head -1 | grep -o 'com\.apple\.CoreSimulator\.SimRuntime\.[^)]*' || xcrun simctl list runtimes | grep "iOS" | tail -1 | grep -o 'com\.apple\.CoreSimulator\.SimRuntime\.[^)]*')
+            
+            if [ -n "$DEVICE_TYPE" ] && [ -n "$RUNTIME" ]; then
+              xcrun simctl create "Test $DEVICE_NAME" "$DEVICE_TYPE" "$RUNTIME" || true
+            fi
+          fi
+
       - name: Build and test
         run: |
           set -o pipefail
@@ -69,6 +94,7 @@ jobs:
             -derivedDataPath ~/Library/Developer/Xcode/DerivedData \
             -enableCodeCoverage YES \
             -resultBundlePath TestResults-${{ strategy.job-index }}.xcresult \
+            -skipPackagePluginValidation \
             clean build test | xcpretty --report junit --output test-results-${{ strategy.job-index }}.xml
 
       - name: Upload test results
@@ -122,6 +148,7 @@ jobs:
             -destination "generic/platform=iOS" \
             -derivedDataPath ~/Library/Developer/Xcode/DerivedData \
             -archivePath coparent.xcarchive \
+            -skipPackagePluginValidation \
             archive
 
       - name: Upload build artifacts
@@ -158,8 +185,9 @@ jobs:
           xcodebuild \
             -scheme "$SCHEME" \
             -project coparent.xcodeproj \
-            -destination "platform=iOS Simulator,name=iPhone 15 Pro" \
+            -destination "platform=iOS Simulator,name=iPhone 16 Pro,OS=18.4" \
             -derivedDataPath ~/Library/Developer/Xcode/DerivedData \
+            -skipPackagePluginValidation \
             analyze
 
   security-scan:

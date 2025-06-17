@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct OnboardingView: View {
+struct WelcomeOnboardingView: View {
     @State private var currentPage = 0
     @State private var showLogin = false
     @State private var showSignUp = false
@@ -95,5 +95,5 @@ struct OnboardingPage {
 }
 
 #Preview {
-    OnboardingView()
+    WelcomeOnboardingView()
 }
