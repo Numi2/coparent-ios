@@ -4,6 +4,7 @@ import CoreLocation
 @Observable
 class MatchService {
     private(set) var potentialMatches: [User] = []
+    private(set) var filteredMatches: [User] = []
     private(set) var isLoading = false
     private(set) var error: Error?
     
@@ -14,6 +15,7 @@ class MatchService {
     
     private let currentUser: User
     private let locationManager = CLLocationManager()
+    private let smartFiltersService = SmartFiltersService.shared
     
     // Super Like Configuration
     private let maxSuperLikesPerDay: Int = 1
@@ -23,6 +25,13 @@ class MatchService {
     init(currentUser: User) {
         self.currentUser = currentUser
         loadSuperLikeState()
+        setupFilterObservation()
+    }
+    
+    private func setupFilterObservation() {
+        // Observe filter changes to automatically update matches
+        // Note: In a real implementation, you'd use proper observation
+        // For now, we'll trigger updates manually when filters change
     }
     
     func loadPotentialMatches() async {
@@ -33,16 +42,119 @@ class MatchService {
             // TODO: Replace with actual API call
             let matches = try await fetchPotentialMatches()
             await MainActor.run {
-                potentialMatches = sortMatchesByDistance(matches)
+                potentialMatches = matches
+                applyFiltersAndSorting()
             }
         } catch {
             self.error = error
         }
     }
     
+    @MainActor
+    func applyFiltersAndSorting() {
+        let filters = smartFiltersService.currentFilters
+        
+        // Apply filters
+        var filtered = potentialMatches.filter { user in
+            return applyFilters(to: user, using: filters)
+        }
+        
+        // Calculate compatibility scores and sort
+        filtered = filtered.map { user in
+            var scoredUser = user
+            // Note: In a real implementation, you'd store this separately
+            // For now, we'll recalculate as needed
+            return scoredUser
+        }
+        
+        // Sort by compatibility score (descending)
+        filtered.sort { user1, user2 in
+            let score1 = smartFiltersService.calculateCompatibilityScore(for: user1, with: currentUser)
+            let score2 = smartFiltersService.calculateCompatibilityScore(for: user2, with: currentUser)
+            return score1 > score2
+        }
+        
+        filteredMatches = filtered
+    }
+    
+    private func applyFilters(to user: User, using filters: FilterSet) -> Bool {
+        // Age filter
+        let age = calculateAge(from: user.dateOfBirth)
+        if !filters.ageRange.contains(Double(age)) {
+            return false
+        }
+        
+        // Distance filter
+        if let userCoordinates = user.location.coordinates,
+           let currentCoordinates = currentUser.location.coordinates {
+            let distance = calculateDistance(
+                from: currentCoordinates,
+                to: userCoordinates
+            )
+            if distance > filters.maxDistance {
+                return false
+            }
+        }
+        
+        // Parenting style filter
+        if !filters.selectedParentingStyles.isEmpty &&
+           !filters.selectedParentingStyles.contains(user.parentingStyle) {
+            return false
+        }
+        
+        // Interest filter
+        if !filters.selectedInterests.isEmpty {
+            let userInterests = Set(user.interestStrings)
+            let hasMatchingInterest = !userInterests.intersection(filters.selectedInterests).isEmpty
+            if !hasMatchingInterest {
+                return false
+            }
+        }
+        
+        // Verification filter
+        if filters.isVerifiedOnly && user.verificationStatus != .verified {
+            return false
+        }
+        
+        // Photo filter
+        if filters.hasPhotosOnly && user.profileImageURL == nil {
+            return false
+        }
+        
+        // Compatibility score filter
+        let compatibilityScore = smartFiltersService.calculateCompatibilityScore(for: user, with: currentUser)
+        if compatibilityScore < filters.minimumCompatibilityScore * AppConfig.Matching.maxCompatibilityScore {
+            return false
+        }
+        
+        // Deal breakers
+        if !filters.dealBreakers.isEmpty {
+            // Note: In a real implementation, you'd check user attributes against deal breakers
+            // For now, we'll skip this complex logic
+        }
+        
+        return true
+    }
+    
+    private func calculateAge(from dateOfBirth: Date) -> Int {
+        let calendar = Calendar.current
+        let now = Date()
+        let ageComponents = calendar.dateComponents([.year], from: dateOfBirth, to: now)
+        return ageComponents.year ?? 0
+    }
+    
+    private func calculateDistance(from coord1: User.Location.Coordinates, to coord2: User.Location.Coordinates) -> Double {
+        let location1 = CLLocation(latitude: coord1.latitude, longitude: coord1.longitude)
+        let location2 = CLLocation(latitude: coord2.latitude, longitude: coord2.longitude)
+        let distance = location1.distance(from: location2) / 1000 // Convert to kilometers
+        return distance
+    }
+    
+    // Current match methods that now work with filteredMatches
+    
     func like() async {
-        guard !potentialMatches.isEmpty else { return }
-        let match = potentialMatches[0]
+        guard !filteredMatches.isEmpty else { return }
+        let match = filteredMatches[0]
         
         do {
             // TODO: Replace with actual API call
@@ -59,7 +171,11 @@ class MatchService {
             }
             
             await MainActor.run {
-                potentialMatches.removeFirst()
+                filteredMatches.removeFirst()
+                // Also remove from potentialMatches to keep them in sync
+                if let index = potentialMatches.firstIndex(where: { $0.id == match.id }) {
+                    potentialMatches.remove(at: index)
+                }
             }
         } catch {
             self.error = error
@@ -68,10 +184,10 @@ class MatchService {
     
     @MainActor
     func superLike() async {
-        guard !potentialMatches.isEmpty else { return }
+        guard !filteredMatches.isEmpty else { return }
         guard canUseSuperLike else { return }
         
-        let match = potentialMatches[0]
+        let match = filteredMatches[0]
         
         do {
             // Use super like
@@ -110,7 +226,11 @@ class MatchService {
                 trackSuperLikeAnalytics(success: false, userId: match.id)
             }
             
-            potentialMatches.removeFirst()
+            filteredMatches.removeFirst()
+            // Also remove from potentialMatches to keep them in sync
+            if let index = potentialMatches.firstIndex(where: { $0.id == match.id }) {
+                potentialMatches.remove(at: index)
+            }
             
         } catch {
             // Restore super like if API call failed
@@ -127,8 +247,14 @@ class MatchService {
     }
     
     func pass() {
-        guard !potentialMatches.isEmpty else { return }
-        potentialMatches.removeFirst()
+        guard !filteredMatches.isEmpty else { return }
+        let match = filteredMatches[0]
+        
+        filteredMatches.removeFirst()
+        // Also remove from potentialMatches to keep them in sync
+        if let index = potentialMatches.firstIndex(where: { $0.id == match.id }) {
+            potentialMatches.remove(at: index)
+        }
     }
     
     // MARK: - Super Like State Management
@@ -327,48 +453,6 @@ class MatchService {
                 verificationStatus: .verified
             )
         ]
-    }
-    
-    private func sortMatchesByDistance(_ matches: [User]) -> [User] {
-        guard let currentLocation = currentUser.location.coordinates else {
-            return matches
-        }
-        
-        return matches.sorted { match1, match2 in
-            guard let location1 = match1.location.coordinates,
-                  let location2 = match2.location.coordinates else {
-                return false
-            }
-            
-            let distance1 = calculateDistance(
-                from: currentLocation,
-                to: location1
-            )
-            
-            let distance2 = calculateDistance(
-                from: currentLocation,
-                to: location2
-            )
-            
-            return distance1 < distance2
-        }
-    }
-    
-    private func calculateDistance(
-        from location1: User.Location.Coordinates,
-        to location2: User.Location.Coordinates
-    ) -> CLLocationDistance {
-        let location1 = CLLocation(
-            latitude: location1.latitude,
-            longitude: location1.longitude
-        )
-        
-        let location2 = CLLocation(
-            latitude: location2.latitude,
-            longitude: location2.longitude
-        )
-        
-        return location1.distance(from: location2)
     }
 }
 

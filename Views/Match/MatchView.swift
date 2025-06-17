@@ -3,6 +3,7 @@ import SwiftUI
 struct MatchView: View {
     @Environment(AppState.self) private var appState
     @State private var matchService: MatchService
+    @State private var smartFiltersService = SmartFiltersService.shared
     @State private var showingMatchAlert = false
     @State private var matchedUser: User?
     @State private var showingFilters = false
@@ -33,7 +34,7 @@ struct MatchView: View {
                             .font(DesignSystem.Typography.callout)
                             .foregroundColor(.secondary)
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    } else if matchService.potentialMatches.isEmpty {
+                    } else if matchService.filteredMatches.isEmpty {
                         emptyStateView
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
                     } else {
@@ -42,7 +43,7 @@ struct MatchView: View {
                 }
                 
                 // Action buttons
-                if !matchService.potentialMatches.isEmpty && !matchService.isLoading {
+                if !matchService.filteredMatches.isEmpty && !matchService.isLoading {
                     actionButtonsView
                         .padding(.bottom, 20)
                 }
@@ -75,7 +76,13 @@ struct MatchView: View {
             }
         }
         .sheet(isPresented: $showingFilters) {
-            FilterView()
+            AdvancedFiltersView()
+                .onDisappear {
+                    // Refresh matches when filters are updated
+                    Task { @MainActor in
+                        matchService.applyFiltersAndSorting()
+                    }
+                }
         }
     }
     
@@ -88,10 +95,27 @@ struct MatchView: View {
                     .fontWeight(.bold)
                 
                 HStack(spacing: 12) {
-                    if !matchService.potentialMatches.isEmpty {
-                        Text("\(matchService.potentialMatches.count) potential matches")
+                    if !matchService.filteredMatches.isEmpty {
+                        Text("\(matchService.filteredMatches.count) matches")
                             .font(DesignSystem.Typography.subheadline)
                             .foregroundColor(.secondary)
+                    }
+                    
+                    // Smart filters indicator
+                    if smartFiltersService.currentFilters != FilterSet() {
+                        HStack(spacing: 4) {
+                            Image(systemName: "brain.head.profile")
+                                .font(.caption)
+                                .foregroundColor(.purple)
+                            
+                            Text("Smart Filtered")
+                                .font(DesignSystem.Typography.caption)
+                                .foregroundColor(.purple)
+                        }
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(.purple.opacity(0.1))
+                        .clipShape(Capsule())
                     }
                     
                     // Super Like status indicator
@@ -122,12 +146,22 @@ struct MatchView: View {
             Spacer()
             
             Button(action: { showingFilters = true }) {
-                Image(systemName: "slider.horizontal.3")
-                    .font(.title2)
-                    .foregroundColor(.primary)
-                    .frame(width: 44, height: 44)
-                    .background(.ultraThinMaterial)
-                    .clipShape(Circle())
+                ZStack {
+                    Image(systemName: "slider.horizontal.3")
+                        .font(.title2)
+                        .foregroundColor(.primary)
+                    
+                    // Active filter indicator
+                    if smartFiltersService.currentFilters != FilterSet() {
+                        Circle()
+                            .fill(.purple)
+                            .frame(width: 8, height: 8)
+                            .offset(x: 12, y: -12)
+                    }
+                }
+                .frame(width: 44, height: 44)
+                .background(.ultraThinMaterial)
+                .clipShape(Circle())
             }
         }
         .padding(.horizontal, 20)
@@ -146,17 +180,40 @@ struct MatchView: View {
                     .font(DesignSystem.Typography.title2)
                     .fontWeight(.bold)
                 
-                Text("Check back later for new potential matches or adjust your preferences")
-                    .font(DesignSystem.Typography.body)
-                    .foregroundColor(.secondary)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 40)
+                if smartFiltersService.currentFilters != FilterSet() {
+                    Text("Try adjusting your filters or check back later for new matches")
+                        .font(DesignSystem.Typography.body)
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 40)
+                    
+                    VStack(spacing: 12) {
+                        Button("Adjust Filters") {
+                            showingFilters = true
+                        }
+                        .buttonStyle(GlassPrimaryButtonStyle())
+                        
+                        Button("Reset Filters") {
+                            Task { @MainActor in
+                                smartFiltersService.resetFilters()
+                                matchService.applyFiltersAndSorting()
+                            }
+                        }
+                        .buttonStyle(GlassSecondaryButtonStyle())
+                    }
+                } else {
+                    Text("Check back later for new potential matches or expand your search area")
+                        .font(DesignSystem.Typography.body)
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 40)
+                    
+                    Button("Expand Search") {
+                        showingFilters = true
+                    }
+                    .buttonStyle(GlassPrimaryButtonStyle())
+                }
             }
-            
-            Button("Adjust Filters") {
-                showingFilters = true
-            }
-            .buttonStyle(GlassButtonStyle())
         }
     }
     
@@ -166,7 +223,7 @@ struct MatchView: View {
         let cardHeight = min(geometry.size.height - 100, 600)
         
         ZStack {
-            ForEach(Array(matchService.potentialMatches.prefix(3).enumerated()), id: \.element.id) { index, user in
+            ForEach(Array(matchService.filteredMatches.prefix(3).enumerated()), id: \.element.id) { index, user in
                 let isTopCard = index == 0
                 let scale = isTopCard ? 1.0 : 1.0 - (Double(index) * 0.05)
                 let offset = CGFloat(index) * 8
@@ -190,7 +247,11 @@ struct MatchView: View {
                     },
                     canUseSuperLike: matchService.canUseSuperLike,
                     isPremium: matchService.isPremiumUser,
-                    superLikeCooldownTimeRemaining: matchService.superLikeCooldownTimeRemaining
+                    superLikeCooldownTimeRemaining: matchService.superLikeCooldownTimeRemaining,
+                    compatibilityScore: smartFiltersService.calculateCompatibilityScore(
+                        for: user,
+                        with: appState.currentUser ?? user
+                    )
                 )
                 .frame(width: cardWidth, height: cardHeight)
                 .scaleEffect(scale)
@@ -223,7 +284,7 @@ struct MatchView: View {
                     .shadow(color: .red.opacity(0.3), radius: 8, x: 0, y: 4)
             }
             .scaleEffect(1.0)
-            .animation(.spring(), value: matchService.potentialMatches.count)
+            .animation(.spring(), value: matchService.filteredMatches.count)
             
             // Super Like button
             SuperLikeButton(
@@ -253,13 +314,13 @@ struct MatchView: View {
                     .shadow(color: .green.opacity(0.3), radius: 8, x: 0, y: 4)
             }
             .scaleEffect(1.0)
-            .animation(.spring(), value: matchService.potentialMatches.count)
+            .animation(.spring(), value: matchService.filteredMatches.count)
         }
         .padding(.horizontal, 20)
     }
     
     private func handleLike() {
-        guard !matchService.potentialMatches.isEmpty else { return }
+        guard !matchService.filteredMatches.isEmpty else { return }
         
         Task {
             await matchService.like()
@@ -267,7 +328,7 @@ struct MatchView: View {
     }
     
     private func handleSuperLike() {
-        guard !matchService.potentialMatches.isEmpty else { return }
+        guard !matchService.filteredMatches.isEmpty else { return }
         guard matchService.canUseSuperLike else { return }
         
         Task {
@@ -276,7 +337,7 @@ struct MatchView: View {
     }
     
     private func handlePass() {
-        guard !matchService.potentialMatches.isEmpty else { return }
+        guard !matchService.filteredMatches.isEmpty else { return }
         
         matchService.pass()
     }

@@ -16,6 +16,28 @@ struct User: Identifiable, Codable {
     var interests: [Interest]
     var verificationStatus: VerificationStatus
     
+    // Computed properties for filtering and compatibility
+    var profileCompletion: Double {
+        var completionScore: Double = 0.0
+        let totalFields: Double = 8.0
+        
+        // Basic required fields
+        if !name.isEmpty { completionScore += 1.0 }
+        if !bio.isEmpty { completionScore += 1.0 }
+        if profileImageURL != nil { completionScore += 1.0 }
+        if !children.isEmpty { completionScore += 1.0 }
+        if !interests.isEmpty { completionScore += 1.0 }
+        if verificationStatus == .verified { completionScore += 1.0 }
+        if email != nil && !email!.isEmpty { completionScore += 1.0 }
+        if phoneNumber != nil && !phoneNumber!.isEmpty { completionScore += 1.0 }
+        
+        return completionScore / totalFields
+    }
+    
+    var interestStrings: [String] {
+        interests.map { $0.rawValue }
+    }
+    
     struct Location: Codable {
         var city: String
         var state: String

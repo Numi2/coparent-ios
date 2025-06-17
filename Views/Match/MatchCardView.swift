@@ -8,6 +8,7 @@ struct MatchCardView: View {
     let canUseSuperLike: Bool
     let isPremium: Bool
     let superLikeCooldownTimeRemaining: TimeInterval
+    let compatibilityScore: Double
     
     @State private var offset = CGSize.zero
     @State private var rotation: Double = 0
@@ -118,17 +119,35 @@ struct MatchCardView: View {
             .frame(height: 400)
             .clipped()
             
-            // Verification badge
-            if user.verificationStatus == .verified {
-                Image(systemName: "checkmark.seal.fill")
-                    .font(.title2)
-                    .foregroundColor(.blue)
-                    .background(.white)
-                    .clipShape(Circle())
-                    .padding(12)
+            // Compatibility Score (top-left)
+            VStack {
+                HStack {
+                    CompatibilityIndicator(score: compatibilityScore)
+                        .padding(12)
+                    
+                    Spacer()
+                }
+                Spacer()
             }
             
-            // Age badge
+            // Verification badge (top-right)
+            if user.verificationStatus == .verified {
+                VStack {
+                    HStack {
+                        Spacer()
+                        
+                        Image(systemName: "checkmark.seal.fill")
+                            .font(.title2)
+                            .foregroundColor(.blue)
+                            .background(.white)
+                            .clipShape(Circle())
+                            .padding(12)
+                    }
+                    Spacer()
+                }
+            }
+            
+            // Age badge (bottom-right)
             VStack {
                 Spacer()
                 HStack {
@@ -406,6 +425,79 @@ struct InterestTag: View {
             .background(.blue.opacity(0.1))
             .foregroundColor(.blue)
             .clipShape(Capsule())
+    }
+}
+
+struct CompatibilityIndicator: View {
+    let score: Double
+    
+    private var scorePercentage: Int {
+        Int(score)
+    }
+    
+    private var scoreColor: Color {
+        switch score {
+        case 0..<40:
+            return .red
+        case 40..<60:
+            return .orange
+        case 60..<80:
+            return .yellow
+        default:
+            return .green
+        }
+    }
+    
+    private var compatibilityLevel: String {
+        switch score {
+        case 0..<40:
+            return "Low"
+        case 40..<60:
+            return "Medium"
+        case 60..<80:
+            return "Good"
+        default:
+            return "Great"
+        }
+    }
+    
+    var body: some View {
+        VStack(spacing: 2) {
+            ZStack {
+                Circle()
+                    .stroke(Color.white.opacity(0.3), lineWidth: 2)
+                    .frame(width: 40, height: 40)
+                
+                Circle()
+                    .trim(from: 0, to: score / 100)
+                    .stroke(
+                        LinearGradient(
+                            colors: [scoreColor, scoreColor.opacity(0.8)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        style: StrokeStyle(lineWidth: 3, lineCap: .round)
+                    )
+                    .frame(width: 40, height: 40)
+                    .rotationEffect(.degrees(-90))
+                    .animation(.spring(response: 0.8), value: score)
+                
+                Text("\(scorePercentage)")
+                    .font(DesignSystem.Typography.caption)
+                    .fontWeight(.bold)
+                    .foregroundColor(.white)
+            }
+            
+            Text(compatibilityLevel)
+                .font(.caption2)
+                .fontWeight(.medium)
+                .foregroundColor(.white)
+                .padding(.horizontal, 6)
+                .padding(.vertical, 2)
+                .background(.black.opacity(0.6))
+                .clipShape(Capsule())
+        }
+        .shadow(color: .black.opacity(0.3), radius: 4, x: 0, y: 2)
     }
 }
 
@@ -694,7 +786,8 @@ struct ProfileDetailView: View {
         onSuperLike: {},
         canUseSuperLike: true,
         isPremium: true,
-        superLikeCooldownTimeRemaining: 0
+        superLikeCooldownTimeRemaining: 0,
+        compatibilityScore: 0.85
     )
     .padding()
 }
