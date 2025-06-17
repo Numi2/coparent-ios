@@ -115,6 +115,12 @@ class MatchService {
         } catch {
             // Restore super like if API call failed
             superLikesRemaining += 1
+            
+            // Also reset cooldown if we're restoring a super like
+            if superLikesRemaining > 0 {
+                nextSuperLikeAvailable = Date()
+            }
+            
             saveSuperLikeState()
             self.error = error
         }

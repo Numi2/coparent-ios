@@ -358,6 +358,9 @@ struct MatchCardView: View {
                     // Check for super like (swipe up)
                     if gesture.translation.height < -threshold && canUseSuperLike {
                         showingSuperLikeAnimation = true
+                        // Reset card position like other gesture endings
+                        offset = .zero
+                        rotation = 0
                     }
                     // Check for horizontal swipes
                     else if abs(gesture.translation.width) > threshold {
