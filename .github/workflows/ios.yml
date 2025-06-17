@@ -63,13 +63,28 @@ jobs:
         run: |
           xcodebuild -resolvePackageDependencies -project coparent.xcodeproj
 
+      - name: Download iOS Platform (Required for GitHub Actions)
+        run: |
+          echo "Downloading iOS platform - this is required on GitHub Actions runners"
+          sudo xcodebuild -downloadPlatform iOS
+
+      - name: List available simulators after platform download
+        run: |
+          echo "Available runtimes:"
+          xcrun simctl list runtimes
+          echo "Available device types:"
+          xcrun simctl list devicetypes
+          echo "Available devices:"
+          xcrun simctl list devices available
+
       - name: Quick Build Check
         run: |
           set -o pipefail
+          # Use a more compatible destination for quick validation
           xcodebuild \
             -scheme "$SCHEME" \
             -project coparent.xcodeproj \
-            -destination "platform=iOS Simulator,name=iPhone 16 Pro,OS=18.4" \
+            -destination "platform=iOS Simulator,name=iPhone 15 Pro,OS=17.5" \
             -skipPackagePluginValidation \
             build-for-testing | xcpretty
 
@@ -83,23 +98,23 @@ jobs:
     strategy:
       matrix:
         include:
-          # iOS 18.x testing (primary target)
-          - destination: "platform=iOS Simulator,name=iPhone 16 Pro,OS=18.4"
-            name: "iPhone 16 Pro iOS 18.4"
-            test_plan: "UnitTests"
-          - destination: "platform=iOS Simulator,name=iPhone 15,OS=18.4"
-            name: "iPhone 15 iOS 18.4"
-            test_plan: "UnitTests"
-          - destination: "platform=iOS Simulator,name=iPad Pro 13-inch (M4),OS=18.4"
-            name: "iPad Pro iOS 18.4"
-            test_plan: "UnitTests"
-          # iOS 17.x compatibility testing
+          # iOS 17.x testing (stable and widely available)
           - destination: "platform=iOS Simulator,name=iPhone 15 Pro,OS=17.5"
             name: "iPhone 15 Pro iOS 17.5"
             test_plan: "UnitTests"
-          # UI Tests on primary device
-          - destination: "platform=iOS Simulator,name=iPhone 16 Pro,OS=18.4"
-            name: "iPhone 16 Pro UI Tests"
+          - destination: "platform=iOS Simulator,name=iPhone 15,OS=17.5"
+            name: "iPhone 15 iOS 17.5"
+            test_plan: "UnitTests"
+          - destination: "platform=iOS Simulator,name=iPad Pro (12.9-inch) (6th generation),OS=17.5"
+            name: "iPad Pro iOS 17.5"
+            test_plan: "UnitTests"
+          # iOS 18.x testing (if available after platform download)
+          - destination: "platform=iOS Simulator,name=iPhone 15 Pro,OS=18.0"
+            name: "iPhone 15 Pro iOS 18.0"
+            test_plan: "UnitTests"
+          # UI Tests on stable device
+          - destination: "platform=iOS Simulator,name=iPhone 15 Pro,OS=17.5"
+            name: "iPhone 15 Pro UI Tests"
             test_plan: "UITests"
       fail-fast: false
 
@@ -133,13 +148,23 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-spm-
 
+      - name: Download iOS Platform (Required for GitHub Actions)
+        run: |
+          echo "Downloading iOS platform - this is required on GitHub Actions runners"
+          sudo xcodebuild -downloadPlatform iOS
+
       - name: Install xcpretty and other tools
         run: |
           gem install xcpretty
           brew install xcbeautify
 
-      - name: List available simulators
+      - name: List available simulators after platform download
         run: |
+          echo "Available runtimes:"
+          xcrun simctl list runtimes
+          echo "Available device types:"
+          xcrun simctl list devicetypes
+          echo "Available devices:"
           xcrun simctl list devices available
 
       - name: Create simulator if needed
@@ -150,15 +175,48 @@ jobs:
           
           echo "Checking for simulator: $DEVICE_NAME with iOS $OS_VERSION"
           
-          # Check if simulator exists, create if not
+          # Check if simulator exists
           if ! xcrun simctl list devices available | grep -q "$DEVICE_NAME.*$OS_VERSION"; then
-            echo "Creating simulator: $DEVICE_NAME with iOS $OS_VERSION"
-            DEVICE_TYPE=$(xcrun simctl list devicetypes | grep "$DEVICE_NAME" | head -1 | grep -o 'com\.apple\.CoreSimulator\.SimDeviceType\.[^)]*')
-            RUNTIME=$(xcrun simctl list runtimes | grep "iOS $OS_VERSION" | head -1 | grep -o 'com\.apple\.CoreSimulator\.SimRuntime\.[^)]*' || xcrun simctl list runtimes | grep "iOS" | tail -1 | grep -o 'com\.apple\.CoreSimulator\.SimRuntime\.[^)]*')
+            echo "Simulator not found. Attempting to create: $DEVICE_NAME with iOS $OS_VERSION"
+            
+            # Find device type (try multiple variations)
+            DEVICE_TYPE=""
+            for name_variation in "$DEVICE_NAME" "$(echo $DEVICE_NAME | sed 's/ (.*)//')"; do
+              DEVICE_TYPE=$(xcrun simctl list devicetypes | grep -i "$name_variation" | head -1 | grep -o 'com\.apple\.CoreSimulator\.SimDeviceType\.[^)]*' || echo "")
+              if [ -n "$DEVICE_TYPE" ]; then
+                echo "Found device type: $DEVICE_TYPE for name: $name_variation"
+                break
+              fi
+            done
+            
+            # Find runtime (try exact version first, then fallback)
+            RUNTIME=""
+            for version_variation in "$OS_VERSION" "$(echo $OS_VERSION | cut -d. -f1-2)" "$(echo $OS_VERSION | cut -d. -f1)"; do
+              RUNTIME=$(xcrun simctl list runtimes | grep "iOS $version_variation" | head -1 | grep -o 'com\.apple\.CoreSimulator\.SimRuntime\.[^)]*' || echo "")
+              if [ -n "$RUNTIME" ]; then
+                echo "Found runtime: $RUNTIME for version: $version_variation"
+                break
+              fi
+            done
+            
+            # Fallback to latest iOS runtime if specific version not found
+            if [ -z "$RUNTIME" ]; then
+              RUNTIME=$(xcrun simctl list runtimes | grep "iOS" | tail -1 | grep -o 'com\.apple\.CoreSimulator\.SimRuntime\.[^)]*' || echo "")
+              echo "Using fallback runtime: $RUNTIME"
+            fi
             
             if [ -n "$DEVICE_TYPE" ] && [ -n "$RUNTIME" ]; then
+              echo "Creating simulator with device type: $DEVICE_TYPE and runtime: $RUNTIME"
               xcrun simctl create "Test $DEVICE_NAME" "$DEVICE_TYPE" "$RUNTIME" || true
+            else
+              echo "Warning: Could not find suitable device type or runtime"
+              echo "Available device types:"
+              xcrun simctl list devicetypes | head -10
+              echo "Available runtimes:"
+              xcrun simctl list runtimes
             fi
+          else
+            echo "Simulator already exists"
           fi
 
       - name: Boot simulator
@@ -248,7 +306,7 @@ jobs:
         configuration: [Debug, Release]
         destination: 
           - "generic/platform=iOS"
-          - "platform=iOS Simulator,name=iPhone 16 Pro,OS=18.4"
+          - "platform=iOS Simulator,name=iPhone 15 Pro,OS=17.5"
       fail-fast: false
 
     steps:
@@ -268,6 +326,12 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-derived-data-${{ hashFiles('**/project.pbxproj') }}-
             ${{ runner.os }}-derived-data-
+
+      - name: Download iOS Platform (Required for simulator builds)
+        if: contains(matrix.destination, 'iOS Simulator')
+        run: |
+          echo "Downloading iOS platform for simulator builds"
+          sudo xcodebuild -downloadPlatform iOS
 
       - name: Build app
         run: |
@@ -331,13 +395,18 @@ jobs:
           swiftlint lint --reporter github-actions-logging --config .swiftlint.yml 2>&1 | tee swiftlint-results.txt
           swiftlint lint --reporter sonarqube > swiftlint-sonar.xml || true
 
+      - name: Download iOS Platform (Required for GitHub Actions)
+        run: |
+          echo "Downloading iOS platform - this is required on GitHub Actions runners"
+          sudo xcodebuild -downloadPlatform iOS
+
       - name: Static analysis with Xcode
         run: |
           set -o pipefail
           xcodebuild \
             -scheme "$SCHEME" \
             -project coparent.xcodeproj \
-            -destination "platform=iOS Simulator,name=iPhone 16 Pro,OS=18.4" \
+            -destination "platform=iOS Simulator,name=iPhone 15 Pro,OS=17.5" \
             -derivedDataPath ~/Library/Developer/Xcode/DerivedData \
             -skipPackagePluginValidation \
             analyze | xcbeautify
@@ -395,13 +464,18 @@ jobs:
         with:
           xcode-version: '16.2'
 
+      - name: Download iOS Platform (Required for GitHub Actions)
+        run: |
+          echo "Downloading iOS platform - this is required on GitHub Actions runners"
+          sudo xcodebuild -downloadPlatform iOS
+
       - name: Run performance tests
         run: |
           set -o pipefail
           xcodebuild \
             -scheme "$SCHEME" \
             -project coparent.xcodeproj \
-            -destination "platform=iOS Simulator,name=iPhone 16 Pro,OS=18.4" \
+            -destination "platform=iOS Simulator,name=iPhone 15 Pro,OS=17.5" \
             -derivedDataPath ~/Library/Developer/Xcode/DerivedData \
             -enableCodeCoverage YES \
             -resultBundlePath PerformanceResults.xcresult \

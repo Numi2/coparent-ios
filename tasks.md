@@ -43,6 +43,9 @@
 - ✅ **SendbirdChatSDK properly integrated and working**
 - ✅ **No duplicate file/type conflicts**
 - ✅ **CI pipeline progresses significantly further**
+- ✅ **iOS Platform Download** - Added required iOS platform download step for GitHub Actions
+- ✅ **Compatible Device Matrix** - Updated to use iPhone 15 Pro iOS 17.5 (widely available)
+- ✅ **Enhanced Simulator Creation** - Improved fallback logic for device/runtime matching
 - ⚠️ **Firebase temporarily disabled** (needs proper dependency addition)
 - ⚠️ **Some remaining type conflicts** (AppState, etc. need architectural cleanup)
 
@@ -52,8 +55,8 @@
 strategy:
   matrix:
     destination: 
-      - platform=iOS Simulator,name=iPhone 16 Pro,OS=18.4
-      - platform=iOS Simulator,name=iPad Pro 13-inch (M4),OS=18.4
+      - platform=iOS Simulator,name=iPhone 15 Pro,OS=17.5
+      - platform=iOS Simulator,name=iPad Pro (12.9-inch) (6th generation),OS=17.5
   fail-fast: false
 
 permissions:
@@ -61,6 +64,30 @@ permissions:
   actions: read
   checks: write
   pull-requests: write
+```
+
+6. **GitHub Actions iOS Simulator Fix** ✅
+   - ✅ **Root Cause**: GitHub Actions runners don't have iOS simulators pre-installed
+   - ✅ **iOS Platform Download**: Added `sudo xcodebuild -downloadPlatform iOS` step (~10 min but necessary)
+   - ✅ **Compatible Device Matrix**: Switched from iPhone 16 Pro iOS 18.4 to iPhone 15 Pro iOS 17.5
+   - ✅ **Enhanced Simulator Creation**: Added robust fallback logic for device type and runtime matching
+   - ✅ **Improved Debugging**: Added comprehensive simulator/runtime listing for troubleshooting
+
+#### Key GitHub Actions Fixes Applied:
+```yaml
+# Added to all jobs requiring simulators
+- name: Download iOS Platform (Required for GitHub Actions)
+  run: |
+    sudo xcodebuild -downloadPlatform iOS
+
+# Updated device matrix for compatibility
+strategy:
+  matrix:
+    include:
+      - destination: "platform=iOS Simulator,name=iPhone 15 Pro,OS=17.5"
+      - destination: "platform=iOS Simulator,name=iPhone 15,OS=17.5"
+      - destination: "platform=iOS Simulator,name=iPad Pro (12.9-inch) (6th generation),OS=17.5"
+      - destination: "platform=iOS Simulator,name=iPhone 15 Pro,OS=18.0"  # fallback if available
 ```
 
 ### ✅ Enhanced CI/CD Pipeline for Zero Local Testing
