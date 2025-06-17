@@ -77,7 +77,7 @@ struct PhotoEditorView: View {
     // MARK: - Image Preview Section
     
     private var imagePreviewSection: some View {
-        GeometryReader { geometry in
+        GeometryReader { _ in
             ZStack {
                 Image(uiImage: editedImage)
                     .resizable()

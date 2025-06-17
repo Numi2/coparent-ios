@@ -511,14 +511,14 @@ struct TravelMode: Codable, Equatable {
 }
 
 enum DealBreaker: String, CaseIterable, Codable {
-    case smoking = "smoking"
-    case drinking = "drinking"
-    case pets = "pets"
-    case religion = "religion"
-    case politics = "politics"
-    case moreChildren = "moreChildren"
-    case longDistance = "longDistance"
-    case differentParentingStyle = "differentParentingStyle"
+    case smoking
+    case drinking
+    case pets
+    case religion
+    case politics
+    case moreChildren
+    case longDistance
+    case differentParentingStyle
 }
 
 struct SmartRecommendation: Identifiable, Equatable {

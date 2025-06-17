@@ -313,9 +313,7 @@ struct VerificationStepView: View {
     
     private var verificationScoreColor: Color {
         let score = verificationService.getOverallVerificationScore()
-        if score >= 0.8 { return .green }
-        else if score >= 0.5 { return .orange }
-        else { return .red }
+        if score >= 0.8 { return .green } else if score >= 0.5 { return .orange } else { return .red }
     }
     
     private let verificationBenefits = [
@@ -453,7 +451,7 @@ struct VerificationStepView: View {
     
     private func isValidEmail(_ email: String) -> Bool {
         let emailRegEx = "[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,64}"
-        let emailPred = NSPredicate(format:"SELF MATCHES %@", emailRegEx)
+        let emailPred = NSPredicate(format: "SELF MATCHES %@", emailRegEx)
         return emailPred.evaluate(with: email)
     }
     

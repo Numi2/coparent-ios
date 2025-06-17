@@ -298,10 +298,8 @@ class SendbirdChatService {
     func getUserReactionKey(for message: BaseMessage) -> String? {
         guard let currentUserId = SendbirdChat.currentUser?.userId else { return nil }
         
-        for reaction in message.reactions {
-            if reaction.userIds.contains(currentUserId) {
-                return reaction.key
-            }
+        for reaction in message.reactions where reaction.userIds.contains(currentUserId) {
+            return reaction.key
         }
         return nil
     }

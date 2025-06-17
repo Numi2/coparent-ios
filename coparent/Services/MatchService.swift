@@ -105,7 +105,7 @@ class MatchService {
         // Interest filter
         if !filters.selectedInterests.isEmpty {
             let userInterests = Set(user.interestStrings)
-            let hasMatchingInterest = !userInterests.intersection(filters.selectedInterests).isEmpty
+            let hasMatchingInterest = !userInterests.isDisjoint(with: filters.selectedInterests)
             if !hasMatchingInterest {
                 return false
             }
@@ -123,7 +123,8 @@ class MatchService {
         
         // Compatibility score filter
         let compatibilityScore = smartFiltersService.calculateCompatibilityScore(for: user, with: currentUser)
-        if compatibilityScore < filters.minimumCompatibilityScore * AppConfig.Matching.maxCompatibilityScore {
+        let scoreThreshold = filters.minimumCompatibilityScore * AppConfig.Matching.maxCompatibilityScore
+        if compatibilityScore < scoreThreshold {
             return false
         }
         
@@ -200,7 +201,9 @@ class MatchService {
                     byAdding: .hour,
                     value: superLikeCooldownHours,
                     to: Date()
-                ) ?? Date().addingTimeInterval(TimeInterval(superLikeCooldownHours * 3600))
+                ) ?? Date().addingTimeInterval(
+                    TimeInterval(superLikeCooldownHours * 3600)
+                )
             }
             
             // TODO: Replace with actual API call
@@ -361,7 +364,8 @@ class MatchService {
             phoneNumber: "+1987654321",
             dateOfBirth: Date().addingTimeInterval(-32 * 365 * 24 * 60 * 60),
             profileImageURL: nil,
-            bio: "Single mother looking for a co-parent. Love outdoor activities, cooking, and spending quality time with my daughter.",
+            bio: "Single mother looking for a co-parent. Love outdoor activities, cooking, " +
+                 "and spending quality time with my daughter.",
             location: User.Location(
                 city: "San Jose",
                 state: "CA",
@@ -392,7 +396,8 @@ class MatchService {
             phoneNumber: "+1555123456",
             dateOfBirth: Date().addingTimeInterval(-29 * 365 * 24 * 60 * 60),
             profileImageURL: nil,
-            bio: "Father of two who believes in balanced parenting. Work in tech but love outdoor adventures on weekends.",
+            bio: "Father of two who believes in balanced parenting. Work in tech but " +
+                 "love outdoor adventures on weekends.",
             location: User.Location(
                 city: "Palo Alto",
                 state: "CA",
@@ -424,7 +429,8 @@ class MatchService {
             phoneNumber: "+1444987654",
             dateOfBirth: Date().addingTimeInterval(-31 * 365 * 24 * 60 * 60),
             profileImageURL: nil,
-            bio: "Looking for a co-parenting partner to share the wonderful journey of raising children. Pediatric nurse who loves nature.",
+            bio: "Looking for a co-parenting partner to share the wonderful journey of " +
+                 "raising children. Pediatric nurse who loves nature.",
             location: User.Location(
                 city: "Mountain View",
                 state: "CA",
@@ -453,7 +459,8 @@ class MatchService {
             phoneNumber: "+1333555777",
             dateOfBirth: Date().addingTimeInterval(-34 * 365 * 24 * 60 * 60),
             profileImageURL: nil,
-            bio: "Single dad who loves cooking with my son and exploring new places. Looking for someone who values family time.",
+            bio: "Single dad who loves cooking with my son and exploring new places. " +
+                 "Looking for someone who values family time.",
             location: User.Location(
                 city: "Sunnyvale",
                 state: "CA",

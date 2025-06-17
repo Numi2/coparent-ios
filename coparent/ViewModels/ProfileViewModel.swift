@@ -96,4 +96,4 @@ class ProfileViewModel {
             self.error = error
         }
     }
-} 
+}

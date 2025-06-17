@@ -41,13 +41,16 @@ struct ChatListView: View {
             .sheet(isPresented: $showingNewChat) {
                 NewChatView()
             }
-            .alert("Error", isPresented: $showingError, actions: {
-                Button("OK", role: .cancel, action: {})
-            }, message: {
-                if let error = errorMessage {
-                    Text(error)
-                }
-            })
+            .alert("Error", 
+                   isPresented: $showingError,
+                   actions: {
+                       Button("OK", role: .cancel, action: {})
+                   },
+                   message: {
+                       if let error = errorMessage {
+                           Text(error)
+                       }
+                   })
             .task {
                 do {
                     try await chatService.fetchChannels()

@@ -269,13 +269,13 @@ struct ToastModifier: ViewModifier {
                 }
                 .animation(DesignSystem.Animation.spring, value: toast)
             )
-            .onChange(of: toast) { newValue in
+            .onChange(of: toast) { _ in
                 showToastIfNeeded()
             }
     }
     
     private func showToastIfNeeded() {
-        guard let _ = toast else { return }
+        guard toast != nil else { return }
         
         // Cancel previous work item
         workItem?.cancel()
@@ -365,4 +365,4 @@ extension View {
             }
         ))
     }
-} 
+}

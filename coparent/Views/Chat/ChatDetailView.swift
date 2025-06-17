@@ -137,7 +137,7 @@ struct ChatDetailView: View {
                 showingError = true
             }
         }
-        .onChange(of: searchText) { oldValue, newValue in
+        .onChange(of: searchText) { _, newValue in
             handleSearchTextChange(newValue)
         }
         .animation(.easeInOut(duration: 0.2), value: showingSearchBar)

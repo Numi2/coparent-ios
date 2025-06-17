@@ -401,4 +401,3 @@ struct MatchCardView: View {
     }
     
 }
-
