@@ -255,6 +255,28 @@ struct ToastData: Equatable {
     let systemImage: String
     let color: Color
     
+    init(message: String, systemImage: String, color: Color) {
+        self.message = message
+        self.systemImage = systemImage
+        self.color = color
+    }
+    
+    // Legacy constructor for compatibility
+    init(message: String, type: ToastType) {
+        self.message = message
+        switch type {
+        case .success:
+            self.systemImage = "checkmark.circle.fill"
+            self.color = .green
+        case .error:
+            self.systemImage = "exclamationmark.circle.fill"
+            self.color = .red
+        case .info:
+            self.systemImage = "info.circle.fill"
+            self.color = .blue
+        }
+    }
+    
     static func success(_ message: String) -> ToastData {
         ToastData(message: message, systemImage: "checkmark.circle.fill", color: .green)
     }
@@ -268,8 +290,19 @@ struct ToastData: Equatable {
     }
 }
 
+enum ToastType {
+    case success
+    case error
+    case info
+}
+
 extension View {
     func toast(_ toast: Binding<ToastData?>) -> some View {
+        modifier(ToastModifier(toast: toast))
+    }
+    
+    // Legacy method for backward compatibility
+    func toast(data toast: Binding<ToastData?>) -> some View {
         modifier(ToastModifier(toast: toast))
     }
 } 
