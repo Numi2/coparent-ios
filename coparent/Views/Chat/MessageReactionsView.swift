@@ -7,7 +7,7 @@ struct MessageReactionsView: View {
     @State private var toast: ToastData?
     
     private var reactions: [Reaction] {
-        message.reactions.filter { $0.userIds.count > 0 }
+        message.reactions.filter { !$0.userIds.isEmpty }
     }
     
     var body: some View {

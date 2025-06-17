@@ -169,7 +169,7 @@ struct GlassSecondaryButtonStyle: ButtonStyle {
 }
 
 struct GlassTextFieldStyle: TextFieldStyle {
-    func _body(configuration: TextField<Self._Label>) -> some View {
+    func makeBody(configuration: TextField<Self._Label>) -> some View {
         configuration
             .padding(.horizontal, DesignSystem.Layout.padding)
             .padding(.vertical, 12)
