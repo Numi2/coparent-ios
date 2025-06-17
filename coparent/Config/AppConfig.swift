@@ -5,13 +5,13 @@ enum AppConfig {
         static let appId = "YOUR_APP_ID" // TODO: Replace with actual Sendbird App ID
         static let isLocalCachingEnabled = true
     }
-    
+
     enum Chat {
         static let messagePageSize = 50
-        static let maxMessageLength = 1000
-        static let maxImageSize = 10 * 1024 * 1024 // 10MB
+        static let maxMessageLength = 1_000
+        static let maxImageSize = 10 * 1_024 * 1_024 // 10MB
     }
-    
+
     enum Filters {
         static let defaultAgeRangeMin: Double = 25
         static let defaultAgeRangeMax: Double = 45
@@ -24,7 +24,7 @@ enum AppConfig {
         static let smartRecommendationsEnabled = true
         static let locationBasedNotifications = true
     }
-    
+
     enum Matching {
         static let maxCompatibilityScore: Double = 100.0
         static let parentingStyleWeight: Double = 0.4
@@ -33,12 +33,12 @@ enum AppConfig {
         static let communicationStyleWeight: Double = 0.1
         static let minimumProfileCompletionForScoring: Double = 0.6
     }
-    
+
     enum Location {
         static let defaultSearchRadius: Double = 50
         static let maxSearchRadius: Double = 500
         static let locationUpdateInterval: TimeInterval = 300 // 5 minutes
         static let travelModeRadius: Double = 100
-        static let geocodingCacheTimeout: TimeInterval = 86400 // 24 hours
+        static let geocodingCacheTimeout: TimeInterval = 86_400 // 24 hours
     }
 }

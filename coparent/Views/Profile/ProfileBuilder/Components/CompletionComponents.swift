@@ -5,7 +5,7 @@ import SwiftUI
 struct CelebrationSection: View {
     let animateContent: Bool
     let animateConfetti: Bool
-    
+
     var body: some View {
         VStack(spacing: DesignSystem.Layout.spacing) {
             // Confetti/Celebration Animation
@@ -25,7 +25,7 @@ struct CelebrationSection: View {
                         DesignSystem.Animation.spring.delay(0.2),
                         value: animateContent
                     )
-                
+
                 // Celebration Icon
                 Image(systemName: "party.popper.fill")
                     .font(.system(size: 60, weight: .medium))
@@ -46,7 +46,7 @@ struct CelebrationSection: View {
                         Animation.easeInOut(duration: 2.0).repeatForever(autoreverses: true),
                         value: animateConfetti
                     )
-                
+
                 // Floating particles
                 ForEach(0..<8, id: \.self) { index in
                     FloatingParticle(
@@ -55,7 +55,7 @@ struct CelebrationSection: View {
                     )
                 }
             }
-            
+
             VStack(spacing: 8) {
                 Text("Congratulations!")
                     .font(DesignSystem.Typography.largeTitle)
@@ -67,7 +67,7 @@ struct CelebrationSection: View {
                         DesignSystem.Animation.spring.delay(0.6),
                         value: animateContent
                     )
-                
+
                 Text("Your amazing profile is complete and ready to help you find meaningful connections!")
                     .font(DesignSystem.Typography.body)
                     .foregroundColor(.secondary)
@@ -89,7 +89,7 @@ struct CompletionSummarySection: View {
     @Environment(ProfileBuilderViewModel.self) private var profileBuilder
     @Environment(VerificationService.self) private var verificationService
     let animateContent: Bool
-    
+
     var body: some View {
         GlassCardView {
             VStack(spacing: DesignSystem.Layout.spacing) {
@@ -97,38 +97,38 @@ struct CompletionSummarySection: View {
                     Text("Profile Completion")
                         .font(DesignSystem.Typography.headline)
                         .fontWeight(.semibold)
-                    
+
                     Spacer()
-                    
+
                     Text("\(Int(profileBuilder.profileCompletion * 100))%")
                         .font(DesignSystem.Typography.title3)
                         .fontWeight(.bold)
                         .foregroundColor(.green)
                 }
-                
+
                 ProgressView(value: profileBuilder.profileCompletion, total: 1.0)
                     .progressViewStyle(GlassProgressViewStyle())
                     .scaleEffect(y: 3.0)
-                
+
                 HStack {
                     CompletionBadge(
                         title: "Photos",
                         isComplete: profileBuilder.hasMainPhoto,
                         icon: "camera.fill"
                     )
-                    
+
                     CompletionBadge(
                         title: "Bio",
                         isComplete: profileBuilder.isAboutYouComplete,
                         icon: "text.quote"
                     )
-                    
+
                     CompletionBadge(
                         title: "Interests",
                         isComplete: profileBuilder.hasSelectedInterests,
                         icon: "heart.fill"
                     )
-                    
+
                     CompletionBadge(
                         title: "Verified",
                         isComplete: verificationService.getOverallVerificationScore() > 0.3,
@@ -149,23 +149,23 @@ struct ProfileStatsSection: View {
     @Environment(ProfileBuilderViewModel.self) private var profileBuilder
     @Environment(VerificationService.self) private var verificationService
     let animateContent: Bool
-    
+
     private let statsColumns = Array(
-        repeating: GridItem(.flexible(), spacing: DesignSystem.Layout.spacing), 
+        repeating: GridItem(.flexible(), spacing: DesignSystem.Layout.spacing),
         count: 2
     )
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: DesignSystem.Layout.spacing) {
             HStack {
                 Image(systemName: "chart.bar.fill")
                     .foregroundColor(.blue)
-                
+
                 Text("Your Profile Stats")
                     .font(DesignSystem.Typography.headline)
                     .fontWeight(.semibold)
             }
-            
+
             LazyVGrid(columns: statsColumns, spacing: DesignSystem.Layout.spacing) {
                 StatCard(
                     title: "Photos",
@@ -174,7 +174,7 @@ struct ProfileStatsSection: View {
                     icon: "photo.stack.fill",
                     color: .blue
                 )
-                
+
                 StatCard(
                     title: "Interests",
                     value: "\(profileBuilder.selectedInterests.count)",
@@ -182,7 +182,7 @@ struct ProfileStatsSection: View {
                     icon: "heart.fill",
                     color: .pink
                 )
-                
+
                 StatCard(
                     title: "Bio Length",
                     value: "\(profileBuilder.bio.count)",
@@ -190,7 +190,7 @@ struct ProfileStatsSection: View {
                     icon: "text.alignleft",
                     color: .green
                 )
-                
+
                 StatCard(
                     title: "Verification",
                     value: "\(Int(verificationService.getOverallVerificationScore() * 100))%",
@@ -210,7 +210,7 @@ struct ProfileStatsSection: View {
 
 struct NextStepsSection: View {
     let animateContent: Bool
-    
+
     private let nextSteps = [
         NextStep(
             icon: "magnifyingglass",
@@ -237,18 +237,18 @@ struct NextStepsSection: View {
             action: "Meet"
         )
     ]
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: DesignSystem.Layout.spacing) {
             HStack {
                 Image(systemName: "arrow.forward.circle.fill")
                     .foregroundColor(.purple)
-                
+
                 Text("What's Next?")
                     .font(DesignSystem.Typography.headline)
                     .fontWeight(.semibold)
             }
-            
+
             GlassCardView {
                 VStack(alignment: .leading, spacing: DesignSystem.Layout.spacing) {
                     ForEach(nextSteps, id: \.title) { step in
@@ -268,14 +268,14 @@ struct NextStepsSection: View {
 struct ProfilePreviewSection: View {
     @Binding var showingProfilePreview: Bool
     let animateContent: Bool
-    
+
     var body: some View {
         VStack(spacing: DesignSystem.Layout.spacing) {
             Button("Preview Your Profile") {
                 showingProfilePreview = true
             }
             .buttonStyle(GlassPrimaryButtonStyle())
-            
+
             Text("See how your profile looks to potential matches")
                 .font(DesignSystem.Typography.caption)
                 .foregroundColor(.secondary)

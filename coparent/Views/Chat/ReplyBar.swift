@@ -3,7 +3,7 @@ import SendbirdChatSDK
 
 struct ReplyBar: View {
     let parentMessage: BaseMessage
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             // Header
@@ -11,36 +11,36 @@ struct ReplyBar: View {
                 Image(systemName: "arrowshape.turn.up.left")
                     .font(.system(size: 12, weight: .medium))
                     .foregroundColor(.blue)
-                
+
                 Text("Reply to")
                     .font(DesignSystem.Typography.caption)
                     .foregroundColor(.secondary)
-                
+
                 Text(parentMessage.sender?.nickname ?? "Unknown")
                     .font(DesignSystem.Typography.caption.weight(.medium))
                     .foregroundColor(.blue)
-                
+
                 Spacer()
-                
+
                 Text(parentMessage.createdAt, style: .time)
                     .font(DesignSystem.Typography.caption)
                     .foregroundColor(.secondary)
             }
             .padding(.bottom, 6)
-            
+
             // Message preview
             HStack(spacing: 12) {
                 // Message type indicator
                 messageTypeIcon
                     .foregroundColor(.secondary)
-                
+
                 // Message content preview
                 messageContentPreview
                     .font(DesignSystem.Typography.body)
                     .foregroundColor(.primary)
                     .lineLimit(2)
                     .multilineTextAlignment(.leading)
-                
+
                 Spacer()
             }
         }
@@ -55,7 +55,7 @@ struct ReplyBar: View {
                 .stroke(Color.blue.opacity(0.2), lineWidth: 1)
         )
     }
-    
+
     @ViewBuilder
     private var messageTypeIcon: some View {
         if let userMessage = parentMessage as? UserMessage {
@@ -74,7 +74,7 @@ struct ReplyBar: View {
             }
         }
     }
-    
+
     @ViewBuilder
     private var messageContentPreview: some View {
         if let userMessage = parentMessage as? UserMessage {
@@ -102,10 +102,10 @@ struct ReplyBar: View {
     VStack(spacing: 16) {
         // Text message preview
         ReplyBar(parentMessage: SampleData.sampleTextMessage)
-        
+
         // Image message preview
         ReplyBar(parentMessage: SampleData.sampleImageMessage)
-        
+
         // Voice message preview
         ReplyBar(parentMessage: SampleData.sampleVoiceMessage)
     }
@@ -121,13 +121,13 @@ private struct SampleData {
         // This is simplified for preview purposes
         return message
     }()
-    
+
     static let sampleImageMessage: FileMessage = {
         let message = FileMessage()
         // In a real implementation, these would be set properly
         return message
     }()
-    
+
     static let sampleVoiceMessage: FileMessage = {
         let message = FileMessage()
         // In a real implementation, these would be set properly

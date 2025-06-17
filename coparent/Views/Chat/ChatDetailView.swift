@@ -15,14 +15,14 @@ struct ChatDetailView: View {
     @State private var isUploading = false
     @State private var showingVoiceMessageView = false
     @State private var typingTimer: Timer?
-    
+
     // MARK: - Advanced Chat Features
     @State private var showingSearchBar = false
     @State private var searchText = ""
     @State private var searchTimer: Timer?
     @State private var scrollPositionId: Int64?
     @FocusState private var isSearchFocused: Bool
-    
+
     var body: some View {
         VStack(spacing: 0) {
             // Search Bar (when active)
@@ -39,7 +39,7 @@ struct ChatDetailView: View {
                 .focused($isSearchFocused)
                 .transition(.move(edge: .top).combined(with: .opacity))
             }
-            
+
             // Main Content
             if chatService.isInSearchMode {
                 // Search Results View
@@ -62,12 +62,12 @@ struct ChatDetailView: View {
                     }
                 )
             }
-            
+
             // Input Bar (hidden during search)
             if !chatService.isInSearchMode {
                 Divider()
                     .background(.ultraThinMaterial)
-                
+
                 MessageInputView(
                     messageText: $messageText,
                     showingImagePicker: $showingImagePicker,
@@ -143,13 +143,13 @@ struct ChatDetailView: View {
         .animation(.easeInOut(duration: 0.2), value: showingSearchBar)
         .animation(.easeInOut(duration: 0.2), value: chatService.isInSearchMode)
     }
-    
+
     // MARK: - Message Handling
-    
+
     private func sendMessage() {
         let trimmedText = messageText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedText.isEmpty else { return }
-        
+
         Task {
             do {
                 try await chatService.sendMessage(trimmedText, in: channel)
@@ -160,10 +160,10 @@ struct ChatDetailView: View {
             }
         }
     }
-    
+
     private func sendImages() {
         guard !selectedImages.isEmpty else { return }
-        
+
         Task {
             isUploading = true
             do {
@@ -177,9 +177,9 @@ struct ChatDetailView: View {
             isUploading = false
         }
     }
-    
+
     // MARK: - Search Handling
-    
+
     private func toggleSearch() {
         withAnimation {
             showingSearchBar.toggle()
@@ -188,10 +188,10 @@ struct ChatDetailView: View {
             }
         }
     }
-    
+
     private func performSearch() {
         guard !searchText.isEmpty else { return }
-        
+
         Task {
             do {
                 try await chatService.searchMessages(searchText, in: channel)
@@ -201,12 +201,12 @@ struct ChatDetailView: View {
             }
         }
     }
-    
+
     private func cancelSearch() {
         searchText = ""
         chatService.clearSearch()
     }
-    
+
     private func handleSearchTextChange(_ newValue: String) {
         searchTimer?.invalidate()
         searchTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: false) { _ in
@@ -215,28 +215,28 @@ struct ChatDetailView: View {
             }
         }
     }
-    
+
     private func jumpToMessage(_ message: BaseMessage) {
         scrollPositionId = message.messageId
         showingSearchBar = false
         cancelSearch()
     }
-    
+
     // MARK: - Typing Indicator
-    
+
     private func handleTypingIndicator(oldText: String, newText: String) {
         // Only send typing status if text changed
         guard oldText != newText else { return }
-        
+
         // Cancel existing timer
         typingTimer?.invalidate()
-        
+
         // Start new timer
         typingTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: false) { _ in
             Task {
                 do {
                     try await chatService.sendTypingStatus(true, in: channel)
-                    
+
                     // Stop typing status after 2 seconds
                     try await Task.sleep(nanoseconds: 2_000_000_000)
                     try await chatService.sendTypingStatus(false, in: channel)
@@ -252,4 +252,4 @@ struct ChatDetailView: View {
     NavigationView {
         ChatDetailView(channel: GroupChannel())
     }
-} 
+}

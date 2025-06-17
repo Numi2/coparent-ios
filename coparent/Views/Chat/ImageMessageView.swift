@@ -9,13 +9,13 @@ struct ModernImagePicker: View {
     @State private var isLoading = false
     let maxSelection: Int
     let onCompletion: () -> Void
-    
+
     init(selectedImages: Binding<[UIImage]>, maxSelection: Int = 5, onCompletion: @escaping () -> Void) {
         self._selectedImages = selectedImages
         self.maxSelection = maxSelection
         self.onCompletion = onCompletion
     }
-    
+
     var body: some View {
         NavigationView {
             VStack(spacing: DesignSystem.Layout.spacing) {
@@ -32,10 +32,10 @@ struct ModernImagePicker: View {
                             Image(systemName: "photo.stack")
                                 .font(.system(size: 48))
                                 .foregroundColor(.blue)
-                            
+
                             Text("Select Photos")
                                 .font(DesignSystem.Typography.title2)
-                            
+
                             Text("Choose up to \(maxSelection) photos")
                                 .font(DesignSystem.Typography.body)
                                 .foregroundColor(.secondary)
@@ -44,7 +44,7 @@ struct ModernImagePicker: View {
                         .glassCard()
                     }
                     .buttonStyle(PlainButtonStyle())
-                    
+
                     if !selectedImages.isEmpty {
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: 12) {
@@ -72,7 +72,7 @@ struct ModernImagePicker: View {
                         onCompletion()
                     }
                 }
-                
+
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") {
                         onCompletion()
@@ -87,14 +87,14 @@ struct ModernImagePicker: View {
             }
         }
     }
-    
+
     private func loadImages(from items: [PhotosPickerItem]) async {
         await MainActor.run {
             isLoading = true
         }
-        
+
         var loadedImages: [UIImage] = []
-        
+
         for item in items {
             do {
                 if let data = try await item.loadTransferable(type: Data.self),
@@ -105,7 +105,7 @@ struct ModernImagePicker: View {
                 print("Failed to load image: \(error)")
             }
         }
-        
+
         await MainActor.run {
             selectedImages = loadedImages
             isLoading = false
@@ -117,7 +117,7 @@ struct ModernImagePicker: View {
 struct ImagePreviewThumbnail: View {
     let image: UIImage
     let onRemove: () -> Void
-    
+
     var body: some View {
         ZStack(alignment: .topTrailing) {
             Image(uiImage: image)
@@ -126,7 +126,7 @@ struct ImagePreviewThumbnail: View {
                 .frame(width: 80, height: 80)
                 .clipped()
                 .cornerRadius(12)
-            
+
             Button(action: onRemove) {
                 Image(systemName: "xmark.circle.fill")
                     .font(.system(size: 20))
@@ -145,7 +145,7 @@ struct ImageMessageView: View {
     let isCurrentUser: Bool
     @State private var showingFullScreen = false
     @State private var toast: ToastData?
-    
+
     var body: some View {
         Image(uiImage: image)
             .resizable()
@@ -157,10 +157,10 @@ struct ImageMessageView: View {
                 // Glass morphism overlay with actions
                 VStack {
                     Spacer()
-                    
+
                     HStack {
                         Spacer()
-                        
+
                         HStack(spacing: 8) {
                             // Save button
                             Button(action: saveImage) {
@@ -172,7 +172,7 @@ struct ImageMessageView: View {
                                     .background(.ultraThinMaterial)
                                     .clipShape(Circle())
                             }
-                            
+
                             // Share button
                             Button(action: shareImage) {
                                 Image(systemName: "square.and.arrow.up")
@@ -198,15 +198,15 @@ struct ImageMessageView: View {
             }
             .toast($toast)
     }
-    
+
     private func saveImage() {
         UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
         toast = .success("Image saved to Photos")
     }
-    
+
     private func shareImage() {
         let activityVC = UIActivityViewController(activityItems: [image], applicationActivities: nil)
-        
+
         if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
            let window = windowScene.windows.first {
             window.rootViewController?.present(activityVC, animated: true)
@@ -221,11 +221,11 @@ struct FullScreenImageView: View {
     @State private var scale: CGFloat = 1.0
     @State private var offset: CGSize = .zero
     @State private var toast: ToastData?
-    
+
     var body: some View {
         ZStack {
             Color.black.ignoresSafeArea()
-            
+
             VStack {
                 // Navigation bar
                 HStack {
@@ -234,16 +234,16 @@ struct FullScreenImageView: View {
                     }
                     .font(DesignSystem.Typography.body)
                     .foregroundColor(.white)
-                    
+
                     Spacer()
-                    
+
                     HStack(spacing: 20) {
                         Button(action: saveImage) {
                             Image(systemName: "square.and.arrow.down")
                                 .font(.system(size: 20))
                                 .foregroundColor(.white)
                         }
-                        
+
                         Button(action: shareImage) {
                             Image(systemName: "square.and.arrow.up")
                                 .font(.system(size: 20))
@@ -252,9 +252,9 @@ struct FullScreenImageView: View {
                     }
                 }
                 .padding()
-                
+
                 Spacer()
-                
+
                 // Zoomable image
                 Image(uiImage: image)
                     .resizable()
@@ -297,21 +297,21 @@ struct FullScreenImageView: View {
                             }
                         }
                     }
-                
+
                 Spacer()
             }
         }
         .toast($toast)
     }
-    
+
     private func saveImage() {
         UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
         toast = .success("Image saved to Photos")
     }
-    
+
     private func shareImage() {
         let activityVC = UIActivityViewController(activityItems: [image], applicationActivities: nil)
-        
+
         if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
            let window = windowScene.windows.first {
             window.rootViewController?.present(activityVC, animated: true)
@@ -327,7 +327,7 @@ struct ImagePreviewView: View {
     @State private var currentIndex = 0
     @State private var editingImage: UIImage?
     @State private var showingEditor = false
-    
+
     var body: some View {
         NavigationView {
             VStack(spacing: 0) {
@@ -346,7 +346,7 @@ struct ImagePreviewView: View {
                 }
                 .tabViewStyle(PageTabViewStyle())
                 .frame(maxHeight: 400)
-                
+
                 // Page indicator
                 if images.count > 1 {
                     HStack(spacing: 8) {
@@ -360,9 +360,9 @@ struct ImagePreviewView: View {
                     }
                     .padding(.vertical)
                 }
-                
+
                 Spacer()
-                
+
                 // Action buttons
                 HStack(spacing: 16) {
                     Button("Edit") {
@@ -373,7 +373,7 @@ struct ImagePreviewView: View {
                     }
                     .buttonStyle(GlassButtonStyle())
                     .disabled(images.isEmpty)
-                    
+
                     Button("Remove") {
                         if images.count > 1 {
                             images.remove(at: currentIndex)
@@ -384,9 +384,9 @@ struct ImagePreviewView: View {
                     }
                     .buttonStyle(GlassButtonStyle())
                     .disabled(images.count <= 1)
-                    
+
                     Spacer()
-                    
+
                     Button("Send \(images.count) Photo\(images.count == 1 ? "" : "s")") {
                         onSend(images)
                     }
@@ -427,12 +427,12 @@ struct SimpleImageEditor: View {
     let image: UIImage
     let onSave: (UIImage) -> Void
     let onCancel: () -> Void
-    
+
     @State private var rotation: Double = 0
     @State private var scale: CGFloat = 1.0
     @State private var brightness: Double = 0
     @State private var contrast: Double = 1.0
-    
+
     var body: some View {
         NavigationView {
             VStack(spacing: 20) {
@@ -446,7 +446,7 @@ struct SimpleImageEditor: View {
                     .contrast(contrast)
                     .frame(maxHeight: 300)
                     .glassCard()
-                
+
                 // Editing controls
                 VStack(spacing: 16) {
                     ControlSlider(
@@ -455,21 +455,21 @@ struct SimpleImageEditor: View {
                         range: -180...180,
                         systemImage: "rotate.right"
                     )
-                    
+
                     ControlSlider(
                         title: "Scale",
                         value: $scale,
                         range: 0.5...2.0,
                         systemImage: "magnifyingglass"
                     )
-                    
+
                     ControlSlider(
                         title: "Brightness",
                         value: $brightness,
                         range: -0.5...0.5,
                         systemImage: "sun.max"
                     )
-                    
+
                     ControlSlider(
                         title: "Contrast",
                         value: $contrast,
@@ -489,7 +489,7 @@ struct SimpleImageEditor: View {
                         onCancel()
                     }
                 }
-                
+
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
                         onSave(processedImage)
@@ -498,7 +498,7 @@ struct SimpleImageEditor: View {
             }
         }
     }
-    
+
     private var processedImage: UIImage {
         // For now, return the original image
         // In a full implementation, you would apply the transformations
@@ -512,24 +512,24 @@ struct ControlSlider: View {
     @Binding var value: Double
     let range: ClosedRange<Double>
     let systemImage: String
-    
+
     var body: some View {
         VStack(spacing: 8) {
             HStack {
                 Image(systemName: systemImage)
                     .font(.system(size: 16, weight: .medium))
                     .foregroundColor(.blue)
-                
+
                 Text(title)
                     .font(DesignSystem.Typography.callout)
-                
+
                 Spacer()
-                
+
                 Text(String(format: "%.1f", value))
                     .font(DesignSystem.Typography.caption)
                     .foregroundColor(.secondary)
             }
-            
+
             Slider(value: $value, in: range)
                 .tint(.blue)
         }
@@ -557,7 +557,7 @@ extension Array {
             image: UIImage(systemName: "photo") ?? UIImage(),
             isCurrentUser: true
         )
-        
+
         ImageMessageView(
             image: UIImage(systemName: "photo") ?? UIImage(),
             isCurrentUser: false
@@ -572,4 +572,4 @@ extension Array {
         onSend: { _ in },
         onCancel: {}
     )
-} 
+}

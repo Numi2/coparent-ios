@@ -8,20 +8,20 @@ struct PhotosStepView: View {
     @State private var selectedImageForEditing: UIImage?
     @State private var selectedImageIndex: Int = 0
     @State private var toast: ToastData?
-    
+
     var body: some View {
         VStack(spacing: DesignSystem.Layout.spacing * 1.5) {
             // Photo Upload Section
             photoUploadSection
-            
+
             // Current Photos Grid
             if !profileBuilder.profileImages.isEmpty {
                 currentPhotosSection
             }
-            
+
             // Photo Guidelines
             photoGuidelinesSection
-            
+
             // Photo Quality Tips
             photoQualitySection
         }
@@ -50,9 +50,9 @@ struct PhotosStepView: View {
         }
         .toast($toast)
     }
-    
+
     // MARK: - Photo Upload Section
-    
+
     private var photoUploadSection: some View {
         VStack(alignment: .leading, spacing: DesignSystem.Layout.spacing) {
             // Section Header
@@ -65,18 +65,18 @@ struct PhotosStepView: View {
                             endPoint: .bottomTrailing
                         )
                     )
-                
+
                 Text("Add Your Photos")
                     .font(DesignSystem.Typography.headline)
                     .fontWeight(.semibold)
-                
+
                 Spacer()
-                
+
                 Text("\(profileBuilder.profileImages.count)/6")
                     .font(DesignSystem.Typography.caption)
                     .foregroundColor(.secondary)
             }
-            
+
             // Photo Picker
             GlassCardView {
                 PhotosPicker(
@@ -94,12 +94,12 @@ struct PhotosStepView: View {
                                     endPoint: .bottomTrailing
                                 )
                             )
-                        
+
                         VStack(spacing: 8) {
                             Text("Add Photos")
                                 .font(DesignSystem.Typography.headline)
                                 .fontWeight(.semibold)
-                            
+
                             Text("Choose up to 6 photos that show your personality")
                                 .font(DesignSystem.Typography.caption)
                                 .foregroundColor(.secondary)
@@ -116,9 +116,9 @@ struct PhotosStepView: View {
         .offset(y: animatePhotos ? 0 : 20)
         .animation(DesignSystem.Animation.spring, value: animatePhotos)
     }
-    
+
     // MARK: - Current Photos Section
-    
+
     private var currentPhotosSection: some View {
         VStack(alignment: .leading, spacing: DesignSystem.Layout.spacing) {
             // Section Header
@@ -131,20 +131,20 @@ struct PhotosStepView: View {
                             endPoint: .bottomTrailing
                         )
                     )
-                
+
                 Text("Your Photos")
                     .font(DesignSystem.Typography.headline)
                     .fontWeight(.semibold)
-                
+
                 Spacer()
-                
+
                 if !profileBuilder.profileImages.isEmpty {
                     Text("Drag to reorder")
                         .font(DesignSystem.Typography.caption)
                         .foregroundColor(.secondary)
                 }
             }
-            
+
             // Photos Grid
             GlassCardView {
                 LazyVGrid(columns: photoGridColumns, spacing: DesignSystem.Layout.spacing) {
@@ -174,7 +174,7 @@ struct PhotosStepView: View {
                     }
                 }
             }
-            
+
             // Main Photo Info
             if !profileBuilder.profileImages.isEmpty {
                 HStack {
@@ -195,21 +195,21 @@ struct PhotosStepView: View {
         .offset(y: animatePhotos ? 0 : 20)
         .animation(DesignSystem.Animation.spring.delay(0.2), value: animatePhotos)
     }
-    
+
     // MARK: - Photo Guidelines Section
-    
+
     private var photoGuidelinesSection: some View {
         VStack(alignment: .leading, spacing: DesignSystem.Layout.spacing) {
             // Section Header
             HStack {
                 Image(systemName: "checkmark.shield.fill")
                     .foregroundColor(.green)
-                
+
                 Text("Photo Guidelines")
                     .font(DesignSystem.Typography.headline)
                     .fontWeight(.semibold)
             }
-            
+
             GlassCardView {
                 VStack(alignment: .leading, spacing: DesignSystem.Layout.spacing) {
                     ForEach(photoGuidelines, id: \.title) { guideline in
@@ -227,21 +227,21 @@ struct PhotosStepView: View {
         .offset(y: animatePhotos ? 0 : 20)
         .animation(DesignSystem.Animation.spring.delay(0.4), value: animatePhotos)
     }
-    
+
     // MARK: - Photo Quality Section
-    
+
     private var photoQualitySection: some View {
         VStack(alignment: .leading, spacing: DesignSystem.Layout.spacing) {
             // Section Header
             HStack {
                 Image(systemName: "sparkles")
                     .foregroundColor(.purple)
-                
+
                 Text("Photo Quality Tips")
                     .font(DesignSystem.Typography.headline)
                     .fontWeight(.semibold)
             }
-            
+
             GlassCardView {
                 VStack(alignment: .leading, spacing: DesignSystem.Layout.spacing) {
                     ForEach(qualityTips, id: \.self) { tip in
@@ -249,11 +249,11 @@ struct PhotosStepView: View {
                             Image(systemName: "star.fill")
                                 .foregroundColor(.purple)
                                 .font(.caption)
-                            
+
                             Text(tip)
                                 .font(DesignSystem.Typography.caption)
                                 .foregroundColor(.secondary)
-                            
+
                             Spacer()
                         }
                     }
@@ -264,11 +264,11 @@ struct PhotosStepView: View {
         .offset(y: animatePhotos ? 0 : 20)
         .animation(DesignSystem.Animation.spring.delay(0.6), value: animatePhotos)
     }
-    
+
     // MARK: - Supporting Properties
-    
+
     private let photoGridColumns = Array(repeating: GridItem(.flexible(), spacing: DesignSystem.Layout.spacing), count: 2)
-    
+
     private let photoGuidelines = [
         Guideline(
             icon: "person.crop.circle.fill",
@@ -301,7 +301,7 @@ struct PhotosStepView: View {
             isRecommended: false
         )
     ]
-    
+
     private let qualityTips = [
         "Use natural lighting when possible",
         "Smile genuinely - it's contagious!",
@@ -321,9 +321,9 @@ struct PhotoCardView: View {
     let onSetAsMain: () -> Void
     let onEdit: () -> Void
     let onDelete: () -> Void
-    
+
     @State private var showingActionSheet = false
-    
+
     var body: some View {
         ZStack {
             // Photo
@@ -333,7 +333,7 @@ struct PhotoCardView: View {
                 .frame(height: 120)
                 .clipped()
                 .cornerRadius(DesignSystem.Layout.cornerRadius)
-            
+
             // Main Photo Badge
             if isMainPhoto {
                 VStack {
@@ -347,7 +347,7 @@ struct PhotoCardView: View {
                     Spacer()
                 }
             }
-            
+
             // Photo Number
             VStack {
                 HStack {
@@ -362,7 +362,7 @@ struct PhotoCardView: View {
                 Spacer()
             }
             .padding(8)
-            
+
             // Action Overlay
             Rectangle()
                 .fill(Color.black.opacity(0.001))
@@ -376,15 +376,15 @@ struct PhotoCardView: View {
                     onSetAsMain()
                 }
             }
-            
+
             Button("Edit Photo") {
                 onEdit()
             }
-            
+
             Button("Delete Photo", role: .destructive) {
                 onDelete()
             }
-            
+
             Button("Cancel", role: .cancel) { }
         }
     }
@@ -397,27 +397,27 @@ struct GuidelineRowView: View {
     let title: String
     let description: String
     let isRecommended: Bool
-    
+
     var body: some View {
         HStack(spacing: DesignSystem.Layout.spacing) {
             // Icon
             Image(systemName: icon)
                 .foregroundColor(isRecommended ? .green : .red)
                 .frame(width: 24, height: 24)
-            
+
             // Content
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
                     .font(DesignSystem.Typography.callout)
                     .fontWeight(.medium)
-                
+
                 Text(description)
                     .font(DesignSystem.Typography.caption)
                     .foregroundColor(.secondary)
             }
-            
+
             Spacer()
-            
+
             // Status
             Image(systemName: isRecommended ? "checkmark.circle.fill" : "xmark.circle.fill")
                 .foregroundColor(isRecommended ? .green : .red)

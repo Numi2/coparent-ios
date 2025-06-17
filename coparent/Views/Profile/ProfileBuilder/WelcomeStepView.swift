@@ -3,7 +3,7 @@ import SwiftUI
 struct WelcomeStepView: View {
     @State private var animateContent = false
     @State private var animateFeatures = false
-    
+
     var body: some View {
         VStack(spacing: DesignSystem.Layout.spacing * 2) {
             // Welcome Animation
@@ -24,7 +24,7 @@ struct WelcomeStepView: View {
                             DesignSystem.Animation.spring.delay(0.2),
                             value: animateContent
                         )
-                    
+
                     Image(systemName: "heart.fill")
                         .font(.system(size: 50, weight: .medium))
                         .foregroundStyle(
@@ -40,7 +40,7 @@ struct WelcomeStepView: View {
                             value: animateContent
                         )
                 }
-                
+
                 Text("Welcome to Co-Parent!")
                     .font(DesignSystem.Typography.largeTitle)
                     .fontWeight(.bold)
@@ -51,7 +51,7 @@ struct WelcomeStepView: View {
                         DesignSystem.Animation.spring.delay(0.6),
                         value: animateContent
                     )
-                
+
                 Text("Let's create a profile that shows the real you and helps you find meaningful connections.")
                     .font(DesignSystem.Typography.body)
                     .foregroundColor(.secondary)
@@ -63,7 +63,7 @@ struct WelcomeStepView: View {
                         value: animateContent
                     )
             }
-            
+
             // Features List
             VStack(spacing: DesignSystem.Layout.spacing) {
                 ForEach(features.indices, id: \.self) { index in
@@ -80,7 +80,7 @@ struct WelcomeStepView: View {
                     )
                 }
             }
-            
+
             // Quick Tips
             GlassCardView {
                 VStack(alignment: .leading, spacing: DesignSystem.Layout.spacing) {
@@ -91,7 +91,7 @@ struct WelcomeStepView: View {
                             .font(DesignSystem.Typography.headline)
                             .fontWeight(.semibold)
                     }
-                    
+
                     VStack(alignment: .leading, spacing: 8) {
                         TipView(text: "Be authentic - genuine profiles get more matches")
                         TipView(text: "Add multiple photos showing different sides of you")
@@ -111,7 +111,7 @@ struct WelcomeStepView: View {
             animateFeatures = true
         }
     }
-    
+
     private let features = [
         Feature(
             icon: "person.crop.circle.badge.plus",
@@ -142,7 +142,7 @@ struct FeatureRowView: View {
     let icon: String
     let title: String
     let description: String
-    
+
     var body: some View {
         HStack(spacing: DesignSystem.Layout.spacing) {
             // Icon
@@ -159,18 +159,18 @@ struct FeatureRowView: View {
                 .background(Color.blue.opacity(0.1))
                 .background(.ultraThinMaterial)
                 .clipShape(Circle())
-            
+
             // Content
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
                     .font(DesignSystem.Typography.callout)
                     .fontWeight(.semibold)
-                
+
                 Text(description)
                     .font(DesignSystem.Typography.caption)
                     .foregroundColor(.secondary)
             }
-            
+
             Spacer()
         }
     }
@@ -178,17 +178,17 @@ struct FeatureRowView: View {
 
 struct TipView: View {
     let text: String
-    
+
     var body: some View {
         HStack(alignment: .top, spacing: 8) {
             Image(systemName: "checkmark.circle.fill")
                 .foregroundColor(.green)
                 .font(.caption)
-            
+
             Text(text)
                 .font(DesignSystem.Typography.caption)
                 .foregroundColor(.secondary)
-            
+
             Spacer()
         }
     }

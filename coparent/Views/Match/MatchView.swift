@@ -8,11 +8,11 @@ struct MatchView: View {
     @State private var matchedUser: User?
     @State private var showingFilters = false
     @State private var isSuperLikeMatch = false
-    
+
     init(user: User) {
         _matchService = State(initialValue: MatchService(currentUser: user))
     }
-    
+
     var body: some View {
         ZStack {
             // Background gradient
@@ -22,11 +22,11 @@ struct MatchView: View {
                 endPoint: .bottomTrailing
             )
             .ignoresSafeArea()
-            
+
             VStack(spacing: 0) {
                 // Header
                 headerView
-                
+
                 // Cards area
                 GeometryReader { geometry in
                     if matchService.isLoading {
@@ -41,7 +41,7 @@ struct MatchView: View {
                         cardStackView(in: geometry)
                     }
                 }
-                
+
                 // Action buttons
                 if !matchService.filteredMatches.isEmpty && !matchService.isLoading {
                     actionButtonsView
@@ -85,7 +85,7 @@ struct MatchView: View {
                 }
         }
     }
-    
+
     @ViewBuilder
     private var headerView: some View {
         HStack {
@@ -93,21 +93,21 @@ struct MatchView: View {
                 Text("Discover")
                     .font(DesignSystem.Typography.largeTitle)
                     .fontWeight(.bold)
-                
+
                 HStack(spacing: 12) {
                     if !matchService.filteredMatches.isEmpty {
                         Text("\(matchService.filteredMatches.count) matches")
                             .font(DesignSystem.Typography.subheadline)
                             .foregroundColor(.secondary)
                     }
-                    
+
                     // Smart filters indicator
                     if smartFiltersService.currentFilters != FilterSet() {
                         HStack(spacing: 4) {
                             Image(systemName: "brain.head.profile")
                                 .font(.caption)
                                 .foregroundColor(.purple)
-                            
+
                             Text("Smart Filtered")
                                 .font(DesignSystem.Typography.caption)
                                 .foregroundColor(.purple)
@@ -117,14 +117,14 @@ struct MatchView: View {
                         .background(.purple.opacity(0.1))
                         .clipShape(Capsule())
                     }
-                    
+
                     // Super Like status indicator
                     if matchService.isPremiumUser {
                         HStack(spacing: 4) {
                             Image(systemName: "star.fill")
                                 .font(.caption)
                                 .foregroundColor(.blue)
-                            
+
                             if matchService.canUseSuperLike {
                                 Text("\(matchService.superLikesRemaining) Super Likes")
                                     .font(DesignSystem.Typography.caption)
@@ -142,15 +142,15 @@ struct MatchView: View {
                     }
                 }
             }
-            
+
             Spacer()
-            
+
             Button(action: { showingFilters = true }) {
                 ZStack {
                     Image(systemName: "slider.horizontal.3")
                         .font(.title2)
                         .foregroundColor(.primary)
-                    
+
                     // Active filter indicator
                     if smartFiltersService.currentFilters != FilterSet() {
                         Circle()
@@ -167,32 +167,32 @@ struct MatchView: View {
         .padding(.horizontal, 20)
         .padding(.top, 10)
     }
-    
+
     @ViewBuilder
     private var emptyStateView: some View {
         VStack(spacing: 24) {
             Image(systemName: "person.2.slash")
                 .font(.system(size: 80))
                 .foregroundColor(.secondary.opacity(0.6))
-            
+
             VStack(spacing: 8) {
                 Text("No More Matches")
                     .font(DesignSystem.Typography.title2)
                     .fontWeight(.bold)
-                
+
                 if smartFiltersService.currentFilters != FilterSet() {
                     Text("Try adjusting your filters or check back later for new matches")
                         .font(DesignSystem.Typography.body)
                         .foregroundColor(.secondary)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 40)
-                    
+
                     VStack(spacing: 12) {
                         Button("Adjust Filters") {
                             showingFilters = true
                         }
                         .buttonStyle(GlassPrimaryButtonStyle())
-                        
+
                         Button("Reset Filters") {
                             Task { @MainActor in
                                 smartFiltersService.resetFilters()
@@ -207,7 +207,7 @@ struct MatchView: View {
                         .foregroundColor(.secondary)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 40)
-                    
+
                     Button("Expand Search") {
                         showingFilters = true
                     }
@@ -216,18 +216,18 @@ struct MatchView: View {
             }
         }
     }
-    
+
     @ViewBuilder
     private func cardStackView(in geometry: GeometryProxy) -> some View {
         let cardWidth = min(geometry.size.width - 40, 350)
         let cardHeight = min(geometry.size.height - 100, 600)
-        
+
         ZStack {
             ForEach(Array(matchService.filteredMatches.prefix(3).enumerated()), id: \.element.id) { index, user in
                 let isTopCard = index == 0
                 let scale = isTopCard ? 1.0 : 1.0 - (Double(index) * 0.05)
                 let offset = CGFloat(index) * 8
-                
+
                 MatchCardView(
                     user: user,
                     onLike: {
@@ -264,7 +264,7 @@ struct MatchView: View {
         .frame(width: cardWidth, height: cardHeight)
         .position(x: geometry.size.width / 2, y: geometry.size.height / 2)
     }
-    
+
     @ViewBuilder
     private var actionButtonsView: some View {
         HStack(spacing: 40) {
@@ -285,7 +285,7 @@ struct MatchView: View {
             }
             .scaleEffect(1.0)
             .animation(.spring(), value: matchService.filteredMatches.count)
-            
+
             // Super Like button
             SuperLikeButton(
                 onSuperLike: {
@@ -298,7 +298,7 @@ struct MatchView: View {
                 cooldownTimeRemaining: matchService.superLikeCooldownTimeRemaining
             )
             .scaleEffect(0.8) // Slightly smaller for action button area
-            
+
             // Like button
             Button(action: {
                 withAnimation(.spring()) {
@@ -318,34 +318,34 @@ struct MatchView: View {
         }
         .padding(.horizontal, 20)
     }
-    
+
     private func handleLike() {
         guard !matchService.filteredMatches.isEmpty else { return }
-        
+
         Task {
             await matchService.like()
         }
     }
-    
+
     private func handleSuperLike() {
         guard !matchService.filteredMatches.isEmpty else { return }
         guard matchService.canUseSuperLike else { return }
-        
+
         Task {
             await matchService.superLike()
         }
     }
-    
+
     private func handlePass() {
         guard !matchService.filteredMatches.isEmpty else { return }
-        
+
         matchService.pass()
     }
-    
+
     private func formatCooldownTime(_ timeInterval: TimeInterval) -> String {
-        let hours = Int(timeInterval) / 3600
-        let minutes = (Int(timeInterval) % 3600) / 60
-        
+        let hours = Int(timeInterval) / 3_600
+        let minutes = (Int(timeInterval) % 3_600) / 60
+
         if hours > 0 {
             return "\(hours)h \(minutes)m"
         } else if minutes > 0 {
@@ -361,7 +361,7 @@ struct FilterView: View {
     @State private var ageRange: ClosedRange<Double> = 25...45
     @State private var maxDistance: Double = 50
     @State private var selectedParentingStyles: Set<User.ParentingStyle> = []
-    
+
     var body: some View {
         NavigationView {
             Form {
@@ -371,14 +371,14 @@ struct FilterView: View {
                             Text("\(Int(ageRange.lowerBound))")
                                 .font(DesignSystem.Typography.callout)
                                 .foregroundColor(.secondary)
-                            
+
                             Spacer()
-                            
+
                             Text("\(Int(ageRange.upperBound))")
                                 .font(DesignSystem.Typography.callout)
                                 .foregroundColor(.secondary)
                         }
-                        
+
                         RangeSlider(
                             range: $ageRange,
                             bounds: 18...65,
@@ -386,28 +386,28 @@ struct FilterView: View {
                         )
                     }
                 }
-                
+
                 Section("Distance") {
                     VStack(spacing: 8) {
                         HStack {
                             Text("Within \(Int(maxDistance)) km")
                                 .font(DesignSystem.Typography.callout)
-                            
+
                             Spacer()
                         }
-                        
+
                         Slider(value: $maxDistance, in: 5...100, step: 5)
                     }
                 }
-                
+
                 Section("Parenting Styles") {
                     ForEach(User.ParentingStyle.allCases, id: \.self) { style in
                         HStack {
                             Text(style.rawValue.capitalized)
                                 .font(DesignSystem.Typography.body)
-                            
+
                             Spacer()
-                            
+
                             if selectedParentingStyles.contains(style) {
                                 Image(systemName: "checkmark")
                                     .foregroundColor(.blue)
@@ -434,7 +434,7 @@ struct FilterView: View {
                         selectedParentingStyles.removeAll()
                     }
                 }
-                
+
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Apply") {
                         // TODO: Apply filters
@@ -451,7 +451,7 @@ struct RangeSlider: View {
     @Binding var range: ClosedRange<Double>
     let bounds: ClosedRange<Double>
     let step: Double
-    
+
     var body: some View {
         // This is a simplified implementation
         // In a real app, you'd want a proper range slider component
@@ -467,7 +467,7 @@ struct RangeSlider: View {
                     in: bounds,
                     step: step
                 )
-                
+
                 Slider(
                     value: Binding(
                         get: { range.upperBound },
@@ -519,4 +519,4 @@ struct RangeSlider: View {
 
 #Preview("Filter View") {
     FilterView()
-} 
+}

@@ -3,19 +3,19 @@ import SwiftUI
 struct PreferencesView: View {
     @Environment(\.dismiss) private var dismiss
     @ObservedObject var viewModel: ProfileViewModel
-    
+
     @State private var ageRange: ClosedRange<Int>
     @State private var distance: Double
     @State private var selectedParentingStyles: Set<User.ParentingStyle>
     @State private var dealBreakers = ""
-    
+
     init(viewModel: ProfileViewModel) {
         self.viewModel = viewModel
         _ageRange = State(initialValue: viewModel.user.preferences.ageRange)
         _distance = State(initialValue: Double(viewModel.user.preferences.distance))
         _selectedParentingStyles = State(initialValue: Set(viewModel.user.preferences.parentingStyles))
     }
-    
+
     var body: some View {
         NavigationStack {
             Form {
@@ -28,11 +28,11 @@ struct PreferencesView: View {
                         }
                         .font(.caption)
                         .foregroundStyle(.secondary)
-                        
+
                         RangeSlider(value: $ageRange, in: 18...65)
                     }
                 }
-                
+
                 Section("Distance") {
                     VStack {
                         HStack {
@@ -44,11 +44,11 @@ struct PreferencesView: View {
                         }
                         .font(.caption)
                         .foregroundStyle(.secondary)
-                        
+
                         Slider(value: $distance, in: 0...100, step: 5)
                     }
                 }
-                
+
                 Section("Parenting Styles") {
                     ForEach(User.ParentingStyle.allCases, id: \.self) { style in
                         Toggle(style.rawValue.capitalized, isOn: Binding(
@@ -63,7 +63,7 @@ struct PreferencesView: View {
                         ))
                     }
                 }
-                
+
                 Section("Deal Breakers") {
                     TextField("Enter deal breakers (comma-separated)", text: $dealBreakers, axis: .vertical)
                         .lineLimit(3...)
@@ -77,7 +77,7 @@ struct PreferencesView: View {
                         dismiss()
                     }
                 }
-                
+
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
                         savePreferences()
@@ -86,20 +86,20 @@ struct PreferencesView: View {
             }
         }
     }
-    
+
     private func savePreferences() {
         let dealBreakersList = dealBreakers
             .split(separator: ",")
             .map { $0.trimmingCharacters(in: .whitespaces) }
             .filter { !$0.isEmpty }
-        
+
         viewModel.updatePreferences(
             ageRange: ageRange,
             distance: Int(distance),
             parentingStyles: Array(selectedParentingStyles),
             dealBreakers: dealBreakersList
         )
-        
+
         dismiss()
     }
 }
@@ -107,24 +107,24 @@ struct PreferencesView: View {
 struct RangeSlider: View {
     @Binding var value: ClosedRange<Int>
     let bounds: ClosedRange<Int>
-    
+
     init(value: Binding<ClosedRange<Int>>, in bounds: ClosedRange<Int>) {
         self._value = value
         self.bounds = bounds
     }
-    
+
     var body: some View {
         GeometryReader { geometry in
             ZStack(alignment: .leading) {
                 Rectangle()
                     .fill(Color.gray.opacity(0.2))
                     .frame(height: 4)
-                
+
                 Rectangle()
                     .fill(Color.blue)
                     .frame(width: width(for: value, in: geometry), height: 4)
                     .offset(x: xOffset(for: value.lowerBound, in: geometry))
-                
+
                 HStack(spacing: 0) {
                     Circle()
                         .fill(.white)
@@ -138,7 +138,7 @@ struct RangeSlider: View {
                                     value = min(newValue, value.upperBound - 1)...value.upperBound
                                 }
                         )
-                    
+
                     Circle()
                         .fill(.white)
                         .frame(width: 24, height: 24)
@@ -156,19 +156,19 @@ struct RangeSlider: View {
         }
         .frame(height: 24)
     }
-    
+
     private func xOffset(for value: Int, in geometry: GeometryProxy) -> CGFloat {
         let range = bounds.upperBound - bounds.lowerBound
         let percentage = CGFloat(value - bounds.lowerBound) / CGFloat(range)
         return percentage * (geometry.size.width - 24)
     }
-    
+
     private func width(for range: ClosedRange<Int>, in geometry: GeometryProxy) -> CGFloat {
         let range = bounds.upperBound - bounds.lowerBound
         let percentage = CGFloat(range.upperBound - range.lowerBound) / CGFloat(range)
         return percentage * geometry.size.width
     }
-    
+
     private func value(for x: CGFloat, in geometry: GeometryProxy) -> Int {
         let range = bounds.upperBound - bounds.lowerBound
         let percentage = x / (geometry.size.width - 24)
@@ -199,4 +199,4 @@ struct RangeSlider: View {
         interests: [.outdoorActivities, .cooking, .sports],
         verificationStatus: .verified
     )))
-} 
+}

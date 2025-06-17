@@ -6,11 +6,11 @@ struct BasicInfoView: View {
     @State private var email = ""
     @State private var phoneNumber = ""
     @State private var dateOfBirth = Date()
-    
+
     private var isFormValid: Bool {
         !name.isEmpty && !email.isEmpty && !phoneNumber.isEmpty
     }
-    
+
     var body: some View {
         ScrollView {
             VStack(spacing: 24) {
@@ -18,24 +18,24 @@ struct BasicInfoView: View {
                     .font(.title)
                     .bold()
                     .padding(.top, 32)
-                
+
                 VStack(spacing: 20) {
                     TextField("Full Name", text: $name)
                         .textFieldStyle(.roundedBorder)
                         .textContentType(.name)
                         .autocapitalization(.words)
-                    
+
                     TextField("Email", text: $email)
                         .textFieldStyle(.roundedBorder)
                         .textContentType(.emailAddress)
                         .keyboardType(.emailAddress)
                         .autocapitalization(.none)
-                    
+
                     TextField("Phone Number", text: $phoneNumber)
                         .textFieldStyle(.roundedBorder)
                         .textContentType(.telephoneNumber)
                         .keyboardType(.phonePad)
-                    
+
                     DatePicker(
                         "Date of Birth",
                         selection: $dateOfBirth,
@@ -44,15 +44,15 @@ struct BasicInfoView: View {
                     )
                 }
                 .padding(.horizontal, 24)
-                
+
                 Spacer()
-                
+
                 Button(action: {
                     // Update user with basic info
                     appState.currentUser?.name = name
                     appState.currentUser?.email = email
                     appState.currentUser?.phoneNumber = phoneNumber
-                    
+
                     withAnimation {
                         appState.onboardingStep = .terms
                     }
@@ -76,4 +76,4 @@ struct BasicInfoView: View {
 #Preview {
     BasicInfoView()
         .environment(AppState())
-} 
+}

@@ -2,7 +2,7 @@ import SwiftUI
 
 struct DealBreakersSection: View {
     @Binding var filters: FilterSet
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack {
@@ -12,7 +12,7 @@ struct DealBreakersSection: View {
                     .font(DesignSystem.Typography.headline)
                     .fontWeight(.semibold)
             }
-            
+
             VStack(spacing: 12) {
                 ForEach(DealBreaker.allCases, id: \.self) { dealBreaker in
                     DealBreakerToggle(
@@ -26,7 +26,7 @@ struct DealBreakersSection: View {
         }
         .glassCard()
     }
-    
+
     private func toggleDealBreaker(_ dealBreaker: DealBreaker) {
         if filters.dealBreakers.contains(dealBreaker) {
             filters.dealBreakers.remove(dealBreaker)
@@ -40,27 +40,27 @@ struct DealBreakerToggle: View {
     let dealBreaker: DealBreaker
     let isEnabled: Bool
     let onToggle: () -> Void
-    
+
     var body: some View {
         Button(action: onToggle) {
             HStack {
                 Image(systemName: dealBreakerIcon)
                     .foregroundColor(isEnabled ? .red : .secondary)
-                
+
                 VStack(alignment: .leading, spacing: 4) {
                     Text(dealBreaker.title)
                         .font(DesignSystem.Typography.subheadline)
                         .fontWeight(.medium)
                         .foregroundColor(.primary)
-                    
+
                     Text(dealBreaker.description)
                         .font(DesignSystem.Typography.caption)
                         .foregroundColor(.secondary)
                         .lineLimit(2)
                 }
-                
+
                 Spacer()
-                
+
                 Image(systemName: isEnabled ? "checkmark.circle.fill" : "circle")
                     .foregroundColor(isEnabled ? .red : .secondary)
             }
@@ -69,7 +69,7 @@ struct DealBreakerToggle: View {
             .cornerRadius(12)
         }
     }
-    
+
     private var dealBreakerIcon: String {
         switch dealBreaker {
         case .smoking: return "smoke.fill"
@@ -93,7 +93,7 @@ enum DealBreaker: String, CaseIterable {
     case education
     case income
     case children
-    
+
     var title: String {
         switch self {
         case .smoking: return "No Smoking"
@@ -106,7 +106,7 @@ enum DealBreaker: String, CaseIterable {
         case .children: return "Children Preferences"
         }
     }
-    
+
     var description: String {
         switch self {
         case .smoking: return "Exclude matches who smoke"
@@ -124,4 +124,4 @@ enum DealBreaker: String, CaseIterable {
 #Preview {
     DealBreakersSection(filters: .constant(FilterSet()))
         .padding()
-} 
+}

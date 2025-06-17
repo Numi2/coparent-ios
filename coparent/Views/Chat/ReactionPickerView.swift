@@ -6,10 +6,10 @@ struct ReactionPickerView: View {
     @State private var chatService = SendbirdChatService.shared
     @Binding var isPresented: Bool
     @State private var toast: ToastData?
-    
+
     // Common emoji reactions
     private let commonReactions = ["👍", "❤️", "😂", "😮", "😢", "😡", "🎉", "👏"]
-    
+
     var body: some View {
         VStack(spacing: DesignSystem.Layout.spacing) {
             // Handle for drag gesture
@@ -17,16 +17,16 @@ struct ReactionPickerView: View {
                 .fill(Color.gray.opacity(0.3))
                 .frame(width: 40, height: 5)
                 .padding(.top, 8)
-            
+
             // Title
             Text("Add Reaction")
                 .font(DesignSystem.Typography.headline)
                 .foregroundColor(.primary)
                 .padding(.top, 8)
-            
+
             // Reaction grid
             LazyVGrid(
-                columns: Array(repeating: GridItem(.flexible()), count: 4), 
+                columns: Array(repeating: GridItem(.flexible()), count: 4),
                 spacing: DesignSystem.Layout.spacing
             ) {
                 ForEach(commonReactions, id: \.self) { emoji in
@@ -39,7 +39,7 @@ struct ReactionPickerView: View {
                 }
             }
             .padding(.horizontal, DesignSystem.Layout.padding)
-            
+
             // Close button
             Button("Close") {
                 withAnimation(DesignSystem.Animation.spring) {
@@ -64,11 +64,11 @@ struct ReactionButton: View {
     @Binding var toast: ToastData?
     @State private var chatService = SendbirdChatService.shared
     @State private var isAnimating = false
-    
+
     private var hasUserReacted: Bool {
         chatService.hasUserReacted(to: message, with: emoji)
     }
-    
+
     var body: some View {
         Button(action: {
             addReaction()
@@ -92,19 +92,19 @@ struct ReactionButton: View {
         .accessibilityLabel("React with \(emoji)")
         .accessibilityHint(hasUserReacted ? "Double tap to remove reaction" : "Double tap to add reaction")
     }
-    
+
     private func addReaction() {
         // Animate button press
         withAnimation(DesignSystem.Animation.easeOut) {
             isAnimating = true
         }
-        
+
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
             withAnimation(DesignSystem.Animation.easeIn) {
                 isAnimating = false
             }
         }
-        
+
         Task {
             do {
                 if hasUserReacted {
@@ -114,7 +114,7 @@ struct ReactionButton: View {
                     try await chatService.addReaction(to: message, key: emoji)
                     toast = ToastData.success("Reaction added")
                 }
-                
+
                 // Close picker after successful reaction
                 withAnimation(DesignSystem.Animation.spring) {
                     isPresented = false
@@ -130,12 +130,12 @@ struct ReactionButton: View {
     // Create a mock message for preview
     struct MockPreview: View {
         @State private var isPresented = true
-        
+
         var body: some View {
             ZStack {
                 Color.black.opacity(0.3)
                     .ignoresSafeArea()
-                
+
                 if isPresented {
                     VStack {
                         Spacer()
@@ -148,7 +148,7 @@ struct ReactionButton: View {
                 }
             }
         }
-        
+
         private func createMockMessage() -> BaseMessage {
             // This is a simplified mock for preview purposes
             // In real app, this would be a proper Sendbird message
@@ -156,6 +156,6 @@ struct ReactionButton: View {
             return mockMessage
         }
     }
-    
+
     return MockPreview()
 }

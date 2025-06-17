@@ -5,7 +5,7 @@ struct ChatContentView: View {
     @ObservedObject var chatService: SendbirdChatService
     @Binding var scrollPositionId: Int64?
     let onError: (String) -> Void
-    
+
     var body: some View {
         ScrollViewReader { proxy in
             ScrollView {
@@ -22,7 +22,7 @@ struct ChatContentView: View {
                         .padding()
                         .frame(maxWidth: .infinity)
                     }
-                    
+
                     ForEach(chatService.messages, id: \.messageId) { message in
                         MessageBubbleView(message: message)
                             .id(message.messageId)
@@ -41,7 +41,7 @@ struct ChatContentView: View {
                                 }
                             }
                     }
-                    
+
                     // Typing indicator
                     if chatService.isAnyoneTyping {
                         TypingIndicatorView()
@@ -71,10 +71,10 @@ struct ChatContentView: View {
             }
         }
     }
-    
+
     private func scrollToLatestMessage(proxy: ScrollViewProxy, animated: Bool) {
         guard let lastMessage = chatService.messages.last else { return }
-        
+
         if animated {
             withAnimation(.easeInOut(duration: 0.3)) {
                 proxy.scrollTo(lastMessage.messageId, anchor: .bottom)
@@ -91,4 +91,4 @@ struct ChatContentView: View {
         scrollPositionId: .constant(nil),
         onError: { _ in }
     )
-} 
+}

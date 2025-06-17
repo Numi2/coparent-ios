@@ -6,7 +6,7 @@ struct ChatSearchBar: View {
     @FocusState private var isSearchFocused: Bool
     let onSearchSubmit: () -> Void
     let onSearchCancel: () -> Void
-    
+
     var body: some View {
         HStack(spacing: 12) {
             // Search field
@@ -14,7 +14,7 @@ struct ChatSearchBar: View {
                 Image(systemName: "magnifyingglass")
                     .font(.system(size: DesignSystem.Layout.iconSize, weight: .medium))
                     .foregroundColor(.secondary)
-                
+
                 TextField("Search messages...", text: $searchText)
                     .font(DesignSystem.Typography.body)
                     .focused($isSearchFocused)
@@ -28,7 +28,7 @@ struct ChatSearchBar: View {
                             onSearchCancel()
                         }
                     }
-                
+
                 if !searchText.isEmpty {
                     Button {
                         searchText = ""
@@ -48,7 +48,7 @@ struct ChatSearchBar: View {
                     .fill(Color(.systemGray6).opacity(0.8))
                     .background(.ultraThinMaterial)
             )
-            
+
             // Cancel button (only show when search is active)
             if isSearchFocused || !searchText.isEmpty {
                 Button("Cancel") {
@@ -74,7 +74,7 @@ struct ChatSearchResultsView: View {
     let searchQuery: String
     let isSearching: Bool
     let onMessageTap: (BaseMessage) -> Void
-    
+
     var body: some View {
         VStack(spacing: 0) {
             // Search results header
@@ -87,29 +87,29 @@ struct ChatSearchResultsView: View {
                         .font(.system(size: 16, weight: .medium))
                         .foregroundColor(.secondary)
                 }
-                
+
                 Text(isSearching ? "Searching..." : "\(searchResults.count) results for '\(searchQuery)'")
                     .font(DesignSystem.Typography.caption)
                     .foregroundColor(.secondary)
-                
+
                 Spacer()
             }
             .padding(DesignSystem.Layout.padding)
             .background(.ultraThinMaterial)
-            
+
             Divider()
-            
+
             // Search results list
             if searchResults.isEmpty && !isSearching {
                 VStack(spacing: 16) {
                     Image(systemName: "magnifyingglass")
                         .font(.system(size: 48, weight: .thin))
                         .foregroundColor(.secondary)
-                    
+
                     Text("No messages found")
                         .font(DesignSystem.Typography.title3)
                         .foregroundColor(.secondary)
-                    
+
                     Text("Try searching with different keywords")
                         .font(DesignSystem.Typography.body)
                         .foregroundColor(.secondary)
@@ -139,11 +139,11 @@ struct SearchResultRow: View {
     let message: BaseMessage
     let searchQuery: String
     let onTap: () -> Void
-    
+
     private var isCurrentUser: Bool {
         message.sender?.userId == SendbirdChat.currentUser?.userId
     }
-    
+
     var body: some View {
         Button(action: onTap) {
             VStack(alignment: .leading, spacing: 8) {
@@ -153,14 +153,14 @@ struct SearchResultRow: View {
                         .font(DesignSystem.Typography.caption)
                         .fontWeight(.medium)
                         .foregroundColor(isCurrentUser ? .blue : .secondary)
-                    
+
                     Spacer()
-                    
+
                     Text(message.createdAt, style: .relative)
                         .font(DesignSystem.Typography.caption)
                         .foregroundColor(.secondary)
                 }
-                
+
                 // Message content with highlighted search terms
                 if let userMessage = message as? UserMessage {
                     Text(highlightedText(userMessage.message, searchQuery: searchQuery))
@@ -172,7 +172,7 @@ struct SearchResultRow: View {
                     HStack {
                         Image(systemName: getFileIcon(for: fileMessage))
                             .foregroundColor(.blue)
-                        
+
                         Text(fileMessage.name)
                             .font(DesignSystem.Typography.callout)
                             .foregroundColor(.primary)
@@ -190,10 +190,10 @@ struct SearchResultRow: View {
         }
         .buttonStyle(PlainButtonStyle())
     }
-    
+
     private func highlightedText(_ text: String, searchQuery: String) -> AttributedString {
         var attributedString = AttributedString(text)
-        
+
         if !searchQuery.isEmpty {
             let range = text.range(of: searchQuery, options: .caseInsensitive)
             if let range = range {
@@ -204,10 +204,10 @@ struct SearchResultRow: View {
                 }
             }
         }
-        
+
         return attributedString
     }
-    
+
     private func getFileIcon(for fileMessage: FileMessage) -> String {
         if fileMessage.mimeType.starts(with: "image/") {
             return "photo"
@@ -226,7 +226,7 @@ struct SearchResultRow: View {
             onSearchSubmit: {},
             onSearchCancel: {}
         )
-        
+
         Spacer()
     }
     .background(Color(.systemGroupedBackground))

@@ -7,7 +7,7 @@ struct FloatingParticle: View {
     let animate: Bool
     @State private var offset: CGSize = .zero
     @State private var opacity: Double = 0
-    
+
     var body: some View {
         Circle()
             .fill(
@@ -31,11 +31,11 @@ struct FloatingParticle: View {
                 }
             }
     }
-    
+
     private func startAnimation() {
         let randomAngle = Double.random(in: 0...(2 * .pi))
-        let distance: CGFloat = CGFloat.random(in: 50...100)
-        
+        let distance = CGFloat.random(in: 50...100)
+
         withAnimation(
             Animation.easeOut(duration: 2.0).delay(delay)
         ) {
@@ -45,7 +45,7 @@ struct FloatingParticle: View {
             )
             opacity = 1.0
         }
-        
+
         withAnimation(
             Animation.easeIn(duration: 1.0).delay(delay + 1.0)
         ) {
@@ -60,13 +60,13 @@ struct CompletionBadge: View {
     let title: String
     let isComplete: Bool
     let icon: String
-    
+
     var body: some View {
         VStack(spacing: 4) {
             Image(systemName: icon)
                 .foregroundColor(isComplete ? .green : .gray)
                 .font(.title3)
-            
+
             Text(title)
                 .font(DesignSystem.Typography.caption)
                 .foregroundColor(isComplete ? .green : .gray)
@@ -88,7 +88,7 @@ struct StatCard: View {
     let subtitle: String
     let icon: String
     let color: Color
-    
+
     var body: some View {
         GlassCardView {
             VStack(spacing: 8) {
@@ -97,17 +97,17 @@ struct StatCard: View {
                         .foregroundColor(color)
                     Spacer()
                 }
-                
+
                 VStack(alignment: .leading, spacing: 4) {
                     Text(value)
                         .font(DesignSystem.Typography.title2)
                         .fontWeight(.bold)
                         .foregroundColor(color)
-                    
+
                     Text(title)
                         .font(DesignSystem.Typography.callout)
                         .fontWeight(.medium)
-                    
+
                     Text(subtitle)
                         .font(DesignSystem.Typography.caption)
                         .foregroundColor(.secondary)
@@ -122,25 +122,25 @@ struct StatCard: View {
 
 struct NextStepRow: View {
     let step: NextStep
-    
+
     var body: some View {
         HStack(spacing: DesignSystem.Layout.spacing) {
             Image(systemName: step.icon)
                 .foregroundColor(.purple)
                 .frame(width: 24, height: 24)
-            
+
             VStack(alignment: .leading, spacing: 4) {
                 Text(step.title)
                     .font(DesignSystem.Typography.callout)
                     .fontWeight(.medium)
-                
+
                 Text(step.description)
                     .font(DesignSystem.Typography.caption)
                     .foregroundColor(.secondary)
             }
-            
+
             Spacer()
-            
+
             Text(step.action)
                 .font(DesignSystem.Typography.caption)
                 .fontWeight(.medium)
@@ -158,7 +158,7 @@ struct NextStepRow: View {
 struct ProfilePreviewView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(ProfileBuilderViewModel.self) private var profileBuilder
-    
+
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -172,18 +172,18 @@ struct ProfilePreviewView: View {
                                 .frame(width: 200, height: 200)
                                 .clipShape(Circle())
                         }
-                        
+
                         VStack(spacing: 8) {
                             Text(profileBuilder.name)
                                 .font(DesignSystem.Typography.title)
                                 .fontWeight(.bold)
-                            
+
                             Text("\(profileBuilder.city), \(profileBuilder.state)")
                                 .font(DesignSystem.Typography.callout)
                                 .foregroundColor(.secondary)
                         }
                     }
-                    
+
                     // Bio
                     if !profileBuilder.bio.isEmpty {
                         GlassCardView {
@@ -191,13 +191,13 @@ struct ProfilePreviewView: View {
                                 Text("About")
                                     .font(DesignSystem.Typography.headline)
                                     .fontWeight(.semibold)
-                                
+
                                 Text(profileBuilder.bio)
                                     .font(DesignSystem.Typography.body)
                             }
                         }
                     }
-                    
+
                     // Interests
                     if !profileBuilder.selectedInterests.isEmpty {
                         GlassCardView {
@@ -205,7 +205,7 @@ struct ProfilePreviewView: View {
                                 Text("Interests")
                                     .font(DesignSystem.Typography.headline)
                                     .fontWeight(.semibold)
-                                
+
                                 LazyVGrid(columns: [
                                     GridItem(.adaptive(minimum: 100, maximum: 150))
                                 ], spacing: 8) {
@@ -222,7 +222,7 @@ struct ProfilePreviewView: View {
                             }
                         }
                     }
-                    
+
                     // Children
                     if profileBuilder.hasChildren && !profileBuilder.children.isEmpty {
                         GlassCardView {
@@ -230,7 +230,7 @@ struct ProfilePreviewView: View {
                                 Text("Children")
                                     .font(DesignSystem.Typography.headline)
                                     .fontWeight(.semibold)
-                                
+
                                 ForEach(profileBuilder.children) { child in
                                     HStack(spacing: 12) {
                                         Circle()
@@ -241,17 +241,17 @@ struct ProfilePreviewView: View {
                                                     .font(DesignSystem.Typography.headline)
                                                     .foregroundColor(.blue)
                                             )
-                                        
+
                                         VStack(alignment: .leading, spacing: 2) {
                                             Text(child.name)
                                                 .font(DesignSystem.Typography.callout)
                                                 .fontWeight(.medium)
-                                            
+
                                             Text("\(child.age) years old")
                                                 .font(DesignSystem.Typography.caption)
                                                 .foregroundColor(.secondary)
                                         }
-                                        
+
                                         Spacer()
                                     }
                                 }

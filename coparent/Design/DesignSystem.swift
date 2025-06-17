@@ -7,32 +7,32 @@ enum DesignSystem {
         static let secondary = Color.gray
         static let background = Color(.systemBackground)
         static let glassBackground = Color.black.opacity(0.1)
-        
+
         static let success = Color.green
         static let error = Color.red
         static let warning = Color.orange
     }
-    
+
     // MARK: - Glass Effects
     enum Glass {
         static let background = AnyView(
             Color.black.opacity(0.1)
                 .background(.ultraThinMaterial)
         )
-        
+
         static let card = AnyView(
             RoundedRectangle(cornerRadius: 20)
                 .fill(Color.white.opacity(0.1))
                 .background(.ultraThinMaterial)
         )
-        
+
         static let button = AnyView(
             RoundedRectangle(cornerRadius: 16)
                 .fill(Color.white.opacity(0.1))
                 .background(.ultraThinMaterial)
         )
     }
-    
+
     // MARK: - Typography
     enum Typography {
         static let largeTitle = Font.system(.largeTitle, design: .rounded).weight(.bold)
@@ -46,7 +46,7 @@ enum DesignSystem {
         static let footnote = Font.system(.footnote, design: .rounded)
         static let caption = Font.system(.caption, design: .rounded)
     }
-    
+
     // MARK: - Layout
     enum Layout {
         static let spacing: CGFloat = 16
@@ -55,7 +55,7 @@ enum DesignSystem {
         static let iconSize: CGFloat = 24
         static let padding: CGFloat = 16
     }
-    
+
     // MARK: - Animations
     enum Animation {
         static let spring = SwiftUI.Animation.spring(response: 0.3, dampingFraction: 0.7)
@@ -93,11 +93,11 @@ extension View {
     func glassBackground() -> some View {
         modifier(GlassBackground())
     }
-    
+
     func glassCard() -> some View {
         modifier(GlassCard())
     }
-    
+
     func glassButton() -> some View {
         modifier(GlassButton())
     }
@@ -111,8 +111,8 @@ struct GlassButtonStyle: ButtonStyle {
             .frame(height: DesignSystem.Layout.buttonHeight)
             .background(
                 RoundedRectangle(cornerRadius: DesignSystem.Layout.cornerRadius)
-                    .fill(configuration.isPressed ? 
-                          Color.white.opacity(0.2) : 
+                    .fill(configuration.isPressed ?
+                          Color.white.opacity(0.2) :
                           Color.white.opacity(0.1))
                     .background(.ultraThinMaterial)
             )
@@ -186,13 +186,13 @@ struct GlassIconButton: View {
     let systemName: String
     let action: () -> Void
     let color: Color
-    
+
     var body: some View {
         Button(action: action) {
             Image(systemName: systemName)
                 .font(.system(size: DesignSystem.Layout.iconSize, weight: .medium))
                 .foregroundColor(color)
-                .frame(width: DesignSystem.Layout.buttonHeight, 
+                .frame(width: DesignSystem.Layout.buttonHeight,
                        height: DesignSystem.Layout.buttonHeight)
                 .background(color.opacity(0.1))
                 .clipShape(Circle())
@@ -202,11 +202,11 @@ struct GlassIconButton: View {
 
 struct GlassCardView<Content: View>: View {
     let content: Content
-    
+
     init(@ViewBuilder content: () -> Content) {
         self.content = content()
     }
-    
+
     var body: some View {
         content
             .padding(DesignSystem.Layout.padding)
@@ -219,16 +219,16 @@ struct ToastView: View {
     let systemImage: String
     let color: Color
     @Binding var isShowing: Bool
-    
+
     var body: some View {
         HStack(spacing: 12) {
             Image(systemName: systemImage)
                 .foregroundColor(color)
-            
+
             Text(message)
                 .font(DesignSystem.Typography.callout)
                 .foregroundColor(.primary)
-            
+
             Spacer()
         }
         .padding(DesignSystem.Layout.padding)
@@ -245,7 +245,7 @@ struct ToastView: View {
 struct ToastModifier: ViewModifier {
     @Binding var toast: ToastData?
     @State private var workItem: DispatchWorkItem?
-    
+
     func body(content: Content) -> some View {
         content
             .overlay(
@@ -273,22 +273,22 @@ struct ToastModifier: ViewModifier {
                 showToastIfNeeded()
             }
     }
-    
+
     private func showToastIfNeeded() {
         guard toast != nil else { return }
-        
+
         // Cancel previous work item
         workItem?.cancel()
-        
+
         // Create new work item to dismiss toast
         let task = DispatchWorkItem {
             dismissToast()
         }
-        
+
         workItem = task
         DispatchQueue.main.asyncAfter(deadline: .now() + 3, execute: task)
     }
-    
+
     private func dismissToast() {
         withAnimation(DesignSystem.Animation.spring) {
             toast = nil
@@ -302,13 +302,13 @@ struct ToastData: Equatable {
     let message: String
     let systemImage: String
     let color: Color
-    
+
     init(message: String, systemImage: String, color: Color) {
         self.message = message
         self.systemImage = systemImage
         self.color = color
     }
-    
+
     // Legacy constructor for compatibility
     init(message: String, type: ToastType) {
         self.message = message
@@ -324,15 +324,15 @@ struct ToastData: Equatable {
             self.color = .blue
         }
     }
-    
+
     static func success(_ message: String) -> ToastData {
         ToastData(message: message, systemImage: "checkmark.circle.fill", color: .green)
     }
-    
+
     static func error(_ message: String) -> ToastData {
         ToastData(message: message, systemImage: "exclamationmark.circle.fill", color: .red)
     }
-    
+
     static func info(_ message: String) -> ToastData {
         ToastData(message: message, systemImage: "info.circle.fill", color: .blue)
     }
@@ -348,12 +348,12 @@ extension View {
     func toast(_ toast: Binding<ToastData?>) -> some View {
         modifier(ToastModifier(toast: toast))
     }
-    
+
     // Legacy method for backward compatibility
     func toast(data toast: Binding<ToastData?>) -> some View {
         modifier(ToastModifier(toast: toast))
     }
-    
+
     // New method for simple message + isShowing binding
     func toast(message: String, isShowing: Binding<Bool>) -> some View {
         self.toast(Binding<ToastData?>(

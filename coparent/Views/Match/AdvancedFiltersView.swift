@@ -11,10 +11,10 @@ struct AdvancedFiltersView: View {
     @State private var searchText = ""
     @State private var showingToast = false
     @State private var toastMessage = ""
-    
+
     // Local filter state for editing
     @State private var localFilters = FilterSet()
-    
+
     var body: some View {
         NavigationView {
             ZStack {
@@ -25,7 +25,7 @@ struct AdvancedFiltersView: View {
                     endPoint: .bottomTrailing
                 )
                 .ignoresSafeArea()
-                
+
                 ScrollView {
                     VStack(spacing: 20) {
                         // Smart Recommendations
@@ -35,26 +35,26 @@ struct AdvancedFiltersView: View {
                                 onApply: applyRecommendation
                             )
                         }
-                        
+
                         // Basic Filters
                         BasicFiltersSection(filters: $localFilters)
-                        
+
                         // Advanced Filters
                         AdvancedFiltersSection(
                             filters: $localFilters,
                             onToggleParentingStyle: toggleParentingStyle
                         )
-                        
+
                         // Deal Breakers
                         DealBreakersSection(filters: $localFilters)
-                        
+
                         // Location & Travel
                         LocationSection(
                             filters: $localFilters,
                             currentLocation: filtersService.currentLocation,
                             onLocationPickerTap: { showingLocationPicker = true }
                         )
-                        
+
                         // Saved Filter Sets
                         SavedFiltersSection(
                             filters: $localFilters,
@@ -66,7 +66,7 @@ struct AdvancedFiltersView: View {
                     .padding(.horizontal, 20)
                     .padding(.bottom, 100) // Space for action buttons
                 }
-                
+
                 // Action buttons overlay
                 actionButtonsOverlay
             }
@@ -81,7 +81,7 @@ struct AdvancedFiltersView: View {
                     }
                     .foregroundColor(.red)
                 }
-                
+
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Done") {
                         applyFilters()
@@ -111,13 +111,13 @@ struct AdvancedFiltersView: View {
         }
         .toast(message: toastMessage, isShowing: $showingToast)
     }
-    
+
     // MARK: - Action Buttons
-    
+
     private var actionButtonsOverlay: some View {
         VStack {
             Spacer()
-            
+
             HStack(spacing: 16) {
                 Button(action: { showingPresets = true }) {
                     HStack {
@@ -129,7 +129,7 @@ struct AdvancedFiltersView: View {
                     .background(.ultraThinMaterial)
                     .cornerRadius(12)
                 }
-                
+
                 Button(action: { showingSaveDialog = true }) {
                     HStack {
                         Image(systemName: "bookmark")
@@ -145,21 +145,21 @@ struct AdvancedFiltersView: View {
             .padding(.bottom, 20)
         }
     }
-    
+
     // MARK: - Actions
-    
+
     private func applyFilters() {
         filtersService.currentFilters = localFilters
         presentationMode.wrappedValue.dismiss()
     }
-    
+
     private func applyRecommendation(_ recommendation: SmartRecommendation) {
         withAnimation(.spring()) {
             localFilters = recommendation.filters
         }
         showToast("Applied \(recommendation.title)")
     }
-    
+
     private func toggleParentingStyle(_ style: User.ParentingStyle) {
         if localFilters.selectedParentingStyles.contains(style) {
             localFilters.selectedParentingStyles.remove(style)
@@ -167,34 +167,34 @@ struct AdvancedFiltersView: View {
             localFilters.selectedParentingStyles.insert(style)
         }
     }
-    
+
     private func applySavedFilter(_ filterSet: SavedFilterSet) {
         withAnimation(.spring()) {
             localFilters = filterSet.filters
         }
         showToast("Applied \(filterSet.name)")
     }
-    
+
     private func deleteSavedFilter(_ filterSet: SavedFilterSet) {
         filtersService.deleteSavedFilter(filterSet)
         showToast("Deleted \(filterSet.name)")
     }
-    
+
     private func saveCurrentFilters() {
         guard !filterName.isEmpty else { return }
-        
+
         let filterSet = SavedFilterSet(
             id: UUID().uuidString,
             name: filterName,
             filters: localFilters,
             lastUsed: Date()
         )
-        
+
         filtersService.saveFilter(filterSet)
         showToast("Saved \(filterName)")
         filterName = ""
     }
-    
+
     private func showToast(_ message: String) {
         toastMessage = message
         showingToast = true

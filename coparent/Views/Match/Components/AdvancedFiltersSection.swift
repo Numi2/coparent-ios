@@ -3,7 +3,7 @@ import SwiftUI
 struct AdvancedFiltersSection: View {
     @Binding var filters: FilterSet
     let onToggleParentingStyle: (User.ParentingStyle) -> Void
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack {
@@ -13,13 +13,13 @@ struct AdvancedFiltersSection: View {
                     .font(DesignSystem.Typography.headline)
                     .fontWeight(.semibold)
             }
-            
+
             // Parenting Styles
             VStack(alignment: .leading, spacing: 12) {
                 Text("Parenting Styles")
                     .font(DesignSystem.Typography.subheadline)
                     .fontWeight(.medium)
-                
+
                 LazyVGrid(columns: [
                     GridItem(.flexible()),
                     GridItem(.flexible())
@@ -35,19 +35,19 @@ struct AdvancedFiltersSection: View {
                     }
                 }
             }
-            
+
             Divider()
                 .background(.white.opacity(0.2))
-            
+
             // Interests
             VStack(alignment: .leading, spacing: 12) {
                 HStack {
                     Text("Interests")
                         .font(DesignSystem.Typography.subheadline)
                         .fontWeight(.medium)
-                    
+
                     Spacer()
-                    
+
                     NavigationLink {
                         InterestSelectionView(selectedInterests: $filters.selectedInterests)
                     } label: {
@@ -56,7 +56,7 @@ struct AdvancedFiltersSection: View {
                             .foregroundColor(.blue)
                     }
                 }
-                
+
                 if filters.selectedInterests.isEmpty {
                     Text("No interests selected")
                         .font(DesignSystem.Typography.caption)
@@ -72,7 +72,7 @@ struct AdvancedFiltersSection: View {
         }
         .glassCard()
     }
-    
+
     private func parentingStyleIcon(_ style: User.ParentingStyle) -> String {
         switch style {
         case .authoritative: return "person.2.fill"
@@ -85,7 +85,7 @@ struct AdvancedFiltersSection: View {
 
 struct InterestTag: View {
     let interest: String
-    
+
     var body: some View {
         Text(interest)
             .font(DesignSystem.Typography.caption)
@@ -103,4 +103,4 @@ struct InterestTag: View {
         onToggleParentingStyle: { _ in }
     )
     .padding()
-} 
+}

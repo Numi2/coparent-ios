@@ -7,7 +7,7 @@ struct UserLocation: Codable {
     var state: String
     var country: String
     var coordinates: Coordinates?
-    
+
     struct Coordinates: Codable {
         var latitude: Double
         var longitude: Double
@@ -20,7 +20,7 @@ struct UserChild: Codable, Identifiable {
     var age: Int
     var gender: Gender
     var interests: [String]
-    
+
     enum Gender: String, Codable {
         case male
         case female
@@ -34,7 +34,7 @@ struct UserPreferences: Codable {
     var distance: Int // in kilometers
     var parentingStyles: [User.ParentingStyle]
     var dealBreakers: [String]
-    
+
     enum CodingKeys: String, CodingKey {
         case ageRangeMin
         case ageRangeMax
@@ -42,14 +42,14 @@ struct UserPreferences: Codable {
         case parentingStyles
         case dealBreakers
     }
-    
+
     init(ageRange: ClosedRange<Int>, distance: Int, parentingStyles: [User.ParentingStyle], dealBreakers: [String]) {
         self.ageRange = ageRange
         self.distance = distance
         self.parentingStyles = parentingStyles
         self.dealBreakers = dealBreakers
     }
-    
+
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         let min = try container.decode(Int.self, forKey: .ageRangeMin)
@@ -59,7 +59,7 @@ struct UserPreferences: Codable {
         parentingStyles = try container.decode([User.ParentingStyle].self, forKey: .parentingStyles)
         dealBreakers = try container.decode([String].self, forKey: .dealBreakers)
     }
-    
+
     func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(ageRange.lowerBound, forKey: .ageRangeMin)
@@ -87,12 +87,12 @@ struct User: Identifiable, Codable {
     var preferences: UserPreferences
     var interests: [Interest]
     var verificationStatus: VerificationStatus
-    
+
     // Computed properties for filtering and compatibility
     var profileCompletion: Double {
         var completionScore: Double = 0.0
         let totalFields: Double = 8.0
-        
+
         // Basic required fields
         if !name.isEmpty { completionScore += 1.0 }
         if !bio.isEmpty { completionScore += 1.0 }
@@ -102,25 +102,25 @@ struct User: Identifiable, Codable {
         if verificationStatus == .verified { completionScore += 1.0 }
         if let email = email, !email.isEmpty { completionScore += 1.0 }
         if let phoneNumber = phoneNumber, !phoneNumber.isEmpty { completionScore += 1.0 }
-        
+
         return completionScore / totalFields
     }
-    
+
     var interestStrings: [String] {
         interests.map { $0.rawValue }
     }
-    
+
     // Legacy type aliases for backward compatibility
     typealias Location = UserLocation
     typealias Child = UserChild
     typealias Preferences = UserPreferences
-    
+
     enum UserType: String, Codable {
         case singleParent
         case coParent
         case potentialCoParent
     }
-    
+
     enum ParentingStyle: String, Codable, CaseIterable {
         case authoritative
         case permissive
@@ -133,7 +133,7 @@ struct User: Identifiable, Codable {
         case modern
         case eclectic
     }
-    
+
     enum Interest: String, Codable, CaseIterable {
         case outdoorActivities
         case artsAndCrafts
@@ -148,7 +148,7 @@ struct User: Identifiable, Codable {
         case education
         case healthAndFitness
     }
-    
+
     enum VerificationStatus: String, Codable {
         case unverified
         case pending

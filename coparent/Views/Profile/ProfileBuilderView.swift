@@ -7,7 +7,7 @@ struct ProfileBuilderView: View {
     @State private var verificationService = VerificationService()
     @State private var currentStep: ProfileStep = .welcome
     @State private var toast: ToastData?
-    
+
     enum ProfileStep: Int, CaseIterable {
         case welcome = 0
         case basicInfo = 1
@@ -18,7 +18,7 @@ struct ProfileBuilderView: View {
         case preferences = 6
         case verification = 7
         case completion = 8
-        
+
         var title: String {
             switch self {
             case .welcome: return "Welcome"
@@ -32,7 +32,7 @@ struct ProfileBuilderView: View {
             case .completion: return "Complete"
             }
         }
-        
+
         var systemImage: String {
             switch self {
             case .welcome: return "hand.wave.fill"
@@ -46,7 +46,7 @@ struct ProfileBuilderView: View {
             case .completion: return "party.popper.fill"
             }
         }
-        
+
         var description: String {
             switch self {
             case .welcome: return "Let's create your amazing profile"
@@ -61,7 +61,7 @@ struct ProfileBuilderView: View {
             }
         }
     }
-    
+
     var body: some View {
         NavigationStack {
             ZStack {
@@ -72,11 +72,11 @@ struct ProfileBuilderView: View {
                     endPoint: .bottomTrailing
                 )
                 .ignoresSafeArea()
-                
+
                 VStack(spacing: 0) {
                     // Progress Header
                     profileHeader
-                    
+
                     // Content
                     TabView(selection: $currentStep) {
                         ForEach(ProfileStep.allCases, id: \.self) { step in
@@ -86,7 +86,7 @@ struct ProfileBuilderView: View {
                     }
                     .tabViewStyle(.page(indexDisplayMode: .never))
                     .animation(DesignSystem.Animation.spring, value: currentStep)
-                    
+
                     // Navigation Controls
                     navigationControls
                 }
@@ -96,9 +96,9 @@ struct ProfileBuilderView: View {
         .environment(profileBuilder)
         .environment(verificationService)
     }
-    
+
     // MARK: - Header
-    
+
     private var profileHeader: some View {
         VStack(spacing: DesignSystem.Layout.spacing) {
             HStack {
@@ -106,21 +106,21 @@ struct ProfileBuilderView: View {
                     dismiss()
                 }
                 .foregroundColor(.secondary)
-                
+
                 Spacer()
-                
+
                 Text("Profile Setup")
                     .font(DesignSystem.Typography.headline)
                     .fontWeight(.semibold)
-                
+
                 Spacer()
-                
+
                 // Step indicator
                 Text("\(currentStep.rawValue + 1) of \(ProfileStep.allCases.count)")
                     .font(DesignSystem.Typography.caption)
                     .foregroundColor(.secondary)
             }
-            
+
             // Progress Bar
             ProgressView(value: Double(currentStep.rawValue), total: Double(ProfileStep.allCases.count - 1))
                 .progressViewStyle(GlassProgressViewStyle())
@@ -128,15 +128,15 @@ struct ProfileBuilderView: View {
         .padding(.horizontal, DesignSystem.Layout.padding)
         .padding(.top, DesignSystem.Layout.padding)
     }
-    
+
     // MARK: - Step Content
-    
+
     @ViewBuilder
     private func stepContent(for step: ProfileStep) -> some View {
         ScrollView {
             VStack(spacing: DesignSystem.Layout.spacing * 2) {
                 stepHeader(for: step)
-                
+
                 switch step {
                 case .welcome:
                     WelcomeStepView()
@@ -162,7 +162,7 @@ struct ProfileBuilderView: View {
             .padding(.bottom, 100) // Space for navigation controls
         }
     }
-    
+
     private func stepHeader(for step: ProfileStep) -> some View {
         VStack(spacing: DesignSystem.Layout.spacing) {
             // Step Icon
@@ -179,12 +179,12 @@ struct ProfileBuilderView: View {
                 .background(Color.white.opacity(0.1))
                 .background(.ultraThinMaterial)
                 .clipShape(Circle())
-            
+
             VStack(spacing: 8) {
                 Text(step.title)
                     .font(DesignSystem.Typography.title2)
                     .fontWeight(.bold)
-                
+
                 Text(step.description)
                     .font(DesignSystem.Typography.body)
                     .foregroundColor(.secondary)
@@ -193,13 +193,13 @@ struct ProfileBuilderView: View {
         }
         .padding(.vertical, DesignSystem.Layout.padding)
     }
-    
+
     // MARK: - Navigation Controls
-    
+
     private var navigationControls: some View {
         VStack(spacing: DesignSystem.Layout.spacing) {
             Divider()
-            
+
             HStack(spacing: DesignSystem.Layout.spacing) {
                 // Back Button
                 if currentStep != .welcome {
@@ -211,7 +211,7 @@ struct ProfileBuilderView: View {
                     .buttonStyle(GlassSecondaryButtonStyle())
                     .frame(maxWidth: .infinity)
                 }
-                
+
                 // Next/Complete Button
                 Button(nextButtonTitle) {
                     withAnimation(DesignSystem.Animation.spring) {
@@ -226,7 +226,7 @@ struct ProfileBuilderView: View {
         }
         .background(.ultraThinMaterial)
     }
-    
+
     private var nextButtonTitle: String {
         switch currentStep {
         case .completion:
@@ -237,7 +237,7 @@ struct ProfileBuilderView: View {
             return "Continue"
         }
     }
-    
+
     private var canProceedToNextStep: Bool {
         switch currentStep {
         case .welcome:
@@ -260,9 +260,9 @@ struct ProfileBuilderView: View {
             return true
         }
     }
-    
+
     // MARK: - Navigation Methods
-    
+
     private func nextStep() {
         if currentStep == .completion {
             completeProfileCreation()
@@ -270,13 +270,13 @@ struct ProfileBuilderView: View {
             currentStep = nextStep
         }
     }
-    
+
     private func previousStep() {
         if let previousStep = ProfileStep(rawValue: currentStep.rawValue - 1) {
             currentStep = previousStep
         }
     }
-    
+
     private func completeProfileCreation() {
         Task {
             do {

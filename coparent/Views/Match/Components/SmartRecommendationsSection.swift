@@ -3,7 +3,7 @@ import SwiftUI
 struct SmartRecommendationsSection: View {
     let recommendations: [SmartRecommendation]
     let onApply: (SmartRecommendation) -> Void
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
@@ -12,9 +12,9 @@ struct SmartRecommendationsSection: View {
                 Text("Smart Recommendations")
                     .font(DesignSystem.Typography.headline)
                     .fontWeight(.semibold)
-                
+
                 Spacer()
-                
+
                 Text("AI Powered")
                     .font(DesignSystem.Typography.caption)
                     .foregroundColor(.blue)
@@ -23,7 +23,7 @@ struct SmartRecommendationsSection: View {
                     .background(.blue.opacity(0.1))
                     .clipShape(Capsule())
             }
-            
+
             ForEach(recommendations) { recommendation in
                 SmartRecommendationCard(
                     recommendation: recommendation,
@@ -38,7 +38,7 @@ struct SmartRecommendationsSection: View {
 struct SmartRecommendationCard: View {
     let recommendation: SmartRecommendation
     let onApply: () -> Void
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
@@ -47,9 +47,9 @@ struct SmartRecommendationCard: View {
                 Text(recommendation.title)
                     .font(DesignSystem.Typography.subheadline)
                     .fontWeight(.medium)
-                
+
                 Spacer()
-                
+
                 Button(action: onApply) {
                     Text("Apply")
                         .font(DesignSystem.Typography.caption)
@@ -61,7 +61,7 @@ struct SmartRecommendationCard: View {
                         .clipShape(Capsule())
                 }
             }
-            
+
             Text(recommendation.description)
                 .font(DesignSystem.Typography.caption)
                 .foregroundColor(.secondary)
@@ -87,4 +87,4 @@ struct SmartRecommendationCard: View {
         onApply: { _ in }
     )
     .padding()
-} 
+}

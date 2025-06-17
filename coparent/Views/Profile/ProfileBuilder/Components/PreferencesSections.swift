@@ -5,7 +5,7 @@ import SwiftUI
 struct PreferencesOverviewSection: View {
     @Environment(ProfileBuilderViewModel.self) private var profileBuilder
     let animateContent: Bool
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: DesignSystem.Layout.spacing) {
             // Section Header
@@ -18,12 +18,12 @@ struct PreferencesOverviewSection: View {
                             endPoint: .bottomTrailing
                         )
                     )
-                
+
                 Text("Your Preferences")
                     .font(DesignSystem.Typography.headline)
                     .fontWeight(.semibold)
             }
-            
+
             GlassCardView {
                 VStack(spacing: DesignSystem.Layout.spacing) {
                     HStack {
@@ -31,19 +31,19 @@ struct PreferencesOverviewSection: View {
                             Text("Matching Preferences")
                                 .font(DesignSystem.Typography.callout)
                                 .fontWeight(.medium)
-                            
+
                             Text("Help us find your ideal matches")
                                 .font(DesignSystem.Typography.caption)
                                 .foregroundColor(.secondary)
                         }
-                        
+
                         Spacer()
-                        
+
                         Image(systemName: "heart.magnifyingglass")
                             .font(.title2)
                             .foregroundColor(.purple)
                     }
-                    
+
                     // Quick Stats
                     HStack {
                         PreferenceStatView(
@@ -52,20 +52,20 @@ struct PreferencesOverviewSection: View {
                             icon: "person.2.fill",
                             color: .blue
                         )
-                        
+
                         Divider()
                             .frame(height: 30)
-                        
+
                         PreferenceStatView(
                             title: "Distance",
                             value: "\(profileBuilder.maxDistance) km",
                             icon: "location.fill",
                             color: .green
                         )
-                        
+
                         Divider()
                             .frame(height: 30)
-                        
+
                         PreferenceStatView(
                             title: "Styles",
                             value: "\(profileBuilder.preferredParentingStyles.count)",
@@ -87,47 +87,47 @@ struct PreferencesOverviewSection: View {
 struct AgeRangeSection: View {
     @Environment(ProfileBuilderViewModel.self) private var profileBuilder
     let animateContent: Bool
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: DesignSystem.Layout.spacing) {
             HStack {
                 Image(systemName: "person.2.fill")
                     .foregroundColor(.blue)
-                
+
                 Text("Age Range")
                     .font(DesignSystem.Typography.headline)
                     .fontWeight(.semibold)
             }
-            
+
             GlassCardView {
                 VStack(spacing: DesignSystem.Layout.spacing) {
                     HStack {
                         Text("Looking for ages")
                             .font(DesignSystem.Typography.callout)
                             .fontWeight(.medium)
-                        
+
                         Spacer()
-                        
+
                         Text("\(profileBuilder.ageRange.lowerBound) - \(profileBuilder.ageRange.upperBound) years")
                             .font(DesignSystem.Typography.callout)
                             .fontWeight(.bold)
                             .foregroundColor(.blue)
                     }
-                    
+
                     // Custom Range Slider
                     RangeSliderView(
                         range: $profileBuilder.ageRange,
                         bounds: 18...65,
                         step: 1
                     )
-                    
+
                     HStack {
                         Text("18")
                             .font(DesignSystem.Typography.caption)
                             .foregroundColor(.secondary)
-                        
+
                         Spacer()
-                        
+
                         Text("65")
                             .font(DesignSystem.Typography.caption)
                             .foregroundColor(.secondary)
@@ -146,33 +146,33 @@ struct AgeRangeSection: View {
 struct DistanceSection: View {
     @Environment(ProfileBuilderViewModel.self) private var profileBuilder
     let animateContent: Bool
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: DesignSystem.Layout.spacing) {
             HStack {
                 Image(systemName: "location.fill")
                     .foregroundColor(.green)
-                
+
                 Text("Maximum Distance")
                     .font(DesignSystem.Typography.headline)
                     .fontWeight(.semibold)
             }
-            
+
             GlassCardView {
                 VStack(spacing: DesignSystem.Layout.spacing) {
                     HStack {
                         Text("Show me people within")
                             .font(DesignSystem.Typography.callout)
                             .fontWeight(.medium)
-                        
+
                         Spacer()
-                        
+
                         Text("\(profileBuilder.maxDistance) km")
                             .font(DesignSystem.Typography.callout)
                             .fontWeight(.bold)
                             .foregroundColor(.green)
                     }
-                    
+
                     Slider(
                         value: Binding(
                             get: { Double(profileBuilder.maxDistance) },
@@ -182,19 +182,19 @@ struct DistanceSection: View {
                         step: 5
                     )
                     .accentColor(.green)
-                    
+
                     HStack {
                         Text("5 km")
                             .font(DesignSystem.Typography.caption)
                             .foregroundColor(.secondary)
-                        
+
                         Spacer()
-                        
+
                         Text("200 km")
                             .font(DesignSystem.Typography.caption)
                             .foregroundColor(.secondary)
                     }
-                    
+
                     // Distance quick selectors
                     HStack(spacing: 8) {
                         ForEach([25, 50, 100], id: \.self) { distance in
@@ -208,13 +208,13 @@ struct DistanceSection: View {
                             .padding(.vertical, 6)
                             .background(
                                 RoundedRectangle(cornerRadius: 12)
-                                    .fill(profileBuilder.maxDistance == distance ? 
-                                          Color.green.opacity(0.2) : 
+                                    .fill(profileBuilder.maxDistance == distance ?
+                                          Color.green.opacity(0.2) :
                                           Color.gray.opacity(0.1))
                             )
                             .foregroundColor(profileBuilder.maxDistance == distance ? .green : .secondary)
                         }
-                        
+
                         Spacer()
                     }
                 }
@@ -231,38 +231,38 @@ struct DistanceSection: View {
 struct ParentingStylesSection: View {
     @Environment(ProfileBuilderViewModel.self) private var profileBuilder
     let animateContent: Bool
-    
+
     private let parentingStyleColumns = Array(
-        repeating: GridItem(.flexible(), spacing: DesignSystem.Layout.spacing), 
+        repeating: GridItem(.flexible(), spacing: DesignSystem.Layout.spacing),
         count: 2
     )
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: DesignSystem.Layout.spacing) {
             HStack {
                 Image(systemName: "heart.fill")
                     .foregroundColor(.pink)
-                
+
                 Text("Preferred Parenting Styles")
                     .font(DesignSystem.Typography.headline)
                     .fontWeight(.semibold)
             }
-            
+
             GlassCardView {
                 VStack(spacing: DesignSystem.Layout.spacing) {
                     HStack {
                         Text("Select compatible styles")
                             .font(DesignSystem.Typography.callout)
                             .fontWeight(.medium)
-                        
+
                         Spacer()
-                        
+
                         Text("\(profileBuilder.preferredParentingStyles.count) selected")
                             .font(DesignSystem.Typography.caption)
-                            .foregroundColor(profileBuilder.preferredParentingStyles.isEmpty ? 
+                            .foregroundColor(profileBuilder.preferredParentingStyles.isEmpty ?
                                            .orange : .green)
                     }
-                    
+
                     if profileBuilder.preferredParentingStyles.isEmpty {
                         HStack {
                             Image(systemName: "info.circle")
@@ -272,7 +272,7 @@ struct ParentingStylesSection: View {
                                 .foregroundColor(.secondary)
                         }
                     }
-                    
+
                     LazyVGrid(columns: parentingStyleColumns, spacing: DesignSystem.Layout.spacing) {
                         ForEach(User.ParentingStyle.allCases, id: \.self) { style in
                             ParentingStylePreferenceCard(
@@ -290,7 +290,7 @@ struct ParentingStylesSection: View {
         .offset(y: animateContent ? 0 : 20)
         .animation(DesignSystem.Animation.spring.delay(0.6), value: animateContent)
     }
-    
+
     private func toggleParentingStyle(_ style: User.ParentingStyle) {
         withAnimation(DesignSystem.Animation.spring) {
             profileBuilder.toggleParentingStyle(style)
@@ -306,7 +306,7 @@ struct DealBreakersSection: View {
     @Binding var toast: ToastData?
     @FocusState.Binding var isDealBreakerFocused: Bool
     let animateContent: Bool
-    
+
     private let commonDealBreakers = [
         "Smoking",
         "Heavy drinking",
@@ -317,34 +317,34 @@ struct DealBreakersSection: View {
         "Different values",
         "Incompatible schedules"
     ]
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: DesignSystem.Layout.spacing) {
             HStack {
                 Image(systemName: "exclamationmark.triangle.fill")
                     .foregroundColor(.red)
-                
+
                 Text("Deal Breakers")
                     .font(DesignSystem.Typography.headline)
                     .fontWeight(.semibold)
-                
+
                 Text("(Optional)")
                     .font(DesignSystem.Typography.caption)
                     .foregroundColor(.secondary)
             }
-            
+
             GlassCardView {
                 VStack(spacing: DesignSystem.Layout.spacing) {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Add Deal Breakers")
                             .font(DesignSystem.Typography.callout)
                             .fontWeight(.medium)
-                        
+
                         Text("Things that are absolutely not compatible with you")
                             .font(DesignSystem.Typography.caption)
                             .foregroundColor(.secondary)
                     }
-                    
+
                     HStack {
                         TextField("Enter a deal breaker", text: $newDealBreaker)
                             .textFieldStyle(GlassTextFieldStyle())
@@ -352,21 +352,21 @@ struct DealBreakersSection: View {
                             .onSubmit {
                                 addDealBreaker()
                             }
-                        
+
                         Button("Add") {
                             addDealBreaker()
                         }
                         .buttonStyle(GlassPrimaryButtonStyle())
                         .disabled(newDealBreaker.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                     }
-                    
+
                     // Deal Breakers List
                     if !profileBuilder.dealBreakers.isEmpty {
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Your Deal Breakers")
                                 .font(DesignSystem.Typography.callout)
                                 .fontWeight(.medium)
-                            
+
                             ForEach(profileBuilder.dealBreakers.indices, id: \.self) { index in
                                 DealBreakerRow(
                                     text: profileBuilder.dealBreakers[index],
@@ -380,14 +380,14 @@ struct DealBreakersSection: View {
                             }
                         }
                     }
-                    
+
                     // Common Deal Breakers
                     if profileBuilder.dealBreakers.isEmpty {
                         VStack(alignment: .leading, spacing: DesignSystem.Layout.spacing) {
                             Text("Common Deal Breakers")
                                 .font(DesignSystem.Typography.callout)
                                 .fontWeight(.medium)
-                            
+
                             LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 2), spacing: 8) {
                                 ForEach(commonDealBreakers, id: \.self) { dealBreaker in
                                     Button(dealBreaker) {
@@ -411,7 +411,7 @@ struct DealBreakersSection: View {
         .offset(y: animateContent ? 0 : 20)
         .animation(DesignSystem.Animation.spring.delay(0.8), value: animateContent)
     }
-    
+
     private func addDealBreaker() {
         let trimmed = newDealBreaker.trimmingCharacters(in: .whitespacesAndNewlines)
         if !trimmed.isEmpty {

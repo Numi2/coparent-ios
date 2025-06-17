@@ -8,7 +8,7 @@ struct ChatListView: View {
     @State private var showingNewChat = false
     @State private var errorMessage: String?
     @State private var showingError = false
-    
+
     var body: some View {
         NavigationView {
             Group {
@@ -41,7 +41,7 @@ struct ChatListView: View {
             .sheet(isPresented: $showingNewChat) {
                 NewChatView()
             }
-            .alert("Error", 
+            .alert("Error",
                    isPresented: $showingError,
                    actions: {
                        Button("OK", role: .cancel, action: {})
@@ -67,7 +67,7 @@ struct ChatRowView: View {
     let channel: GroupChannel
     @State private var otherUser: User?
     @State private var messageStatusService = MessageStatusService.shared
-    
+
     var body: some View {
         HStack(spacing: 12) {
             // Profile Image
@@ -91,18 +91,18 @@ struct ChatRowView: View {
                             .foregroundColor(.gray)
                     })
             }
-            
+
             VStack(alignment: .leading, spacing: 4) {
                 Text(channel.name ?? "Unknown User")
                     .font(.headline)
-                
+
                 if let lastMessage = channel.lastMessage {
                     HStack(spacing: 4) {
                         Text(lastMessage.message)
                             .font(.subheadline)
                             .foregroundColor(.gray)
                             .lineLimit(1)
-                        
+
                         if let userMessage = lastMessage as? UserMessage,
                            userMessage.sender?.userId == SendbirdChat.currentUser?.userId {
                             let status = messageStatusService.getMessageStatus(userMessage)
@@ -115,16 +115,16 @@ struct ChatRowView: View {
                     }
                 }
             }
-            
+
             Spacer()
-            
+
             VStack(alignment: .trailing, spacing: 4) {
                 if let lastMessage = channel.lastMessage {
                     Text(lastMessage.createdAt, style: .time)
                         .font(.caption)
                         .foregroundColor(.gray)
                 }
-                
+
                 if channel.unreadMessageCount > 0 {
                     Text("\(channel.unreadMessageCount)")
                         .font(.caption)
@@ -140,12 +140,12 @@ struct ChatRowView: View {
             await loadOtherUser()
         }
     }
-    
+
     private func loadOtherUser() async {
         guard let otherMember = channel.members.first(where: { $0.userId != SendbirdChat.currentUser?.userId }) else {
             return
         }
-        
+
         do {
             let userService = UserService()
             otherUser = try await userService.fetchUser(id: otherMember.userId)
@@ -158,4 +158,4 @@ struct ChatRowView: View {
 #Preview {
     ChatListView()
         .environment(AppState())
-} 
+}

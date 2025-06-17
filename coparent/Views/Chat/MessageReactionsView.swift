@@ -5,11 +5,11 @@ struct MessageReactionsView: View {
     let message: BaseMessage
     @State private var chatService = SendbirdChatService.shared
     @State private var toast: ToastData?
-    
+
     private var reactions: [Reaction] {
         message.reactions.filter { !$0.userIds.isEmpty }
     }
-    
+
     var body: some View {
         if !reactions.isEmpty {
             HStack(spacing: 8) {
@@ -32,16 +32,16 @@ struct ReactionCountView: View {
     @Binding var toast: ToastData?
     @State private var chatService = SendbirdChatService.shared
     @State private var isAnimating = false
-    
+
     private var hasUserReacted: Bool {
         guard let currentUserId = SendbirdChat.currentUser?.userId else { return false }
         return reaction.userIds.contains(currentUserId)
     }
-    
+
     private var reactionCount: Int {
         reaction.userIds.count
     }
-    
+
     var body: some View {
         Button(action: {
             toggleReaction()
@@ -49,7 +49,7 @@ struct ReactionCountView: View {
             HStack(spacing: 4) {
                 Text(reaction.key)
                     .font(.system(size: 14))
-                
+
                 if reactionCount > 1 {
                     Text("\(reactionCount)")
                         .font(.system(size: 12, weight: .medium))
@@ -60,8 +60,8 @@ struct ReactionCountView: View {
             .padding(.vertical, 4)
             .background(
                 Capsule()
-                    .fill(hasUserReacted ? 
-                          Color.blue.opacity(0.8) : 
+                    .fill(hasUserReacted ?
+                          Color.blue.opacity(0.8) :
                           Color.white.opacity(0.1))
                     .background(.ultraThinMaterial)
             )
@@ -76,19 +76,19 @@ struct ReactionCountView: View {
         .accessibilityLabel("Reaction \(reaction.key), \(reactionCount) users")
         .accessibilityHint(hasUserReacted ? "Double tap to remove your reaction" : "Double tap to add this reaction")
     }
-    
+
     private func toggleReaction() {
         // Animate button press
         withAnimation(DesignSystem.Animation.easeOut) {
             isAnimating = true
         }
-        
+
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
             withAnimation(DesignSystem.Animation.easeIn) {
                 isAnimating = false
             }
         }
-        
+
         Task {
             do {
                 if hasUserReacted {
@@ -109,10 +109,10 @@ struct ReactionCountView: View {
     VStack(spacing: 16) {
         // Preview with multiple reactions
         MessageReactionsView(message: createMockMessageWithReactions())
-        
+
         // Preview with single reaction
         MessageReactionsView(message: createMockMessageWithSingleReaction())
-        
+
         // Preview with user's own reaction
         MessageReactionsView(message: createMockMessageWithUserReaction())
     }

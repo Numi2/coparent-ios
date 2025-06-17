@@ -7,18 +7,18 @@ struct PreferenceStatView: View {
     let value: String
     let icon: String
     let color: Color
-    
+
     var body: some View {
         VStack(spacing: 4) {
             Image(systemName: icon)
                 .foregroundColor(color)
                 .font(.caption)
-            
+
             Text(value)
                 .font(DesignSystem.Typography.caption)
                 .fontWeight(.bold)
                 .foregroundColor(color)
-            
+
             Text(title)
                 .font(DesignSystem.Typography.caption)
                 .foregroundColor(.secondary)
@@ -33,7 +33,7 @@ struct RangeSliderView: View {
     @Binding var range: ClosedRange<Int>
     let bounds: ClosedRange<Int>
     let step: Int
-    
+
     var body: some View {
         VStack(spacing: 8) {
             HStack {
@@ -41,13 +41,13 @@ struct RangeSliderView: View {
                     Text("Min")
                         .font(DesignSystem.Typography.caption)
                         .foregroundColor(.secondary)
-                    
+
                     Stepper(
                         value: Binding(
                             get: { range.lowerBound },
                             set: { newValue in
                                 let clampedValue = max(
-                                    bounds.lowerBound, 
+                                    bounds.lowerBound,
                                     min(newValue, range.upperBound - step)
                                 )
                                 range = clampedValue...range.upperBound
@@ -62,20 +62,20 @@ struct RangeSliderView: View {
                             .frame(width: 40)
                     }
                 }
-                
+
                 Spacer()
-                
+
                 VStack(spacing: 4) {
                     Text("Max")
                         .font(DesignSystem.Typography.caption)
                         .foregroundColor(.secondary)
-                    
+
                     Stepper(
                         value: Binding(
                             get: { range.upperBound },
                             set: { newValue in
                                 let clampedValue = max(
-                                    range.lowerBound + step, 
+                                    range.lowerBound + step,
                                     min(newValue, bounds.upperBound)
                                 )
                                 range = range.lowerBound...clampedValue
@@ -101,14 +101,14 @@ struct ParentingStylePreferenceCard: View {
     let style: User.ParentingStyle
     let isSelected: Bool
     let action: () -> Void
-    
+
     var body: some View {
         Button(action: action) {
             VStack(spacing: 8) {
                 Image(systemName: style.systemImage)
                     .font(.title3)
                     .foregroundColor(isSelected ? .white : .pink)
-                
+
                 Text(style.displayName)
                     .font(DesignSystem.Typography.caption)
                     .fontWeight(.medium)
@@ -123,7 +123,7 @@ struct ParentingStylePreferenceCard: View {
                     .overlay(
                         RoundedRectangle(cornerRadius: DesignSystem.Layout.cornerRadius)
                             .stroke(
-                                isSelected ? Color.pink : Color.gray.opacity(0.3), 
+                                isSelected ? Color.pink : Color.gray.opacity(0.3),
                                 lineWidth: 1
                             )
                     )
@@ -140,14 +140,14 @@ struct ParentingStylePreferenceCard: View {
 struct DealBreakerRow: View {
     let text: String
     let onRemove: () -> Void
-    
+
     var body: some View {
         HStack {
             Text(text)
                 .font(DesignSystem.Typography.callout)
-            
+
             Spacer()
-            
+
             Button(action: onRemove) {
                 Image(systemName: "minus.circle.fill")
                     .foregroundColor(.red)

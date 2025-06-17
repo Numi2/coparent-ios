@@ -8,7 +8,7 @@ class AppDelegate: NSObject, UIApplicationDelegate {
     ) -> Bool {
         return true
     }
-    
+
     func application(
         _ application: UIApplication,
         didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data
@@ -21,14 +21,14 @@ class AppDelegate: NSObject, UIApplicationDelegate {
             }
         }
     }
-    
+
     func application(
         _ application: UIApplication,
         didFailToRegisterForRemoteNotificationsWithError error: Error
     ) {
         print("Failed to register for remote notifications: \(error)")
     }
-    
+
     func application(
         _ application: UIApplication,
         didReceiveRemoteNotification userInfo: [AnyHashable: Any],

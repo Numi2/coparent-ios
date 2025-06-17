@@ -3,7 +3,7 @@ import CoreLocation
 
 struct InterestTag: View {
     let interest: String
-    
+
     var body: some View {
         Text(interest)
             .font(DesignSystem.Typography.caption)
@@ -17,11 +17,11 @@ struct InterestTag: View {
 
 struct CompatibilityIndicator: View {
     let score: Double
-    
+
     private var scorePercentage: Int {
         Int(score)
     }
-    
+
     private var scoreColor: Color {
         switch score {
         case 0..<40:
@@ -34,7 +34,7 @@ struct CompatibilityIndicator: View {
             return .green
         }
     }
-    
+
     private var compatibilityLevel: String {
         switch score {
         case 0..<40:
@@ -47,14 +47,14 @@ struct CompatibilityIndicator: View {
             return "Great"
         }
     }
-    
+
     var body: some View {
         VStack(spacing: 2) {
             ZStack {
                 Circle()
                     .stroke(Color.white.opacity(0.3), lineWidth: 2)
                     .frame(width: 40, height: 40)
-                
+
                 Circle()
                     .trim(from: 0, to: score / 100)
                     .stroke(
@@ -68,13 +68,13 @@ struct CompatibilityIndicator: View {
                     .frame(width: 40, height: 40)
                     .rotationEffect(.degrees(-90))
                     .animation(.spring(response: 0.8), value: score)
-                
+
                 Text("\(scorePercentage)")
                     .font(DesignSystem.Typography.caption)
                     .fontWeight(.bold)
                     .foregroundColor(.white)
             }
-            
+
             Text(compatibilityLevel)
                 .font(.caption2)
                 .fontWeight(.medium)
@@ -100,9 +100,9 @@ extension MatchCardView {
         )
         return ageComponents.year ?? 0
     }
-    
+
     func formatDistance(to coordinates: CLLocationCoordinate2D) -> Int {
         // TODO: Implement actual distance calculation
         return Int.random(in: 1...50)
     }
-} 
+}

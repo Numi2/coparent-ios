@@ -14,7 +14,7 @@ struct NewChatView: View {
     @State private var errorMessage = ""
     @State private var users: [User] = []
     @State private var isLoading = false
-    
+
     var filteredUsers: [User] {
         if searchText.isEmpty {
             return users
@@ -24,7 +24,7 @@ struct NewChatView: View {
             (user.bio?.localizedCaseInsensitiveContains(searchText) ?? false)
         }
     }
-    
+
     var body: some View {
         NavigationView {
             VStack {
@@ -44,7 +44,7 @@ struct NewChatView: View {
                         .padding()
                     }
                 }
-                
+
                 if isLoading {
                     ProgressView()
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -69,7 +69,7 @@ struct NewChatView: View {
                         dismiss()
                     }
                 }
-                
+
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Start") {
                         startChat()
@@ -87,18 +87,18 @@ struct NewChatView: View {
             }
         }
     }
-    
+
     private func loadUsers() async {
         isLoading = true
         defer { isLoading = false }
-        
+
         do {
             // Fetch users from Firestore
             let db = Firestore.firestore()
             let snapshot = try await db.collection("users")
                 .whereField("id", isNotEqualTo: appState.currentUser?.id ?? "")
                 .getDocuments()
-            
+
             users = try snapshot.documents.compactMap { document -> User? in
                 try document.data(as: User.self)
             }
@@ -107,14 +107,14 @@ struct NewChatView: View {
             showingError = true
         }
     }
-    
+
     private func startChat() {
         guard !selectedUsers.isEmpty else { return }
-        
+
         let participantIds = selectedUsers.map { $0.id }
         if let currentUserId = appState.currentUser?.id {
             let allParticipants = [currentUserId] + participantIds
-            
+
             Task {
                 do {
                     let channel = try await chatService.createChannel(with: allParticipants)
@@ -131,7 +131,7 @@ struct NewChatView: View {
 struct SelectedUserView: View {
     let user: User
     let onRemove: () -> Void
-    
+
     var body: some View {
         VStack {
             AsyncImage(url: URL(string: user.profileImageURL ?? "")) { image in
@@ -145,11 +145,11 @@ struct SelectedUserView: View {
             }
             .frame(width: 50, height: 50)
             .clipShape(Circle())
-            
+
             Text(user.name)
                 .font(.caption)
                 .lineLimit(1)
-            
+
             Button(action: onRemove) {
                 Image(systemName: "xmark.circle.fill")
                     .foregroundColor(.red)
@@ -162,7 +162,7 @@ struct SelectedUserView: View {
 struct UserRowView: View {
     let user: User
     let onSelect: () -> Void
-    
+
     var body: some View {
         Button(action: onSelect) {
             HStack {
@@ -177,11 +177,11 @@ struct UserRowView: View {
                 }
                 .frame(width: 40, height: 40)
                 .clipShape(Circle())
-                
+
                 VStack(alignment: .leading) {
                     Text(user.name)
                         .font(.headline)
-                    
+
                     if let bio = user.bio {
                         Text(bio)
                             .font(.caption)
@@ -189,9 +189,9 @@ struct UserRowView: View {
                             .lineLimit(1)
                     }
                 }
-                
+
                 Spacer()
-                
+
                 Image(systemName: "plus.circle")
                     .foregroundColor(.blue)
             }
@@ -203,4 +203,4 @@ struct UserRowView: View {
 #Preview {
     NewChatView()
         .environment(AppState())
-} 
+}

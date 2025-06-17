@@ -9,13 +9,13 @@ struct MatchCardView: View {
     let isPremium: Bool
     let superLikeCooldownTimeRemaining: TimeInterval
     let compatibilityScore: Double
-    
+
     @State private var offset = CGSize.zero
     @State private var rotation: Double = 0
     @State private var isShowingDetails = false
     @State private var dragAmount = CGSize.zero
     @State private var showingSuperLikeAnimation = false
-    
+
     var body: some View {
         ZStack {
             // Main card
@@ -26,27 +26,27 @@ struct MatchCardView: View {
                     RoundedRectangle(cornerRadius: DesignSystem.Layout.cornerRadius)
                         .stroke(.white.opacity(0.2), lineWidth: 1)
                 )
-            
+
             // Card content
             VStack(spacing: 0) {
                 // Profile image section
                 profileImageSection
-                
+
                 // Profile info section
                 profileInfoSection
                     .padding(DesignSystem.Layout.padding)
             }
             .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Layout.cornerRadius))
-            
+
             // Swipe feedback overlay
             swipeFeedbackOverlay
-            
+
             // Super Like Button (bottom right)
             VStack {
                 Spacer()
                 HStack {
                     Spacer()
-                    
+
                     SuperLikeButton(
                         onSuperLike: {
                             showingSuperLikeAnimation = true
@@ -59,7 +59,7 @@ struct MatchCardView: View {
                     .padding(.bottom, 16)
                 }
             }
-            
+
             // Super Like Animation Overlay
             SuperLikeView(isVisible: showingSuperLikeAnimation) {
                 showingSuperLikeAnimation = false
@@ -91,7 +91,7 @@ struct MatchCardView: View {
             )
         }
     }
-    
+
     @ViewBuilder
     private var profileImageSection: some View {
         ZStack(alignment: .topTrailing) {
@@ -110,7 +110,7 @@ struct MatchCardView: View {
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     )
-                    
+
                     Image(systemName: "person.fill")
                         .font(.system(size: 60))
                         .foregroundColor(.white.opacity(0.8))
@@ -118,24 +118,24 @@ struct MatchCardView: View {
             }
             .frame(height: 400)
             .clipped()
-            
+
             // Compatibility Score (top-left)
             VStack {
                 HStack {
                     CompatibilityIndicator(score: compatibilityScore)
                         .padding(12)
-                    
+
                     Spacer()
                 }
                 Spacer()
             }
-            
+
             // Verification badge (top-right)
             if user.verificationStatus == .verified {
                 VStack {
                     HStack {
                         Spacer()
-                        
+
                         Image(systemName: "checkmark.seal.fill")
                             .font(.title2)
                             .foregroundColor(.blue)
@@ -146,13 +146,13 @@ struct MatchCardView: View {
                     Spacer()
                 }
             }
-            
+
             // Age badge (bottom-right)
             VStack {
                 Spacer()
                 HStack {
                     Spacer()
-                    
+
                     Text("\(calculateAge(from: user.dateOfBirth))")
                         .font(DesignSystem.Typography.title3)
                         .fontWeight(.bold)
@@ -166,7 +166,7 @@ struct MatchCardView: View {
             }
         }
     }
-    
+
     @ViewBuilder
     private var profileInfoSection: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -175,7 +175,7 @@ struct MatchCardView: View {
                 Text(user.name)
                     .font(DesignSystem.Typography.title2)
                     .fontWeight(.bold)
-                
+
                 if let coordinates = user.location.coordinates {
                     HStack(spacing: 4) {
                         Image(systemName: "location.fill")
@@ -189,13 +189,13 @@ struct MatchCardView: View {
                     }
                 }
             }
-            
+
             // Bio preview
             Text(user.bio)
                 .font(DesignSystem.Typography.body)
                 .lineLimit(2)
                 .foregroundColor(.primary)
-            
+
             // Parenting style
             HStack(spacing: 8) {
                 Image(systemName: "heart.fill")
@@ -205,14 +205,14 @@ struct MatchCardView: View {
                     .fontWeight(.medium)
                     .foregroundColor(.primary)
             }
-            
+
             // Interests preview
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 8) {
                     ForEach(user.interests.prefix(3), id: \.self) { interest in
                         InterestTag(interest: interest)
                     }
-                    
+
                     if user.interests.count > 3 {
                         Text("+\(user.interests.count - 3) more")
                             .font(DesignSystem.Typography.caption)
@@ -225,13 +225,13 @@ struct MatchCardView: View {
                 }
                 .padding(.horizontal, 2)
             }
-            
+
             // Children preview
             if !user.children.isEmpty {
                 HStack(spacing: 8) {
                     Image(systemName: "figure.and.child.holdinghands")
                         .foregroundColor(.orange)
-                    
+
                     if user.children.count == 1 {
                         Text("1 child")
                     } else {
@@ -243,7 +243,7 @@ struct MatchCardView: View {
             }
         }
     }
-    
+
     @ViewBuilder
     private var swipeFeedbackOverlay: some View {
         // Super Like overlay (swipe up)
@@ -251,7 +251,7 @@ struct MatchCardView: View {
             VStack {
                 HStack {
                     Spacer()
-                    
+
                     ZStack {
                         Circle()
                             .fill(
@@ -262,18 +262,18 @@ struct MatchCardView: View {
                                 )
                             )
                             .frame(width: 100, height: 100)
-                        
+
                         Image(systemName: "star.fill")
                             .font(.system(size: 30, weight: .bold))
                             .foregroundColor(.white)
                     }
                     .scaleEffect(min(abs(offset.height) / 150, 1.3))
                     .animation(.spring(), value: offset.height)
-                    
+
                     Spacer()
                 }
                 .padding(.top, 50)
-                
+
                 Text("SUPER LIKE")
                     .font(DesignSystem.Typography.title3)
                     .fontWeight(.bold)
@@ -285,48 +285,48 @@ struct MatchCardView: View {
                         )
                     )
                     .padding(.top, 16)
-                
+
                 Spacer()
             }
         }
-        
+
         // Like overlay (swipe right)
         if offset.width > 50 {
             VStack {
                 Spacer()
                 HStack {
                     Spacer()
-                    
+
                     ZStack {
                         Circle()
                             .fill(.green.opacity(0.9))
                             .frame(width: 80, height: 80)
-                        
+
                         Image(systemName: "heart.fill")
                             .font(.title)
                             .foregroundColor(.white)
                     }
                     .scaleEffect(min(offset.width / 150, 1.2))
                     .animation(.spring(), value: offset.width)
-                    
+
                     Spacer()
                 }
                 Spacer()
             }
         }
-        
+
         // Pass overlay (swipe left)
         if offset.width < -50 {
             VStack {
                 Spacer()
                 HStack {
                     Spacer()
-                    
+
                     ZStack {
                         Circle()
                             .fill(.red.opacity(0.9))
                             .frame(width: 80, height: 80)
-                        
+
                         Image(systemName: "xmark")
                             .font(.title)
                             .fontWeight(.bold)
@@ -334,19 +334,19 @@ struct MatchCardView: View {
                     }
                     .scaleEffect(min(abs(offset.width) / 150, 1.2))
                     .animation(.spring(), value: offset.width)
-                    
+
                     Spacer()
                 }
                 Spacer()
             }
         }
     }
-    
+
     private var swipeGesture: some Gesture {
         DragGesture()
             .onChanged { gesture in
                 offset = gesture.translation
-                
+
                 // Different rotation for vertical vs horizontal swipes
                 if abs(gesture.translation.height) > abs(gesture.translation.width) {
                     // Vertical swipe - no rotation for super like
@@ -355,27 +355,27 @@ struct MatchCardView: View {
                     // Horizontal swipe - normal rotation
                     rotation = Double(gesture.translation.width / 20)
                 }
-                
+
                 // Haptic feedback for swipe zones
                 let threshold: CGFloat = 100
-                
-                if abs(gesture.translation.width) > threshold && 
+
+                if abs(gesture.translation.width) > threshold &&
                    abs(dragAmount.width) <= threshold {
                     let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
                     impactFeedback.impactOccurred()
-                } else if abs(gesture.translation.height) > threshold && 
+                } else if abs(gesture.translation.height) > threshold &&
                           abs(dragAmount.height) <= threshold && canUseSuperLike {
                     // Special haptic for super like
                     let impactFeedback = UINotificationFeedbackGenerator()
                     impactFeedback.notificationOccurred(.success)
                 }
-                
+
                 dragAmount = gesture.translation
             }
             .onEnded { gesture in
                 withAnimation(.spring()) {
                     let threshold: CGFloat = 100
-                    
+
                     // Check for super like (swipe up)
                     if gesture.translation.height < -threshold && canUseSuperLike {
                         showingSuperLikeAnimation = true
@@ -399,5 +399,5 @@ struct MatchCardView: View {
                 dragAmount = .zero
             }
     }
-    
+
 }

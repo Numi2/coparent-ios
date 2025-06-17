@@ -9,7 +9,7 @@ struct MessageInputView: View {
     @FocusState var isInputFocused: Bool
     let onSend: () -> Void
     let onTyping: (String, String) -> Void
-    
+
     var body: some View {
         HStack(spacing: 12) {
             // Image button
@@ -19,7 +19,7 @@ struct MessageInputView: View {
                 Image(systemName: "photo")
                     .font(.system(size: DesignSystem.Layout.iconSize, weight: .medium))
                     .foregroundColor(.blue)
-                    .frame(width: DesignSystem.Layout.buttonHeight, 
+                    .frame(width: DesignSystem.Layout.buttonHeight,
                            height: DesignSystem.Layout.buttonHeight)
                     .background(Color.blue.opacity(0.1))
                     .background(.ultraThinMaterial)
@@ -27,7 +27,7 @@ struct MessageInputView: View {
             }
             .disabled(isUploading)
             .accessibilityLabel("Add photo")
-            
+
             // Voice message button
             Button {
                 showingVoiceMessageView = true
@@ -35,7 +35,7 @@ struct MessageInputView: View {
                 Image(systemName: "mic")
                     .font(.system(size: DesignSystem.Layout.iconSize, weight: .medium))
                     .foregroundColor(.blue)
-                    .frame(width: DesignSystem.Layout.buttonHeight, 
+                    .frame(width: DesignSystem.Layout.buttonHeight,
                            height: DesignSystem.Layout.buttonHeight)
                     .background(Color.blue.opacity(0.1))
                     .background(.ultraThinMaterial)
@@ -43,7 +43,7 @@ struct MessageInputView: View {
             }
             .disabled(isUploading)
             .accessibilityLabel("Record voice message")
-            
+
             // Message text field
             TextField("Message", text: $messageText, axis: .vertical)
                 .textFieldStyle(GlassTextFieldStyle())
@@ -56,19 +56,19 @@ struct MessageInputView: View {
                 .onChange(of: messageText) { oldValue, newValue in
                     onTyping(oldValue, newValue)
                 }
-            
+
             // Send button
             Button(action: onSend) {
                 if isUploading {
                     ProgressView()
                         .scaleEffect(0.8)
-                        .frame(width: DesignSystem.Layout.buttonHeight, 
+                        .frame(width: DesignSystem.Layout.buttonHeight,
                                height: DesignSystem.Layout.buttonHeight)
                 } else {
                     Image(systemName: "arrow.up.circle.fill")
                         .font(.system(size: DesignSystem.Layout.iconSize + 4, weight: .medium))
                         .foregroundColor(.blue)
-                        .frame(width: DesignSystem.Layout.buttonHeight, 
+                        .frame(width: DesignSystem.Layout.buttonHeight,
                                height: DesignSystem.Layout.buttonHeight)
                 }
             }
@@ -90,4 +90,4 @@ struct MessageInputView: View {
         onSend: {},
         onTyping: { _, _ in }
     )
-} 
+}

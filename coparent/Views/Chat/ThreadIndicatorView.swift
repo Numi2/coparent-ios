@@ -5,15 +5,15 @@ struct ThreadIndicatorView: View {
     let message: BaseMessage
     let onTapThread: () -> Void
     @State private var chatService = SendbirdChatService.shared
-    
+
     private var threadReplyCount: Int {
         chatService.getThreadReplyCount(for: message)
     }
-    
+
     private var hasThread: Bool {
         chatService.hasThread(for: message)
     }
-    
+
     var body: some View {
         if hasThread {
             Button(action: onTapThread) {
@@ -22,12 +22,12 @@ struct ThreadIndicatorView: View {
                     Image(systemName: "text.bubble.rtl")
                         .font(.system(size: 14, weight: .medium))
                         .foregroundColor(.blue)
-                    
+
                     // Reply count and text
                     Text(replyCountText)
                         .font(DesignSystem.Typography.caption.weight(.medium))
                         .foregroundColor(.blue)
-                    
+
                     // Arrow indicator
                     Image(systemName: "chevron.right")
                         .font(.system(size: 10, weight: .semibold))
@@ -52,7 +52,7 @@ struct ThreadIndicatorView: View {
             .accessibilityHint("Double tap to open thread conversation")
         }
     }
-    
+
     private var replyCountText: String {
         if threadReplyCount == 1 {
             return "1 reply"
@@ -72,7 +72,7 @@ struct ThreadIndicatorView: View {
                 print("Thread tapped")
             }
         )
-        
+
         // Message with multiple replies
         ThreadIndicatorView(
             message: SampleData.sampleMessageWithMultipleReplies,
@@ -92,7 +92,7 @@ private struct SampleData {
         // In a real implementation, this would have proper thread info
         return message
     }()
-    
+
     static let sampleMessageWithMultipleReplies: BaseMessage = {
         let message = UserMessage()
         // In a real implementation, this would have proper thread info

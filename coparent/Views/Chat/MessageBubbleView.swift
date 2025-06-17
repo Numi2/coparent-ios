@@ -13,25 +13,25 @@ struct MessageBubbleView: View {
     @State private var editText = ""
     @State private var toast: ToastData?
     @State private var chatService = SendbirdChatService.shared
-    
+
     private var isCurrentUser: Bool {
         message.sender?.userId == SendbirdChat.currentUser?.userId
     }
-    
+
     private var messageStatus: MessageStatus {
         messageStatusService.getMessageStatus(message)
     }
-    
+
     private var canEditOrDelete: Bool {
         isCurrentUser && message is UserMessage
     }
-    
+
     var body: some View {
         HStack(alignment: .bottom, spacing: 8) {
-            if isCurrentUser { 
-                Spacer(minLength: 60) 
+            if isCurrentUser {
+                Spacer(minLength: 60)
             }
-            
+
             VStack(alignment: isCurrentUser ? .trailing : .leading, spacing: 6) {
                 // Message content
                 messageContentView
@@ -41,25 +41,25 @@ struct MessageBubbleView: View {
                         MessageContextMenu(
                             message: message,
                             canEditOrDelete: canEditOrDelete,
-                            onEdit: { 
+                            onEdit: {
                                 if let userMessage = message as? UserMessage {
                                     editText = userMessage.message
                                     showingEditMessage = true
                                 }
                             },
                             onDelete: { showingDeleteConfirmation = true },
-                            onCopy: { 
+                            onCopy: {
                                 if let userMessage = message as? UserMessage {
                                     UIPasteboard.general.string = userMessage.message
                                     toast = .success("Message copied")
                                 }
                             },
-                            onReply: { 
+                            onReply: {
                                 // TODO: Implement reply functionality
                             }
                         )
                     }
-                
+
                 // Message metadata
                 HStack(spacing: 6) {
                     if !isCurrentUser {
@@ -67,20 +67,20 @@ struct MessageBubbleView: View {
                             .font(DesignSystem.Typography.caption)
                             .foregroundColor(.secondary)
                     }
-                    
+
                     Text(message.createdAt, style: .time)
                         .font(DesignSystem.Typography.caption)
                         .foregroundColor(.secondary)
-                    
+
                     // Status indicators for current user messages
                     if isCurrentUser {
                         MessageStatusIndicator(status: messageStatus)
                     }
                 }
             }
-            
-            if !isCurrentUser { 
-                Spacer(minLength: 60) 
+
+            if !isCurrentUser {
+                Spacer(minLength: 60)
             }
         }
         .sheet(isPresented: $showingEditMessage) {
@@ -132,7 +132,7 @@ struct MessageBubbleView: View {
         }
         .toast($toast)
     }
-    
+
     @ViewBuilder
     private var messageContentView: some View {
         if let userMessage = message as? UserMessage {
@@ -154,7 +154,7 @@ struct MessageBubbleView: View {
             }
         }
     }
-    
+
     @ViewBuilder
     private func imageMessageView(_ fileMessage: FileMessage) -> some View {
         Group {
@@ -176,52 +176,52 @@ struct MessageBubbleView: View {
             }
         }
     }
-    
+
     @ViewBuilder
     private func voiceMessageView(_ fileMessage: FileMessage) -> some View {
         if let url = URL(string: fileMessage.url) {
             VoiceMessagePlayerView(url: url, isCurrentUser: isCurrentUser)
         }
     }
-    
+
     @ViewBuilder
     private func fileMessageView(_ fileMessage: FileMessage) -> some View {
         HStack {
             Image(systemName: "doc")
                 .foregroundColor(.blue)
-            
+
             VStack(alignment: .leading) {
                 Text(fileMessage.name)
                     .font(DesignSystem.Typography.callout)
                     .lineLimit(1)
-                
+
                 if fileMessage.fileSize > 0 {
                     Text(ByteCountFormatter.string(fromByteCount: Int64(fileMessage.fileSize), countStyle: .file))
                         .font(DesignSystem.Typography.caption)
                         .foregroundColor(.secondary)
                 }
             }
-            
+
             Spacer()
         }
         .padding(12)
         .background(Color(.systemGray6))
         .cornerRadius(16)
     }
-    
+
     private func loadImage(from message: FileMessage) async {
         guard let url = URL(string: message.url) else { return }
-        
+
         await MainActor.run {
             isLoading = true
         }
-        
-        defer { 
+
+        defer {
             Task { @MainActor in
                 isLoading = false
             }
         }
-        
+
         do {
             let (data, _) = try await URLSession.shared.data(from: url)
             if let loadedImage = UIImage(data: data) {
@@ -238,7 +238,7 @@ struct MessageBubbleView: View {
 struct MessageStatusIndicator: View {
     let status: MessageStatus
     @State private var messageStatusService = MessageStatusService.shared
-    
+
     var body: some View {
         Group {
             if status != .none {
@@ -249,7 +249,7 @@ struct MessageStatusIndicator: View {
                         .opacity(0.8)
                         .scaleEffect(status == .sending ? 1.0 : 0.9)
                         .animation(.easeInOut(duration: 0.2), value: status)
-                    
+
                     if status == .sending {
                         ProgressView()
                             .scaleEffect(0.4)
@@ -260,7 +260,7 @@ struct MessageStatusIndicator: View {
             }
         }
     }
-    
+
     private var statusAccessibilityLabel: String {
         switch status {
         case .sending: return "Sending message"
@@ -280,26 +280,26 @@ struct MessageContextMenu: View {
     let onDelete: () -> Void
     let onCopy: () -> Void
     let onReply: () -> Void
-    
+
     var body: some View {
         Group {
             if canEditOrDelete {
                 Button(action: onEdit) {
                     Label("Edit", systemImage: "pencil")
                 }
-                
+
                 Button(action: onDelete) {
                     Label("Delete", systemImage: "trash")
                 }
                 .foregroundColor(.red)
             }
-            
+
             if message is UserMessage {
                 Button(action: onCopy) {
                     Label("Copy", systemImage: "doc.on.doc")
                 }
             }
-            
+
             Button(action: onReply) {
                 Label("Reply", systemImage: "arrowshape.turn.up.left")
             }
@@ -313,13 +313,13 @@ struct EditMessageView: View {
     let onCancel: () -> Void
     @Environment(\.presentationMode) private var presentationMode
     @FocusState private var isTextFieldFocused: Bool
-    
+
     init(message: String, onSave: @escaping (String) -> Void, onCancel: @escaping () -> Void) {
         self._message = State(initialValue: message)
         self.onSave = onSave
         self.onCancel = onCancel
     }
-    
+
     var body: some View {
         NavigationView {
             VStack(spacing: DesignSystem.Layout.spacing) {
@@ -327,14 +327,14 @@ struct EditMessageView: View {
                     .font(DesignSystem.Typography.title2)
                     .fontWeight(.semibold)
                     .padding(.top)
-                
+
                 TextField("Message", text: $message, axis: .vertical)
                     .textFieldStyle(GlassTextFieldStyle())
                     .focused($isTextFieldFocused)
                     .lineLimit(3...10)
-                
+
                 Spacer()
-                
+
                 HStack(spacing: DesignSystem.Layout.spacing) {
                     Button("Cancel") {
                         onCancel()
@@ -342,7 +342,7 @@ struct EditMessageView: View {
                     }
                     .buttonStyle(.bordered)
                     .foregroundColor(.secondary)
-                    
+
                     Button("Save") {
                         onSave(message)
                         presentationMode.wrappedValue.dismiss()
@@ -370,4 +370,4 @@ struct EditMessageView: View {
         MessageStatusIndicator(status: .failed)
     }
     .padding()
-} 
+}

@@ -5,7 +5,7 @@ class AppState {
     var isOnboarded = false
     var currentUser: User?
     var onboardingStep: OnboardingStep = .welcome
-    
+
     enum OnboardingStep {
         case welcome
         case userType
@@ -13,7 +13,7 @@ class AppState {
         case terms
         case complete
     }
-    
+
     func initializeServices() async {
         do {
             try await SendbirdService.shared.initialize()
@@ -21,10 +21,10 @@ class AppState {
             print("Failed to initialize Sendbird: \(error)")
         }
     }
-    
+
     func connectToSendbird() async {
         guard let user = currentUser else { return }
-        
+
         do {
             try await SendbirdService.shared.connect(userId: user.id, nickname: user.name)
         } catch {
@@ -38,7 +38,7 @@ class AppState {
 @main
 struct CoParentApp: App {
     @State private var appState = AppState()
-    
+
     var body: some Scene {
         WindowGroup {
             if !appState.isOnboarded {

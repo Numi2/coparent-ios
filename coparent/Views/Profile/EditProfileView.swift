@@ -4,14 +4,14 @@ import PhotosUI
 struct EditProfileView: View {
     @Environment(\.dismiss) private var dismiss
     @ObservedObject var viewModel: ProfileViewModel
-    
+
     @State private var name: String
     @State private var bio: String
     @State private var city: String
     @State private var state: String
     @State private var selectedParentingStyle: User.ParentingStyle
     @State private var selectedInterests: Set<User.Interest>
-    
+
     init(viewModel: ProfileViewModel) {
         self.viewModel = viewModel
         _name = State(initialValue: viewModel.user.name)
@@ -21,7 +21,7 @@ struct EditProfileView: View {
         _selectedParentingStyle = State(initialValue: viewModel.user.parentingStyle)
         _selectedInterests = State(initialValue: Set(viewModel.user.interests))
     }
-    
+
     var body: some View {
         NavigationStack {
             Form {
@@ -46,18 +46,18 @@ struct EditProfileView: View {
                         }
                     }
                 }
-                
+
                 Section("Basic Information") {
                     TextField("Name", text: $name)
                     TextField("Bio", text: $bio, axis: .vertical)
                         .lineLimit(5...)
                 }
-                
+
                 Section("Location") {
                     TextField("City", text: $city)
                     TextField("State", text: $state)
                 }
-                
+
                 Section("Parenting Style") {
                     Picker("Style", selection: $selectedParentingStyle) {
                         ForEach(User.ParentingStyle.allCases, id: \.self) { style in
@@ -66,7 +66,7 @@ struct EditProfileView: View {
                         }
                     }
                 }
-                
+
                 Section("Interests") {
                     ForEach(User.Interest.allCases, id: \.self) { interest in
                         Toggle(
@@ -93,7 +93,7 @@ struct EditProfileView: View {
                         dismiss()
                     }
                 }
-                
+
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
                         Task {
@@ -107,7 +107,7 @@ struct EditProfileView: View {
             }
         }
     }
-    
+
     private func saveChanges() async {
         let location = User.Location(
             city: city,
@@ -115,7 +115,7 @@ struct EditProfileView: View {
             country: viewModel.user.location.country,
             coordinates: viewModel.user.location.coordinates
         )
-        
+
         await viewModel.updateProfile(
             name: name,
             bio: bio,
@@ -123,7 +123,7 @@ struct EditProfileView: View {
             parentingStyle: selectedParentingStyle,
             interests: Array(selectedInterests)
         )
-        
+
         dismiss()
     }
 }
@@ -159,4 +159,4 @@ struct EditProfileView: View {
             )
         )
     )
-} 
+}

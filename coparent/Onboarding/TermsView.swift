@@ -4,11 +4,11 @@ struct TermsView: View {
     @Environment(AppState.self) private var appState
     @State private var acceptedTerms = false
     @State private var acceptedPrivacy = false
-    
+
     private var canContinue: Bool {
         acceptedTerms && acceptedPrivacy
     }
-    
+
     var body: some View {
         ScrollView {
             VStack(spacing: 24) {
@@ -16,7 +16,7 @@ struct TermsView: View {
                     .font(.title)
                     .bold()
                     .padding(.top, 32)
-                
+
                 VStack(alignment: .leading, spacing: 20) {
                     Toggle(isOn: $acceptedTerms) {
                         VStack(alignment: .leading, spacing: 4) {
@@ -27,7 +27,7 @@ struct TermsView: View {
                                 .foregroundStyle(.secondary)
                         }
                     }
-                    
+
                     Toggle(isOn: $acceptedPrivacy) {
                         VStack(alignment: .leading, spacing: 4) {
                             Text("Privacy Policy")
@@ -37,7 +37,7 @@ struct TermsView: View {
                                 .foregroundStyle(.secondary)
                         }
                     }
-                    
+
                     Text(
                         "By continuing, you agree to our Terms of Service and Privacy Policy. "
                         + "We take your privacy seriously and will never share your personal "
@@ -48,9 +48,9 @@ struct TermsView: View {
                     .padding(.top)
                 }
                 .padding(.horizontal, 24)
-                
+
                 Spacer()
-                
+
                 Button(action: {
                     withAnimation {
                         appState.onboardingStep = .complete
@@ -75,4 +75,4 @@ struct TermsView: View {
 #Preview {
     TermsView()
         .environment(AppState())
-} 
+}

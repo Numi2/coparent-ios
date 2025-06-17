@@ -5,7 +5,7 @@ struct SavedFiltersSection: View {
     let savedFilters: [SavedFilterSet]
     let onApplyFilter: (SavedFilterSet) -> Void
     let onDeleteFilter: (SavedFilterSet) -> Void
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack {
@@ -14,16 +14,16 @@ struct SavedFiltersSection: View {
                 Text("Saved Filters")
                     .font(DesignSystem.Typography.headline)
                     .fontWeight(.semibold)
-                
+
                 Spacer()
-                
+
                 Button(action: {}) {
                     Text("Manage")
                         .font(DesignSystem.Typography.caption)
                         .foregroundColor(.blue)
                 }
             }
-            
+
             if savedFilters.isEmpty {
                 Text("No saved filters yet")
                     .font(DesignSystem.Typography.callout)
@@ -54,21 +54,21 @@ struct SavedFilterCard: View {
     let onApply: () -> Void
     let onDelete: () -> Void
     @State private var showingDeleteConfirmation = false
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Text(filterSet.name)
                     .font(DesignSystem.Typography.subheadline)
                     .fontWeight(.medium)
-                
+
                 Spacer()
-                
+
                 Menu {
                     Button(action: onApply) {
                         Label("Apply", systemImage: "checkmark.circle")
                     }
-                    
+
                     Button(role: .destructive, action: { showingDeleteConfirmation = true }) {
                         Label("Delete", systemImage: "trash")
                     }
@@ -77,11 +77,11 @@ struct SavedFilterCard: View {
                         .foregroundColor(.secondary)
                 }
             }
-            
+
             Text("\(filterSet.filterCount) filters")
                 .font(DesignSystem.Typography.caption)
                 .foregroundColor(.secondary)
-            
+
             Text(filterSet.lastUsed.formatted(date: .abbreviated, time: .omitted))
                 .font(DesignSystem.Typography.caption2)
                 .foregroundColor(.secondary)
@@ -104,7 +104,7 @@ struct SavedFilterSet: Identifiable {
     let name: String
     let filters: FilterSet
     let lastUsed: Date
-    
+
     var filterCount: Int {
         var count = 0
         if !filters.selectedParentingStyles.isEmpty { count += 1 }
@@ -136,4 +136,4 @@ struct SavedFilterSet: Identifiable {
         onDeleteFilter: { _ in }
     )
     .padding()
-} 
+}

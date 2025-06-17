@@ -4,7 +4,7 @@ struct BasicInfoStepView: View {
     @Environment(ProfileBuilderViewModel.self) private var profileBuilder
     @State private var animateFields = false
     @State private var toast: ToastData?
-    
+
     var body: some View {
         VStack(spacing: DesignSystem.Layout.spacing * 1.5) {
             // Personal Information Section
@@ -15,19 +15,19 @@ struct BasicInfoStepView: View {
                         Text("Full Name")
                             .font(DesignSystem.Typography.callout)
                             .fontWeight(.medium)
-                        
+
                         TextField("Enter your full name", text: $profileBuilder.name)
                             .textFieldStyle(GlassTextFieldStyle())
                             .textContentType(.name)
                             .submitLabel(.next)
                     }
-                    
+
                     // Email Field
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Email Address")
                             .font(DesignSystem.Typography.callout)
                             .fontWeight(.medium)
-                        
+
                         TextField("Enter your email", text: $profileBuilder.email)
                             .textFieldStyle(GlassTextFieldStyle())
                             .textContentType(.emailAddress)
@@ -42,32 +42,32 @@ struct BasicInfoStepView: View {
                                 }
                             }
                     }
-                    
+
                     // Phone Number Field (Optional)
                     VStack(alignment: .leading, spacing: 8) {
                         HStack {
                             Text("Phone Number")
                                 .font(DesignSystem.Typography.callout)
                                 .fontWeight(.medium)
-                            
+
                             Text("(Optional)")
                                 .font(DesignSystem.Typography.caption)
                                 .foregroundColor(.secondary)
                         }
-                        
+
                         TextField("Enter your phone number", text: $profileBuilder.phoneNumber)
                             .textFieldStyle(GlassTextFieldStyle())
                             .textContentType(.telephoneNumber)
                             .keyboardType(.phonePad)
                             .submitLabel(.next)
                     }
-                    
+
                     // Date of Birth
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Date of Birth")
                             .font(DesignSystem.Typography.callout)
                             .fontWeight(.medium)
-                        
+
                         DatePicker("", selection: $profileBuilder.dateOfBirth, displayedComponents: .date)
                             .datePickerStyle(.compact)
                             .labelsHidden()
@@ -82,7 +82,7 @@ struct BasicInfoStepView: View {
                     }
                 }
             }
-            
+
             // User Type Section
             sectionView(title: "I am a...", icon: "figure.and.child.holdinghands") {
                 VStack(spacing: DesignSystem.Layout.spacing) {
@@ -98,7 +98,7 @@ struct BasicInfoStepView: View {
                     }
                 }
             }
-            
+
             // Location Section
             sectionView(title: "Location", icon: "location.fill") {
                 VStack(spacing: DesignSystem.Layout.spacing) {
@@ -108,26 +108,26 @@ struct BasicInfoStepView: View {
                             Text("City")
                                 .font(DesignSystem.Typography.callout)
                                 .fontWeight(.medium)
-                            
+
                             TextField("City", text: $profileBuilder.city)
                                 .textFieldStyle(GlassTextFieldStyle())
                                 .textContentType(.addressCity)
                                 .submitLabel(.next)
                         }
-                        
+
                         // State
                         VStack(alignment: .leading, spacing: 8) {
                             Text("State")
                                 .font(DesignSystem.Typography.callout)
                                 .fontWeight(.medium)
-                            
+
                             TextField("State", text: $profileBuilder.state)
                                 .textFieldStyle(GlassTextFieldStyle())
                                 .textContentType(.addressState)
                                 .submitLabel(.done)
                         }
                     }
-                    
+
                     // Location Tips
                     HStack {
                         Image(systemName: "info.circle")
@@ -143,7 +143,7 @@ struct BasicInfoStepView: View {
                     .cornerRadius(DesignSystem.Layout.cornerRadius)
                 }
             }
-            
+
             // Completion Status
             if !profileBuilder.isBasicInfoComplete {
                 incompleteFieldsView
@@ -156,18 +156,18 @@ struct BasicInfoStepView: View {
         }
         .toast($toast)
     }
-    
+
     // MARK: - Computed Properties
-    
+
     private var isValidEmail: Bool {
         let emailRegEx = "[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,64}"
         let emailPred = NSPredicate(format: "SELF MATCHES %@", emailRegEx)
         return emailPred.evaluate(with: profileBuilder.email)
     }
-    
+
     private var incompleteFields: [String] {
         var fields: [String] = []
-        
+
         if profileBuilder.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             fields.append("Full Name")
         }
@@ -180,12 +180,12 @@ struct BasicInfoStepView: View {
         if profileBuilder.state.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             fields.append("State")
         }
-        
+
         return fields
     }
-    
+
     // MARK: - Supporting Views
-    
+
     @ViewBuilder
     private func sectionView<Content: View>(
         title: String,
@@ -203,12 +203,12 @@ struct BasicInfoStepView: View {
                             endPoint: .bottomTrailing
                         )
                     )
-                
+
                 Text(title)
                     .font(DesignSystem.Typography.headline)
                     .fontWeight(.semibold)
             }
-            
+
             // Section Content
             GlassCardView {
                 content()
@@ -218,7 +218,7 @@ struct BasicInfoStepView: View {
         .offset(y: animateFields ? 0 : 20)
         .animation(DesignSystem.Animation.spring, value: animateFields)
     }
-    
+
     private var incompleteFieldsView: some View {
         GlassCardView {
             VStack(alignment: .leading, spacing: DesignSystem.Layout.spacing) {
@@ -229,11 +229,11 @@ struct BasicInfoStepView: View {
                         .font(DesignSystem.Typography.callout)
                         .fontWeight(.semibold)
                 }
-                
+
                 Text("Please complete the following fields to continue:")
                     .font(DesignSystem.Typography.caption)
                     .foregroundColor(.secondary)
-                
+
                 VStack(alignment: .leading, spacing: 4) {
                     ForEach(incompleteFields, id: \.self) { field in
                         HStack {
@@ -256,7 +256,7 @@ struct UserTypeSelectionView: View {
     let userType: User.UserType
     let isSelected: Bool
     let action: () -> Void
-    
+
     var body: some View {
         Button(action: action) {
             HStack(spacing: DesignSystem.Layout.spacing) {
@@ -269,21 +269,21 @@ struct UserTypeSelectionView: View {
                         Circle()
                             .fill(isSelected ? Color.blue : Color.gray.opacity(0.2))
                     )
-                
+
                 // Content
                 VStack(alignment: .leading, spacing: 4) {
                     Text(userType.displayTitle)
                         .font(DesignSystem.Typography.callout)
                         .fontWeight(.semibold)
                         .foregroundColor(isSelected ? .white : .primary)
-                    
+
                     Text(userType.description)
                         .font(DesignSystem.Typography.caption)
                         .foregroundColor(isSelected ? Color.white.opacity(0.8) : .secondary)
                 }
-                
+
                 Spacer()
-                
+
                 // Selection Indicator
                 Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
                     .foregroundColor(isSelected ? .white : .gray)
@@ -310,7 +310,7 @@ extension User.UserType: CaseIterable {
     public static var allCases: [User.UserType] {
         return [.singleParent, .coParent, .potentialCoParent]
     }
-    
+
     var displayTitle: String {
         switch self {
         case .singleParent:
@@ -321,7 +321,7 @@ extension User.UserType: CaseIterable {
             return "Potential Co-Parent"
         }
     }
-    
+
     var description: String {
         switch self {
         case .singleParent:
@@ -332,7 +332,7 @@ extension User.UserType: CaseIterable {
             return "I'm open to becoming a parent with the right person"
         }
     }
-    
+
     var systemImage: String {
         switch self {
         case .singleParent:

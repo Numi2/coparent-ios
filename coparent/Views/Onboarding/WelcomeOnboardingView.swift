@@ -4,7 +4,7 @@ struct WelcomeOnboardingView: View {
     @State private var currentPage = 0
     @State private var showLogin = false
     @State private var showSignUp = false
-    
+
     let pages = [
         OnboardingPage(
             title: "Welcome to Co-Parent",
@@ -22,13 +22,13 @@ struct WelcomeOnboardingView: View {
             imageName: "lock.shield.fill"
         )
     ]
-    
+
     var body: some View {
         ZStack {
             // Background
             DesignSystem.Glass.background
                 .ignoresSafeArea()
-            
+
             VStack(spacing: DesignSystem.Layout.spacing * 2) {
                 // Page content
                 TabView(selection: $currentPage) {
@@ -39,11 +39,11 @@ struct WelcomeOnboardingView: View {
                                 .foregroundColor(DesignSystem.Colors.primary)
                                 .padding()
                                 .glassCard()
-                            
+
                             Text(pages[index].title)
                                 .font(DesignSystem.Typography.title)
                                 .multilineTextAlignment(.center)
-                            
+
                             Text(pages[index].description)
                                 .font(DesignSystem.Typography.body)
                                 .multilineTextAlignment(.center)
@@ -55,7 +55,7 @@ struct WelcomeOnboardingView: View {
                 }
                 .tabViewStyle(.page)
                 .indexViewStyle(.page(backgroundDisplayMode: .always))
-                
+
                 // Action buttons
                 VStack(spacing: DesignSystem.Layout.spacing) {
                     Button(action: { showSignUp = true }) {
@@ -68,7 +68,7 @@ struct WelcomeOnboardingView: View {
                             .cornerRadius(DesignSystem.Layout.cornerRadius)
                     }
                     .buttonStyle(GlassButtonStyle())
-                    
+
                     Button(action: { showLogin = true }) {
                         Text("I already have an account")
                             .font(DesignSystem.Typography.subheadline)

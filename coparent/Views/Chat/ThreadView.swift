@@ -14,7 +14,7 @@ struct ThreadView: View {
     @State private var showingError = false
     @State private var isUploading = false
     @Environment(\.dismiss) private var dismiss
-    
+
     var body: some View {
         NavigationView {
             VStack(spacing: 0) {
@@ -22,10 +22,10 @@ struct ThreadView: View {
                 ReplyBar(parentMessage: parentMessage)
                     .padding(.horizontal)
                     .padding(.top, 8)
-                
+
                 Divider()
                     .background(.ultraThinMaterial)
-                
+
                 // Thread messages
                 ScrollViewReader { proxy in
                     ScrollView {
@@ -45,10 +45,10 @@ struct ThreadView: View {
                         }
                     }
                 }
-                
+
                 Divider()
                     .background(.ultraThinMaterial)
-                
+
                 // Thread message input
                 threadMessageInput
             }
@@ -102,7 +102,7 @@ struct ThreadView: View {
             }
         }
     }
-    
+
     @ViewBuilder
     private var threadMessageInput: some View {
         HStack(spacing: 12) {
@@ -111,7 +111,7 @@ struct ThreadView: View {
                 Image(systemName: "photo")
                     .font(.system(size: DesignSystem.Layout.iconSize, weight: .medium))
                     .foregroundColor(.blue)
-                    .frame(width: DesignSystem.Layout.buttonHeight, 
+                    .frame(width: DesignSystem.Layout.buttonHeight,
                            height: DesignSystem.Layout.buttonHeight)
                     .background(Color.blue.opacity(0.1))
                     .background(.ultraThinMaterial)
@@ -119,7 +119,7 @@ struct ThreadView: View {
             }
             .disabled(isUploading)
             .accessibilityLabel("Add photo to thread")
-            
+
             // Message text field
             TextField("Reply in thread", text: $messageText)
                 .textFieldStyle(GlassTextFieldStyle())
@@ -128,23 +128,23 @@ struct ThreadView: View {
                 .onSubmit {
                     sendThreadMessage()
                 }
-            
+
             // Send button
             Button(action: sendThreadMessage) {
                 if isUploading {
                     ProgressView()
                         .scaleEffect(0.8)
-                        .frame(width: DesignSystem.Layout.buttonHeight, 
+                        .frame(width: DesignSystem.Layout.buttonHeight,
                                height: DesignSystem.Layout.buttonHeight)
                         .background(Color.blue.opacity(0.1))
                         .background(.ultraThinMaterial)
                         .clipShape(Circle())
                 } else {
-                    Image(systemName: messageText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? 
+                    Image(systemName: messageText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ?
                           "arrow.up.circle" : "arrow.up.circle.fill")
                         .font(.system(size: DesignSystem.Layout.iconSize, weight: .medium))
                         .foregroundColor(.blue)
-                        .frame(width: DesignSystem.Layout.buttonHeight, 
+                        .frame(width: DesignSystem.Layout.buttonHeight,
                                height: DesignSystem.Layout.buttonHeight)
                         .background(Color.blue.opacity(0.1))
                         .background(.ultraThinMaterial)
@@ -159,10 +159,10 @@ struct ThreadView: View {
         .padding(DesignSystem.Layout.padding)
         .background(.ultraThinMaterial)
     }
-    
+
     private func sendThreadMessage() {
         guard !messageText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
-        
+
         Task {
             do {
                 try await chatService.sendThreadMessage(messageText, to: parentMessage)
@@ -175,12 +175,12 @@ struct ThreadView: View {
             }
         }
     }
-    
+
     private func sendThreadImages(_ images: [UIImage]) {
         Task {
             isUploading = true
             defer { isUploading = false }
-            
+
             do {
                 for image in images {
                     try await chatService.sendThreadImage(image, to: parentMessage)
@@ -210,7 +210,7 @@ private struct SampleData {
         // This would normally be created from Sendbird, simplified for preview
         return UserMessage()
     }()
-    
+
     static let sampleChannel: GroupChannel = {
         // This would normally be created from Sendbird, simplified for preview
         return GroupChannel()

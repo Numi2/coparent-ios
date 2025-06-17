@@ -5,18 +5,18 @@ struct SuperLikeButton: View {
     let isEnabled: Bool
     let isPremium: Bool
     let cooldownTimeRemaining: TimeInterval
-    
+
     @State private var isPressed = false
     @State private var pulseAnimation = false
     @State private var glowAnimation = false
-    
+
     var body: some View {
         Button(action: {
             if isEnabled {
                 // Haptic feedback for premium feel
                 let impactFeedback = UINotificationFeedbackGenerator()
                 impactFeedback.notificationOccurred(.success)
-                
+
                 onSuperLike()
             }
         }) {
@@ -38,7 +38,7 @@ struct SuperLikeButton: View {
                     .frame(width: 80, height: 80)
                     .blur(radius: 10)
                     .opacity(isPremium && isEnabled ? 1 : 0.3)
-                
+
                 // Main button background
                 Circle()
                     .fill(.ultraThinMaterial)
@@ -47,7 +47,7 @@ struct SuperLikeButton: View {
                         Circle()
                             .stroke(
                                 LinearGradient(
-                                    colors: isPremium && isEnabled ? 
+                                    colors: isPremium && isEnabled ?
                                         [.blue, .purple] : [.gray.opacity(0.5)],
                                     startPoint: .topLeading,
                                     endPoint: .bottomTrailing
@@ -56,7 +56,7 @@ struct SuperLikeButton: View {
                             )
                     )
                     .scaleEffect(isPressed ? 0.95 : (pulseAnimation ? 1.05 : 1.0))
-                
+
                 // Button content
                 buttonContent
             }
@@ -74,7 +74,7 @@ struct SuperLikeButton: View {
         .accessibilityLabel(accessibilityLabel)
         .accessibilityHint(accessibilityHint)
     }
-    
+
     @ViewBuilder
     private var buttonContent: some View {
         if cooldownTimeRemaining > 0 {
@@ -83,7 +83,7 @@ struct SuperLikeButton: View {
                 Image(systemName: "star.fill")
                     .font(.system(size: 16, weight: .bold))
                     .foregroundColor(.gray)
-                
+
                 Text(formatCooldownTime(cooldownTimeRemaining))
                     .font(.system(size: 8, weight: .medium))
                     .foregroundColor(.gray)
@@ -94,7 +94,7 @@ struct SuperLikeButton: View {
                 Image(systemName: "star")
                     .font(.system(size: 18, weight: .bold))
                     .foregroundColor(.gray)
-                
+
                 Image(systemName: "lock.fill")
                     .font(.system(size: 8))
                     .foregroundColor(.gray)
@@ -112,7 +112,7 @@ struct SuperLikeButton: View {
                 )
         }
     }
-    
+
     private var accessibilityLabel: String {
         if cooldownTimeRemaining > 0 {
             return "Super Like unavailable, cooldown \(formatCooldownTime(cooldownTimeRemaining)) remaining"
@@ -122,7 +122,7 @@ struct SuperLikeButton: View {
             return "Super Like"
         }
     }
-    
+
     private var accessibilityHint: String {
         if cooldownTimeRemaining > 0 {
             return "Wait for cooldown to finish"
@@ -132,12 +132,12 @@ struct SuperLikeButton: View {
             return "Double tap to send super like"
         }
     }
-    
+
     private func formatCooldownTime(_ timeInterval: TimeInterval) -> String {
-        let hours = Int(timeInterval) / 3600
-        let minutes = (Int(timeInterval) % 3600) / 60
+        let hours = Int(timeInterval) / 3_600
+        let minutes = (Int(timeInterval) % 3_600) / 60
         let seconds = Int(timeInterval) % 60
-        
+
         if hours > 0 {
             return "\(hours)h"
         } else if minutes > 0 {
@@ -146,16 +146,16 @@ struct SuperLikeButton: View {
             return "\(seconds)s"
         }
     }
-    
+
     private func startAnimations() {
         // Only animate if premium and enabled
         guard isPremium && isEnabled else { return }
-        
+
         // Pulse animation
         withAnimation(.easeInOut(duration: 2.0).repeatForever(autoreverses: true)) {
             pulseAnimation = true
         }
-        
+
         // Glow animation
         withAnimation(.easeInOut(duration: 1.5).repeatForever(autoreverses: true)) {
             glowAnimation = true
@@ -183,7 +183,7 @@ struct SuperLikeButton: View {
             onSuperLike: { print("Super like activated!") },
             isEnabled: false,
             isPremium: true,
-            cooldownTimeRemaining: 3661 // 1 hour, 1 minute, 1 second
+            cooldownTimeRemaining: 3_661 // 1 hour, 1 minute, 1 second
         )
         .padding()
     }

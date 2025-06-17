@@ -5,23 +5,23 @@ struct InterestsStepView: View {
     @State private var animateContent = false
     @State private var searchText = ""
     @State private var showingSuggestions = false
-    
+
     var body: some View {
         VStack(spacing: DesignSystem.Layout.spacing * 1.5) {
             // Selection Progress
             selectionProgressSection
-            
+
             // Search Section
             searchSection
-            
+
             // Suggested Interests
             if !suggestedInterests.isEmpty {
                 suggestedInterestsSection
             }
-            
+
             // All Interests Grid
             allInterestsSection
-            
+
             // Selection Requirements
             selectionRequirementsSection
         }
@@ -31,9 +31,9 @@ struct InterestsStepView: View {
             }
         }
     }
-    
+
     // MARK: - Selection Progress Section
-    
+
     private var selectionProgressSection: some View {
         VStack(alignment: .leading, spacing: DesignSystem.Layout.spacing) {
             // Section Header
@@ -46,37 +46,37 @@ struct InterestsStepView: View {
                             endPoint: .bottomTrailing
                         )
                     )
-                
+
                 Text("Your Interests")
                     .font(DesignSystem.Typography.headline)
                     .fontWeight(.semibold)
-                
+
                 Spacer()
-                
+
                 Text("\(profileBuilder.selectedInterests.count)/\(User.Interest.allCases.count)")
                     .font(DesignSystem.Typography.caption)
                     .foregroundColor(.secondary)
             }
-            
+
             GlassCardView {
                 VStack(spacing: DesignSystem.Layout.spacing) {
                     HStack {
                         Text("Selected: \(profileBuilder.selectedInterests.count)")
                             .font(DesignSystem.Typography.callout)
                             .fontWeight(.medium)
-                        
+
                         Spacer()
-                        
+
                         Text("Minimum: 3")
                             .font(DesignSystem.Typography.caption)
                             .foregroundColor(profileBuilder.selectedInterests.count >= 3 ? .green : .orange)
                     }
-                    
+
                     // Progress Bar
                     ProgressView(value: Double(profileBuilder.selectedInterests.count), total: Double(min(6, User.Interest.allCases.count)))
                         .progressViewStyle(GlassProgressViewStyle())
                         .scaleEffect(y: 2.0)
-                    
+
                     if profileBuilder.selectedInterests.count < 3 {
                         HStack {
                             Image(systemName: "info.circle")
@@ -93,20 +93,20 @@ struct InterestsStepView: View {
         .offset(y: animateContent ? 0 : 20)
         .animation(DesignSystem.Animation.spring, value: animateContent)
     }
-    
+
     // MARK: - Search Section
-    
+
     private var searchSection: some View {
         VStack(alignment: .leading, spacing: DesignSystem.Layout.spacing) {
             HStack {
                 Image(systemName: "magnifyingglass")
                     .foregroundColor(.gray)
-                
+
                 Text("Find Interests")
                     .font(DesignSystem.Typography.headline)
                     .fontWeight(.semibold)
             }
-            
+
             GlassCardView {
                 TextField("Search interests...", text: $searchText)
                     .textFieldStyle(GlassTextFieldStyle())
@@ -117,28 +117,28 @@ struct InterestsStepView: View {
         .offset(y: animateContent ? 0 : 20)
         .animation(DesignSystem.Animation.spring.delay(0.2), value: animateContent)
     }
-    
+
     // MARK: - Suggested Interests Section
-    
+
     private var suggestedInterestsSection: some View {
         VStack(alignment: .leading, spacing: DesignSystem.Layout.spacing) {
             HStack {
                 Image(systemName: "sparkles")
                     .foregroundColor(.purple)
-                
+
                 Text("Suggested for You")
                     .font(DesignSystem.Typography.headline)
                     .fontWeight(.semibold)
-                
+
                 Spacer()
-                
+
                 Button("Refresh") {
                     // This would trigger new suggestions in a real app
                 }
                 .font(DesignSystem.Typography.caption)
                 .foregroundColor(.purple)
             }
-            
+
             GlassCardView {
                 LazyVGrid(columns: interestColumns, spacing: DesignSystem.Layout.spacing) {
                     ForEach(suggestedInterests, id: \.self) { interest in
@@ -157,20 +157,20 @@ struct InterestsStepView: View {
         .offset(y: animateContent ? 0 : 20)
         .animation(DesignSystem.Animation.spring.delay(0.4), value: animateContent)
     }
-    
+
     // MARK: - All Interests Section
-    
+
     private var allInterestsSection: some View {
         VStack(alignment: .leading, spacing: DesignSystem.Layout.spacing) {
             HStack {
                 Image(systemName: "grid.circle.fill")
                     .foregroundColor(.blue)
-                
+
                 Text("All Interests")
                     .font(DesignSystem.Typography.headline)
                     .fontWeight(.semibold)
             }
-            
+
             GlassCardView {
                 LazyVGrid(columns: interestColumns, spacing: DesignSystem.Layout.spacing) {
                     ForEach(filteredInterests, id: \.self) { interest in
@@ -189,26 +189,26 @@ struct InterestsStepView: View {
         .offset(y: animateContent ? 0 : 20)
         .animation(DesignSystem.Animation.spring.delay(0.6), value: animateContent)
     }
-    
+
     // MARK: - Selection Requirements Section
-    
+
     private var selectionRequirementsSection: some View {
         if profileBuilder.selectedInterests.count >= 3 {
             GlassCardView {
                 HStack {
                     Image(systemName: "checkmark.circle.fill")
                         .foregroundColor(.green)
-                    
+
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Great selection!")
                             .font(DesignSystem.Typography.callout)
                             .fontWeight(.semibold)
-                        
+
                         Text("You've selected enough interests to find great matches")
                             .font(DesignSystem.Typography.caption)
                             .foregroundColor(.secondary)
                     }
-                    
+
                     Spacer()
                 }
             }
@@ -217,9 +217,9 @@ struct InterestsStepView: View {
             .animation(DesignSystem.Animation.spring.delay(0.8), value: animateContent)
         }
     }
-    
+
     // MARK: - Computed Properties
-    
+
     private var filteredInterests: [User.Interest] {
         if searchText.isEmpty {
             return User.Interest.allCases
@@ -230,15 +230,15 @@ struct InterestsStepView: View {
             }
         }
     }
-    
+
     private var suggestedInterests: [User.Interest] {
         profileBuilder.getInterestSuggestions()
     }
-    
+
     private let interestColumns = Array(repeating: GridItem(.flexible(), spacing: DesignSystem.Layout.spacing), count: 2)
-    
+
     // MARK: - Methods
-    
+
     private func toggleInterest(_ interest: User.Interest) {
         withAnimation(DesignSystem.Animation.spring) {
             profileBuilder.toggleInterest(interest)
@@ -253,18 +253,18 @@ struct InterestChip: View {
     let isSelected: Bool
     let style: ChipStyle
     let action: () -> Void
-    
+
     enum ChipStyle {
         case normal
         case suggested
-        
+
         var backgroundColor: Color {
             switch self {
             case .normal: return .clear
             case .suggested: return .purple.opacity(0.1)
             }
         }
-        
+
         var borderColor: Color {
             switch self {
             case .normal: return .gray.opacity(0.3)
@@ -272,7 +272,7 @@ struct InterestChip: View {
             }
         }
     }
-    
+
     var body: some View {
         Button(action: action) {
             HStack(spacing: 8) {
@@ -280,16 +280,16 @@ struct InterestChip: View {
                 Image(systemName: interest.systemImage)
                     .font(.system(size: 16, weight: .medium))
                     .foregroundColor(isSelected ? .white : iconColor)
-                
+
                 // Interest Name
                 Text(interest.displayName)
                     .font(DesignSystem.Typography.caption)
                     .fontWeight(.medium)
                     .foregroundColor(isSelected ? .white : .primary)
                     .lineLimit(1)
-                
+
                 Spacer()
-                
+
                 // Selection Indicator
                 if isSelected {
                     Image(systemName: "checkmark.circle.fill")
@@ -312,7 +312,7 @@ struct InterestChip: View {
         .scaleEffect(isSelected ? 1.05 : 1.0)
         .animation(DesignSystem.Animation.spring, value: isSelected)
     }
-    
+
     private var iconColor: Color {
         switch style {
         case .normal: return .blue
@@ -340,7 +340,7 @@ extension User.Interest {
         case .healthAndFitness: return "Health & Fitness"
         }
     }
-    
+
     var systemImage: String {
         switch self {
         case .outdoorActivities: return "figure.hiking"
@@ -357,7 +357,7 @@ extension User.Interest {
         case .healthAndFitness: return "figure.run"
         }
     }
-    
+
     var keywords: [String] {
         switch self {
         case .outdoorActivities: return ["hiking", "camping", "adventure", "outdoors", "nature"]

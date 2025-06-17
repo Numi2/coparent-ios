@@ -5,20 +5,20 @@ struct ChildrenStepView: View {
     @State private var animateContent = false
     @State private var showingAddChild = false
     @State private var toast: ToastData?
-    
+
     var body: some View {
         VStack(spacing: DesignSystem.Layout.spacing * 1.5) {
             // Children Overview
             childrenOverviewSection
-            
+
             // Add Children Section
             addChildrenSection
-            
+
             // Children List
             if !profileBuilder.children.isEmpty {
                 childrenListSection
             }
-            
+
             // Privacy Information
             privacyInformationSection
         }
@@ -36,9 +36,9 @@ struct ChildrenStepView: View {
         }
         .toast($toast)
     }
-    
+
     // MARK: - Children Overview Section
-    
+
     private var childrenOverviewSection: some View {
         VStack(alignment: .leading, spacing: DesignSystem.Layout.spacing) {
             // Section Header
@@ -51,18 +51,18 @@ struct ChildrenStepView: View {
                             endPoint: .bottomTrailing
                         )
                     )
-                
+
                 Text("Your Children")
                     .font(DesignSystem.Typography.headline)
                     .fontWeight(.semibold)
-                
+
                 Spacer()
-                
+
                 Text("Optional")
                     .font(DesignSystem.Typography.caption)
                     .foregroundColor(.secondary)
             }
-            
+
             GlassCardView {
                 VStack(spacing: DesignSystem.Layout.spacing) {
                     HStack {
@@ -70,26 +70,26 @@ struct ChildrenStepView: View {
                             Text("Children Added")
                                 .font(DesignSystem.Typography.callout)
                                 .fontWeight(.medium)
-                            
+
                             Text(childrenCountText)
                                 .font(DesignSystem.Typography.caption)
                                 .foregroundColor(.secondary)
                         }
-                        
+
                         Spacer()
-                        
+
                         Text("\(profileBuilder.children.count)")
                             .font(DesignSystem.Typography.title2)
                             .fontWeight(.bold)
                             .foregroundColor(.pink)
                     }
-                    
+
                     if profileBuilder.children.isEmpty {
                         VStack(spacing: 8) {
                             Image(systemName: "heart")
                                 .font(.title2)
                                 .foregroundColor(.gray)
-                            
+
                             Text("Sharing information about your children helps other co-parents understand your family dynamic")
                                 .font(DesignSystem.Typography.caption)
                                 .foregroundColor(.secondary)
@@ -104,33 +104,33 @@ struct ChildrenStepView: View {
         .offset(y: animateContent ? 0 : 20)
         .animation(DesignSystem.Animation.spring, value: animateContent)
     }
-    
+
     // MARK: - Add Children Section
-    
+
     private var addChildrenSection: some View {
         VStack(alignment: .leading, spacing: DesignSystem.Layout.spacing) {
             HStack {
                 Image(systemName: "plus.circle.fill")
                     .foregroundColor(.blue)
-                
+
                 Text("Add a Child")
                     .font(DesignSystem.Typography.headline)
                     .fontWeight(.semibold)
             }
-            
+
             Button(action: {
                 showingAddChild = true
             }) {
                 HStack {
                     Image(systemName: "plus")
                         .foregroundColor(.blue)
-                    
+
                     Text("Add Child Information")
                         .font(DesignSystem.Typography.callout)
                         .fontWeight(.medium)
-                    
+
                     Spacer()
-                    
+
                     Image(systemName: "chevron.right")
                         .foregroundColor(.secondary)
                         .font(.caption)
@@ -151,20 +151,20 @@ struct ChildrenStepView: View {
         .offset(y: animateContent ? 0 : 20)
         .animation(DesignSystem.Animation.spring.delay(0.2), value: animateContent)
     }
-    
+
     // MARK: - Children List Section
-    
+
     private var childrenListSection: some View {
         VStack(alignment: .leading, spacing: DesignSystem.Layout.spacing) {
             HStack {
                 Image(systemName: "list.bullet")
                     .foregroundColor(.green)
-                
+
                 Text("Your Children")
                     .font(DesignSystem.Typography.headline)
                     .fontWeight(.semibold)
             }
-            
+
             VStack(spacing: DesignSystem.Layout.spacing) {
                 ForEach(profileBuilder.children.indices, id: \.self) { index in
                     ChildCard(
@@ -187,20 +187,20 @@ struct ChildrenStepView: View {
         .offset(y: animateContent ? 0 : 20)
         .animation(DesignSystem.Animation.spring.delay(0.4), value: animateContent)
     }
-    
+
     // MARK: - Privacy Information Section
-    
+
     private var privacyInformationSection: some View {
         VStack(alignment: .leading, spacing: DesignSystem.Layout.spacing) {
             HStack {
                 Image(systemName: "lock.shield.fill")
                     .foregroundColor(.green)
-                
+
                 Text("Privacy & Safety")
                     .font(DesignSystem.Typography.headline)
                     .fontWeight(.semibold)
             }
-            
+
             GlassCardView {
                 VStack(alignment: .leading, spacing: DesignSystem.Layout.spacing) {
                     ForEach(privacyPoints, id: \.self) { point in
@@ -208,11 +208,11 @@ struct ChildrenStepView: View {
                             Image(systemName: "checkmark.circle.fill")
                                 .foregroundColor(.green)
                                 .font(.caption)
-                            
+
                             Text(point)
                                 .font(DesignSystem.Typography.caption)
                                 .foregroundColor(.secondary)
-                            
+
                             Spacer()
                         }
                     }
@@ -223,9 +223,9 @@ struct ChildrenStepView: View {
         .offset(y: animateContent ? 0 : 20)
         .animation(DesignSystem.Animation.spring.delay(0.6), value: animateContent)
     }
-    
+
     // MARK: - Computed Properties
-    
+
     private var childrenCountText: String {
         switch profileBuilder.children.count {
         case 0:
@@ -236,7 +236,7 @@ struct ChildrenStepView: View {
             return "\(profileBuilder.children.count) children added"
         }
     }
-    
+
     private let privacyPoints = [
         "Children's faces can be hidden in photos",
         "Names and personal details are never shared publicly",
@@ -252,9 +252,9 @@ struct ChildCard: View {
     let child: ChildData
     let onEdit: () -> Void
     let onDelete: () -> Void
-    
+
     @State private var showingActionSheet = false
-    
+
     var body: some View {
         GlassCardView {
             VStack(spacing: DesignSystem.Layout.spacing) {
@@ -264,29 +264,29 @@ struct ChildCard: View {
                         Circle()
                             .fill(child.gender.color.opacity(0.2))
                             .frame(width: 50, height: 50)
-                        
+
                         Image(systemName: child.gender.systemImage)
                             .foregroundColor(child.gender.color)
                             .font(.title2)
                     }
-                    
+
                     // Child Info
                     VStack(alignment: .leading, spacing: 4) {
                         Text(child.name)
                             .font(DesignSystem.Typography.callout)
                             .fontWeight(.semibold)
-                        
+
                         Text("\(child.age) years old")
                             .font(DesignSystem.Typography.caption)
                             .foregroundColor(.secondary)
-                        
+
                         Text(child.gender.displayName)
                             .font(DesignSystem.Typography.caption)
                             .foregroundColor(child.gender.color)
                     }
-                    
+
                     Spacer()
-                    
+
                     // Actions Button
                     Button(action: {
                         showingActionSheet = true
@@ -296,7 +296,7 @@ struct ChildCard: View {
                             .font(.title3)
                     }
                 }
-                
+
                 // Interests
                 if !child.interests.isEmpty {
                     VStack(alignment: .leading, spacing: 8) {
@@ -307,7 +307,7 @@ struct ChildCard: View {
                                 .foregroundColor(.secondary)
                             Spacer()
                         }
-                        
+
                         LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 2), spacing: 4) {
                             ForEach(child.interests, id: \.self) { interest in
                                 Text(interest)
@@ -327,11 +327,11 @@ struct ChildCard: View {
             Button("Edit Information") {
                 onEdit()
             }
-            
+
             Button("Remove Child", role: .destructive) {
                 onDelete()
             }
-            
+
             Button("Cancel", role: .cancel) { }
         }
     }
@@ -342,26 +342,26 @@ struct ChildCard: View {
 struct AddChildView: View {
     let onSave: (String, Int, User.Child.Gender, [String]) -> Void
     @Environment(\.dismiss) private var dismiss
-    
+
     @State private var name = ""
     @State private var age = 5
     @State private var selectedGender: User.Child.Gender = .preferNotToSay
     @State private var interests: [String] = []
     @State private var newInterest = ""
-    
+
     var body: some View {
         NavigationStack {
             Form {
                 Section("Basic Information") {
                     TextField("Child's name", text: $name)
                         .textContentType(.name)
-                    
+
                     Picker("Age", selection: $age) {
                         ForEach(0...18, id: \.self) { age in
                             Text("\(age) years old").tag(age)
                         }
                     }
-                    
+
                     Picker("Gender", selection: $selectedGender) {
                         ForEach(User.Child.Gender.allCases, id: \.self) { gender in
                             Label(gender.displayName, systemImage: gender.systemImage)
@@ -369,11 +369,11 @@ struct AddChildView: View {
                         }
                     }
                 }
-                
+
                 Section("Interests (Optional)") {
                     HStack {
                         TextField("Add interest", text: $newInterest)
-                        
+
                         Button("Add") {
                             if !newInterest.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                                 interests.append(newInterest.trimmingCharacters(in: .whitespacesAndNewlines))
@@ -382,7 +382,7 @@ struct AddChildView: View {
                         }
                         .disabled(newInterest.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                     }
-                    
+
                     ForEach(interests, id: \.self) { interest in
                         HStack {
                             Text(interest)
@@ -403,7 +403,7 @@ struct AddChildView: View {
                         dismiss()
                     }
                 }
-                
+
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
                         onSave(name, age, selectedGender, interests)
@@ -421,7 +421,7 @@ extension User.Child.Gender: CaseIterable {
     public static var allCases: [User.Child.Gender] {
         return [.male, .female, .other, .preferNotToSay]
     }
-    
+
     var displayName: String {
         switch self {
         case .male: return "Boy"
@@ -430,7 +430,7 @@ extension User.Child.Gender: CaseIterable {
         case .preferNotToSay: return "Prefer not to say"
         }
     }
-    
+
     var systemImage: String {
         switch self {
         case .male: return "figure.child"
@@ -439,7 +439,7 @@ extension User.Child.Gender: CaseIterable {
         case .preferNotToSay: return "questionmark.circle"
         }
     }
-    
+
     var color: Color {
         switch self {
         case .male: return .blue

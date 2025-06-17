@@ -3,24 +3,24 @@ import SwiftUI
 struct AddChildView: View {
     @Environment(\.dismiss) private var dismiss
     @ObservedObject var viewModel: ProfileViewModel
-    
+
     @State private var name = ""
     @State private var age = 0
     @State private var gender = User.Child.Gender.preferNotToSay
     @State private var interests = ""
-    
+
     private var isFormValid: Bool {
         !name.isEmpty && age > 0
     }
-    
+
     var body: some View {
         NavigationStack {
             Form {
                 Section("Basic Information") {
                     TextField("Name", text: $name)
-                    
+
                     Stepper("Age: \(age)", value: $age, in: 0...18)
-                    
+
                     Picker("Gender", selection: $gender) {
                         ForEach(User.Child.Gender.allCases, id: \.self) { gender in
                             Text(gender.rawValue.capitalized)
@@ -28,7 +28,7 @@ struct AddChildView: View {
                         }
                     }
                 }
-                
+
                 Section("Interests") {
                     TextField(
                         "Interests (comma-separated)",
@@ -46,7 +46,7 @@ struct AddChildView: View {
                         dismiss()
                     }
                 }
-                
+
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Add") {
                         addChild()
@@ -56,20 +56,20 @@ struct AddChildView: View {
             }
         }
     }
-    
+
     private func addChild() {
         let childInterests = interests
             .split(separator: ",")
             .map { $0.trimmingCharacters(in: .whitespaces) }
             .filter { !$0.isEmpty }
-        
+
         viewModel.addChild(
             name: name,
             age: age,
             gender: gender,
             interests: childInterests
         )
-        
+
         dismiss()
     }
 }
@@ -105,4 +105,4 @@ struct AddChildView: View {
             )
         )
     )
-} 
+}

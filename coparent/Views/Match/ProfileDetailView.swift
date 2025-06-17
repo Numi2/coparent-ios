@@ -8,7 +8,7 @@ struct ProfileDetailView: View {
     let canUseSuperLike: Bool
     let isPremium: Bool
     @Environment(\.presentationMode) private var presentationMode
-    
+
     var body: some View {
         NavigationView {
             ScrollView {
@@ -22,13 +22,13 @@ struct ProfileDetailView: View {
                         ZStack {
                             LinearGradient(
                                 colors: [
-                                    Color.blue.opacity(0.3), 
+                                    Color.blue.opacity(0.3),
                                     Color.purple.opacity(0.3)
                                 ],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             )
-                            
+
                             Image(systemName: "person.fill")
                                 .font(.system(size: 60))
                                 .foregroundColor(.white.opacity(0.8))
@@ -40,7 +40,7 @@ struct ProfileDetailView: View {
                             cornerRadius: DesignSystem.Layout.cornerRadius
                         )
                     )
-                    
+
                     // Profile details
                     VStack(alignment: .leading, spacing: DesignSystem.Layout.spacing) {
                         // Basic info
@@ -49,9 +49,9 @@ struct ProfileDetailView: View {
                                 Text(user.name)
                                     .font(DesignSystem.Typography.largeTitle)
                                     .fontWeight(.bold)
-                                
+
                                 Spacer()
-                                
+
                                 if user.verificationStatus == .verified {
                                     HStack(spacing: 4) {
                                         Image(systemName: "checkmark.seal.fill")
@@ -62,11 +62,11 @@ struct ProfileDetailView: View {
                                     }
                                 }
                             }
-                            
+
                             Text("\(calculateAge(from: user.dateOfBirth)) years old")
                                 .font(DesignSystem.Typography.title3)
                                 .foregroundColor(.secondary)
-                            
+
                             if let coordinates = user.location.coordinates {
                                 HStack(spacing: 4) {
                                     Image(systemName: "location.fill")
@@ -81,24 +81,24 @@ struct ProfileDetailView: View {
                             }
                         }
                         .glassCard()
-                        
+
                         // Bio
                         VStack(alignment: .leading, spacing: 8) {
                             Text("About")
                                 .font(DesignSystem.Typography.headline)
                                 .fontWeight(.semibold)
-                            
+
                             Text(user.bio)
                                 .font(DesignSystem.Typography.body)
                         }
                         .glassCard()
-                        
+
                         // Parenting style
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Parenting Style")
                                 .font(DesignSystem.Typography.headline)
                                 .fontWeight(.semibold)
-                            
+
                             HStack(spacing: 8) {
                                 Image(systemName: "heart.fill")
                                     .foregroundColor(.pink)
@@ -107,14 +107,14 @@ struct ProfileDetailView: View {
                             }
                         }
                         .glassCard()
-                        
+
                         // Children
                         if !user.children.isEmpty {
                             VStack(alignment: .leading, spacing: 12) {
                                 Text("Children")
                                     .font(DesignSystem.Typography.headline)
                                     .fontWeight(.semibold)
-                                
+
                                 ForEach(user.children) { child in
                                     HStack(spacing: 12) {
                                         Circle()
@@ -125,30 +125,30 @@ struct ProfileDetailView: View {
                                                     .font(DesignSystem.Typography.headline)
                                                     .foregroundColor(.blue)
                                             )
-                                        
+
                                         VStack(alignment: .leading, spacing: 2) {
                                             Text(child.name)
                                                 .font(DesignSystem.Typography.callout)
                                                 .fontWeight(.medium)
-                                            
+
                                             Text("\(child.age) years old")
                                                 .font(DesignSystem.Typography.caption)
                                                 .foregroundColor(.secondary)
                                         }
-                                        
+
                                         Spacer()
                                     }
                                 }
                             }
                             .glassCard()
                         }
-                        
+
                         // Interests
                         VStack(alignment: .leading, spacing: 12) {
                             Text("Interests")
                                 .font(DesignSystem.Typography.headline)
                                 .fontWeight(.semibold)
-                            
+
                             LazyVGrid(columns: [
                                 GridItem(.adaptive(minimum: 100, maximum: 150))
                             ], spacing: 8) {
@@ -188,9 +188,9 @@ struct ProfileDetailView: View {
                             .clipShape(Circle())
                             .shadow(radius: 4)
                     }
-                    
+
                     Spacer()
-                    
+
                     // Super Like button (if available)
                     if canUseSuperLike {
                         Button(action: {
@@ -224,10 +224,10 @@ struct ProfileDetailView: View {
                         }
                         .disabled(!isPremium)
                         .opacity(isPremium ? 1.0 : 0.6)
-                        
+
                         Spacer()
                     }
-                    
+
                     // Like button
                     Button(action: {
                         presentationMode.wrappedValue.dismiss()
@@ -247,13 +247,13 @@ struct ProfileDetailView: View {
             }
         }
     }
-    
+
     private func calculateAge(from date: Date) -> Int {
         let calendar = Calendar.current
         let ageComponents = calendar.dateComponents([.year], from: date, to: Date())
         return ageComponents.year ?? 0
     }
-    
+
     private func formatDistance(to location: User.Location.Coordinates) -> String {
         // TODO: Implement actual distance calculation based on user's location
         return "\(Int.random(in: 1...25))"
@@ -278,24 +278,24 @@ struct ProfileDetailView: View {
                 state: "CA",
                 country: "USA",
                 coordinates: User.Location.Coordinates(
-                    latitude: 37.3382, 
+                    latitude: 37.3382,
                     longitude: -121.8863
                 )
             ),
             parentingStyle: .gentle,
             children: [
                 User.Child(
-                    id: "1", 
-                    name: "Sophia", 
-                    age: 6, 
-                    gender: .female, 
+                    id: "1",
+                    name: "Sophia",
+                    age: 6,
+                    gender: .female,
                     interests: ["dancing", "art"]
                 ),
                 User.Child(
-                    id: "2", 
-                    name: "Emma", 
-                    age: 4, 
-                    gender: .female, 
+                    id: "2",
+                    name: "Emma",
+                    age: 4,
+                    gender: .female,
                     interests: ["music", "dancing"]
                 )
             ],
@@ -306,7 +306,7 @@ struct ProfileDetailView: View {
                 dealBreakers: []
             ),
             interests: [
-                .outdoorActivities, .cooking, .music, .reading, 
+                .outdoorActivities, .cooking, .music, .reading,
                 .artsAndCrafts, .healthAndFitness
             ],
             verificationStatus: .verified

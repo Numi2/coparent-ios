@@ -5,7 +5,7 @@ struct PhotoEditorView: View {
     let image: UIImage
     let onSave: (UIImage) -> Void
     let onCancel: () -> Void
-    
+
     @State private var editedImage: UIImage
     @State private var brightness: Double = 0.0
     @State private var contrast: Double = 1.0
@@ -14,13 +14,13 @@ struct PhotoEditorView: View {
     @State private var cropRect: CGRect = .zero
     @State private var isProcessing = false
     @State private var currentTool: EditingTool = .brightness
-    
+
     enum EditingTool: String, CaseIterable {
         case brightness = "Brightness"
         case contrast = "Contrast"
         case rotate = "Rotate"
         case scale = "Scale"
-        
+
         var systemImage: String {
             switch self {
             case .brightness: return "sun.max.fill"
@@ -30,25 +30,25 @@ struct PhotoEditorView: View {
             }
         }
     }
-    
+
     init(image: UIImage, onSave: @escaping (UIImage) -> Void, onCancel: @escaping () -> Void) {
         self.image = image
         self.onSave = onSave
         self.onCancel = onCancel
         self._editedImage = State(initialValue: image)
     }
-    
+
     var body: some View {
         NavigationStack {
             ZStack {
                 // Background
                 Color.black
                     .ignoresSafeArea()
-                
+
                 VStack(spacing: 0) {
                     // Image Preview
                     imagePreviewSection
-                    
+
                     // Editing Controls
                     editingControlsSection
                 }
@@ -62,7 +62,7 @@ struct PhotoEditorView: View {
                     }
                     .foregroundColor(.white)
                 }
-                
+
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
                         saveEditedImage()
@@ -73,9 +73,9 @@ struct PhotoEditorView: View {
             }
         }
     }
-    
+
     // MARK: - Image Preview Section
-    
+
     private var imagePreviewSection: some View {
         GeometryReader { _ in
             ZStack {
@@ -85,7 +85,7 @@ struct PhotoEditorView: View {
                     .scaleEffect(scale)
                     .rotationEffect(.degrees(rotation))
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                
+
                 if isProcessing {
                     ProgressView()
                         .progressViewStyle(CircularProgressViewStyle(tint: .white))
@@ -102,17 +102,17 @@ struct PhotoEditorView: View {
                 })
         )
     }
-    
+
     // MARK: - Editing Controls Section
-    
+
     private var editingControlsSection: some View {
         VStack(spacing: DesignSystem.Layout.spacing) {
             // Tool Selector
             toolSelectorView
-            
+
             // Tool Controls
             toolControlsView
-            
+
             // Reset Button
             resetButton
         }
@@ -120,7 +120,7 @@ struct PhotoEditorView: View {
         .background(.ultraThinMaterial)
         .background(Color.black.opacity(0.8))
     }
-    
+
     private var toolSelectorView: some View {
         HStack(spacing: DesignSystem.Layout.spacing) {
             ForEach(EditingTool.allCases, id: \.self) { tool in
@@ -133,7 +133,7 @@ struct PhotoEditorView: View {
                         Image(systemName: tool.systemImage)
                             .font(.title2)
                             .foregroundColor(currentTool == tool ? .blue : .white)
-                        
+
                         Text(tool.rawValue)
                             .font(DesignSystem.Typography.caption)
                             .foregroundColor(currentTool == tool ? .blue : .gray)
@@ -149,7 +149,7 @@ struct PhotoEditorView: View {
             }
         }
     }
-    
+
     @ViewBuilder
     private var toolControlsView: some View {
         VStack(spacing: DesignSystem.Layout.spacing) {
@@ -166,7 +166,7 @@ struct PhotoEditorView: View {
         }
         .animation(DesignSystem.Animation.spring, value: currentTool)
     }
-    
+
     private var brightnessControl: some View {
         VStack(spacing: 8) {
             HStack {
@@ -178,7 +178,7 @@ struct PhotoEditorView: View {
                     .foregroundColor(.gray)
                     .font(DesignSystem.Typography.caption)
             }
-            
+
             Slider(value: $brightness, in: -1.0...1.0, step: 0.01)
                 .accentColor(.blue)
                 .onChange(of: brightness) { _, _ in
@@ -186,7 +186,7 @@ struct PhotoEditorView: View {
                 }
         }
     }
-    
+
     private var contrastControl: some View {
         VStack(spacing: 8) {
             HStack {
@@ -198,7 +198,7 @@ struct PhotoEditorView: View {
                     .foregroundColor(.gray)
                     .font(DesignSystem.Typography.caption)
             }
-            
+
             Slider(value: $contrast, in: 0.5...2.0, step: 0.01)
                 .accentColor(.blue)
                 .onChange(of: contrast) { _, _ in
@@ -206,7 +206,7 @@ struct PhotoEditorView: View {
                 }
         }
     }
-    
+
     private var rotateControl: some View {
         VStack(spacing: DesignSystem.Layout.spacing) {
             HStack {
@@ -218,10 +218,10 @@ struct PhotoEditorView: View {
                     .foregroundColor(.gray)
                     .font(DesignSystem.Typography.caption)
             }
-            
+
             Slider(value: $rotation, in: -180...180, step: 1)
                 .accentColor(.blue)
-            
+
             HStack(spacing: DesignSystem.Layout.spacing) {
                 Button("90° Left") {
                     withAnimation(DesignSystem.Animation.spring) {
@@ -230,7 +230,7 @@ struct PhotoEditorView: View {
                 }
                 .buttonStyle(GlassSecondaryButtonStyle())
                 .foregroundColor(.white)
-                
+
                 Button("90° Right") {
                     withAnimation(DesignSystem.Animation.spring) {
                         rotation = min(180, rotation + 90)
@@ -241,7 +241,7 @@ struct PhotoEditorView: View {
             }
         }
     }
-    
+
     private var scaleControl: some View {
         VStack(spacing: 8) {
             HStack {
@@ -253,12 +253,12 @@ struct PhotoEditorView: View {
                     .foregroundColor(.gray)
                     .font(DesignSystem.Typography.caption)
             }
-            
+
             Slider(value: $scale, in: 0.5...3.0, step: 0.01)
                 .accentColor(.blue)
         }
     }
-    
+
     private var resetButton: some View {
         Button("Reset All Changes") {
             withAnimation(DesignSystem.Animation.spring) {
@@ -272,15 +272,15 @@ struct PhotoEditorView: View {
         .buttonStyle(GlassSecondaryButtonStyle())
         .foregroundColor(.white)
     }
-    
+
     // MARK: - Image Processing
-    
+
     private func applyImageFilters() {
         guard let ciImage = CIImage(image: image) else { return }
-        
+
         let context = CIContext()
         var outputImage = ciImage
-        
+
         // Apply brightness
         if brightness != 0 {
             let brightnessFilter = CIFilter.colorControls()
@@ -288,7 +288,7 @@ struct PhotoEditorView: View {
             brightnessFilter.brightness = Float(brightness)
             outputImage = brightnessFilter.outputImage ?? outputImage
         }
-        
+
         // Apply contrast
         if contrast != 1.0 {
             let contrastFilter = CIFilter.colorControls()
@@ -296,71 +296,71 @@ struct PhotoEditorView: View {
             contrastFilter.contrast = Float(contrast)
             outputImage = contrastFilter.outputImage ?? outputImage
         }
-        
+
         // Convert back to UIImage
         if let cgImage = context.createCGImage(outputImage, from: outputImage.extent) {
             editedImage = UIImage(cgImage: cgImage)
         }
     }
-    
+
     private func saveEditedImage() {
         isProcessing = true
-        
+
         Task {
             let finalImage = await processedFinalImage()
-            
+
             await MainActor.run {
                 isProcessing = false
                 onSave(finalImage)
             }
         }
     }
-    
+
     private func processedFinalImage() async -> UIImage {
         // Apply all transformations to create final image
         var finalImage = editedImage
-        
+
         // Apply rotation if needed
         if rotation != 0 {
             finalImage = rotateImage(finalImage, by: rotation)
         }
-        
+
         // Apply scale if needed
         if scale != 1.0 {
             finalImage = scaleImage(finalImage, by: scale)
         }
-        
+
         return finalImage
     }
-    
+
     private func rotateImage(_ image: UIImage, by degrees: Double) -> UIImage {
         let radians = degrees * .pi / 180
-        
+
         UIGraphicsBeginImageContextWithOptions(image.size, false, image.scale)
         defer { UIGraphicsEndImageContext() }
-        
+
         guard let context = UIGraphicsGetCurrentContext() else { return image }
-        
+
         context.translateBy(x: image.size.width / 2, y: image.size.height / 2)
         context.rotate(by: radians)
         context.translateBy(x: -image.size.width / 2, y: -image.size.height / 2)
-        
+
         image.draw(at: .zero)
-        
+
         return UIGraphicsGetImageFromCurrentImageContext() ?? image
     }
-    
+
     private func scaleImage(_ image: UIImage, by scale: Double) -> UIImage {
         let newSize = CGSize(
             width: image.size.width * scale,
             height: image.size.height * scale
         )
-        
+
         UIGraphicsBeginImageContextWithOptions(newSize, false, image.scale)
         defer { UIGraphicsEndImageContext() }
-        
+
         image.draw(in: CGRect(origin: .zero, size: newSize))
-        
+
         return UIGraphicsGetImageFromCurrentImageContext() ?? image
     }
 }

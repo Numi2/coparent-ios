@@ -2,7 +2,7 @@ import SwiftUI
 
 struct BasicFiltersSection: View {
     @Binding var filters: FilterSet
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack {
@@ -12,21 +12,21 @@ struct BasicFiltersSection: View {
                     .font(DesignSystem.Typography.headline)
                     .fontWeight(.semibold)
             }
-            
+
             // Age Range
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
                     Text("Age Range")
                         .font(DesignSystem.Typography.subheadline)
                         .fontWeight(.medium)
-                    
+
                     Spacer()
-                    
+
                     Text("\(Int(filters.ageRange.lowerBound)) - \(Int(filters.ageRange.upperBound)) years")
                         .font(DesignSystem.Typography.callout)
                         .foregroundColor(.secondary)
                 }
-                
+
                 RangeSlider(
                     range: Binding(
                         get: { filters.ageRange },
@@ -36,24 +36,24 @@ struct BasicFiltersSection: View {
                     step: 1
                 )
             }
-            
+
             Divider()
                 .background(.white.opacity(0.2))
-            
+
             // Distance
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
                     Text("Maximum Distance")
                         .font(DesignSystem.Typography.subheadline)
                         .fontWeight(.medium)
-                    
+
                     Spacer()
-                    
+
                     Text("\(Int(filters.maxDistance)) km")
                         .font(DesignSystem.Typography.callout)
                         .foregroundColor(.secondary)
                 }
-                
+
                 Slider(
                     value: $filters.maxDistance,
                     in: AppConfig.Filters.minFilterDistance...AppConfig.Filters.maxFilterDistance,
@@ -79,4 +79,4 @@ struct BasicFiltersSection: View {
 #Preview {
     BasicFiltersSection(filters: .constant(FilterSet()))
         .padding()
-} 
+}

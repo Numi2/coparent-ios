@@ -3,18 +3,18 @@ import SwiftUI
 struct UserTypeView: View {
     @Environment(AppState.self) private var appState
     @State private var selectedType: User.UserType?
-    
+
     var body: some View {
         VStack(spacing: 24) {
             Text("I am a...")
                 .font(.title)
                 .bold()
                 .padding(.top, 32)
-            
+
             Text("Select your current parenting situation")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
-            
+
             VStack(spacing: 16) {
                 UserTypeButton(
                     title: "Single Parent",
@@ -24,7 +24,7 @@ struct UserTypeView: View {
                 ) {
                     selectedType = .singleParent
                 }
-                
+
                 UserTypeButton(
                     title: "Co-Parent",
                     description: "Already co-parenting",
@@ -33,7 +33,7 @@ struct UserTypeView: View {
                 ) {
                     selectedType = .coParent
                 }
-                
+
                 UserTypeButton(
                     title: "Potential Co-Parent",
                     description: "Planning to co-parent",
@@ -44,9 +44,9 @@ struct UserTypeView: View {
                 }
             }
             .padding(.horizontal, 24)
-            
+
             Spacer()
-            
+
             Button(action: {
                 if let type = selectedType {
                     // Create temporary user
@@ -81,7 +81,7 @@ struct UserTypeButton: View {
     let type: User.UserType
     let isSelected: Bool
     let action: () -> Void
-    
+
     var body: some View {
         Button(action: action) {
             HStack {
@@ -92,9 +92,9 @@ struct UserTypeButton: View {
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
-                
+
                 Spacer()
-                
+
                 if isSelected {
                     Image(systemName: "checkmark.circle.fill")
                         .foregroundStyle(.blue)
@@ -117,4 +117,4 @@ struct UserTypeButton: View {
 #Preview {
     UserTypeView()
         .environment(AppState())
-} 
+}

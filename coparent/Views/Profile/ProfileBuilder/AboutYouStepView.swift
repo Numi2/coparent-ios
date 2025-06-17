@@ -6,18 +6,18 @@ struct AboutYouStepView: View {
     @State private var bioCharacterCount = 0
     @State private var showingSuggestions = false
     @FocusState private var isBioFocused: Bool
-    
+
     var body: some View {
         VStack(spacing: DesignSystem.Layout.spacing * 1.5) {
             // Bio Section
             bioSection
-            
+
             // Parenting Style Section
             parentingStyleSection
-            
+
             // Professional Information Section (Optional)
             professionalSection
-            
+
             // Bio Tips Section
             bioTipsSection
         }
@@ -31,9 +31,9 @@ struct AboutYouStepView: View {
             updateCharacterCount()
         }
     }
-    
+
     // MARK: - Bio Section
-    
+
     private var bioSection: some View {
         VStack(alignment: .leading, spacing: DesignSystem.Layout.spacing) {
             // Section Header
@@ -46,20 +46,20 @@ struct AboutYouStepView: View {
                             endPoint: .bottomTrailing
                         )
                     )
-                
+
                 Text("Tell Your Story")
                     .font(DesignSystem.Typography.headline)
                     .fontWeight(.semibold)
-                
+
                 Spacer()
-                
+
                 Button("Suggestions") {
                     showingSuggestions.toggle()
                 }
                 .font(DesignSystem.Typography.caption)
                 .foregroundColor(.blue)
             }
-            
+
             GlassCardView {
                 VStack(alignment: .leading, spacing: DesignSystem.Layout.spacing) {
                     VStack(alignment: .leading, spacing: 8) {
@@ -67,14 +67,14 @@ struct AboutYouStepView: View {
                             Text("About You")
                                 .font(DesignSystem.Typography.callout)
                                 .fontWeight(.medium)
-                            
+
                             Spacer()
-                            
+
                             Text("\(bioCharacterCount)/500")
                                 .font(DesignSystem.Typography.caption)
                                 .foregroundColor(bioCharacterCountColor)
                         }
-                        
+
                         TextField(
                             "Share what makes you unique, your interests, what you're looking for...",
                             text: $profileBuilder.bio,
@@ -84,12 +84,12 @@ struct AboutYouStepView: View {
                         .textFieldStyle(GlassTextFieldStyle())
                         .focused($isBioFocused)
                     }
-                    
+
                     // Character count progress
                     ProgressView(value: Double(bioCharacterCount), total: 500.0)
                         .progressViewStyle(GlassProgressViewStyle())
                         .scaleEffect(y: 0.5)
-                    
+
                     if bioCharacterCount < 50 {
                         HStack {
                             Image(systemName: "info.circle")
@@ -114,9 +114,9 @@ struct AboutYouStepView: View {
             )
         }
     }
-    
+
     // MARK: - Parenting Style Section
-    
+
     private var parentingStyleSection: some View {
         VStack(alignment: .leading, spacing: DesignSystem.Layout.spacing) {
             // Section Header
@@ -129,19 +129,19 @@ struct AboutYouStepView: View {
                             endPoint: .bottomTrailing
                         )
                     )
-                
+
                 Text("Parenting Style")
                     .font(DesignSystem.Typography.headline)
                     .fontWeight(.semibold)
             }
-            
+
             GlassCardView {
                 VStack(spacing: DesignSystem.Layout.spacing) {
                     Text("How would you describe your approach to parenting?")
                         .font(DesignSystem.Typography.callout)
                         .foregroundColor(.secondary)
                         .multilineTextAlignment(.center)
-                    
+
                     LazyVGrid(columns: parentingStyleColumns, spacing: DesignSystem.Layout.spacing) {
                         ForEach(User.ParentingStyle.allCases, id: \.self) { style in
                             ParentingStyleCard(
@@ -161,9 +161,9 @@ struct AboutYouStepView: View {
         .offset(y: animateContent ? 0 : 20)
         .animation(DesignSystem.Animation.spring.delay(0.2), value: animateContent)
     }
-    
+
     // MARK: - Professional Section
-    
+
     private var professionalSection: some View {
         VStack(alignment: .leading, spacing: DesignSystem.Layout.spacing) {
             // Section Header
@@ -176,33 +176,33 @@ struct AboutYouStepView: View {
                             endPoint: .bottomTrailing
                         )
                     )
-                
+
                 Text("Professional Info")
                     .font(DesignSystem.Typography.headline)
                     .fontWeight(.semibold)
-                
+
                 Text("(Optional)")
                     .font(DesignSystem.Typography.caption)
                     .foregroundColor(.secondary)
             }
-            
+
             GlassCardView {
                 VStack(spacing: DesignSystem.Layout.spacing) {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Profession")
                             .font(DesignSystem.Typography.callout)
                             .fontWeight(.medium)
-                        
+
                         TextField("What do you do for work?", text: $profileBuilder.profession)
                             .textFieldStyle(GlassTextFieldStyle())
                             .textContentType(.jobTitle)
                     }
-                    
+
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Education")
                             .font(DesignSystem.Typography.callout)
                             .fontWeight(.medium)
-                        
+
                         TextField("Your educational background", text: $profileBuilder.education)
                             .textFieldStyle(GlassTextFieldStyle())
                     }
@@ -213,21 +213,21 @@ struct AboutYouStepView: View {
         .offset(y: animateContent ? 0 : 20)
         .animation(DesignSystem.Animation.spring.delay(0.4), value: animateContent)
     }
-    
+
     // MARK: - Bio Tips Section
-    
+
     private var bioTipsSection: some View {
         VStack(alignment: .leading, spacing: DesignSystem.Layout.spacing) {
             // Section Header
             HStack {
                 Image(systemName: "lightbulb.fill")
                     .foregroundColor(.yellow)
-                
+
                 Text("Writing Tips")
                     .font(DesignSystem.Typography.headline)
                     .fontWeight(.semibold)
             }
-            
+
             GlassCardView {
                 VStack(alignment: .leading, spacing: DesignSystem.Layout.spacing) {
                     ForEach(bioTips, id: \.title) { tip in
@@ -240,9 +240,9 @@ struct AboutYouStepView: View {
         .offset(y: animateContent ? 0 : 20)
         .animation(DesignSystem.Animation.spring.delay(0.6), value: animateContent)
     }
-    
+
     // MARK: - Computed Properties
-    
+
     private var bioCharacterCountColor: Color {
         if bioCharacterCount < 50 {
             return .orange
@@ -252,9 +252,9 @@ struct AboutYouStepView: View {
             return .green
         }
     }
-    
+
     private let parentingStyleColumns = Array(repeating: GridItem(.flexible(), spacing: DesignSystem.Layout.spacing), count: 2)
-    
+
     private let bioTips = [
         BioTip(
             icon: "heart.fill",
@@ -277,9 +277,9 @@ struct AboutYouStepView: View {
             description: "Mention what you're looking for in a partner"
         )
     ]
-    
+
     // MARK: - Helper Methods
-    
+
     private func updateCharacterCount() {
         bioCharacterCount = profileBuilder.bio.count
     }
@@ -291,14 +291,14 @@ struct ParentingStyleCard: View {
     let style: User.ParentingStyle
     let isSelected: Bool
     let action: () -> Void
-    
+
     var body: some View {
         Button(action: action) {
             VStack(spacing: 8) {
                 Image(systemName: style.systemImage)
                     .font(.title2)
                     .foregroundColor(isSelected ? .white : .primary)
-                
+
                 Text(style.displayName)
                     .font(DesignSystem.Typography.caption)
                     .fontWeight(.medium)
@@ -326,23 +326,23 @@ struct ParentingStyleCard: View {
 
 struct BioTipView: View {
     let tip: BioTip
-    
+
     var body: some View {
         HStack(spacing: DesignSystem.Layout.spacing) {
             Image(systemName: tip.icon)
                 .foregroundColor(.blue)
                 .frame(width: 24, height: 24)
-            
+
             VStack(alignment: .leading, spacing: 4) {
                 Text(tip.title)
                     .font(DesignSystem.Typography.callout)
                     .fontWeight(.medium)
-                
+
                 Text(tip.description)
                     .font(DesignSystem.Typography.caption)
                     .foregroundColor(.secondary)
             }
-            
+
             Spacer()
         }
     }
@@ -353,7 +353,7 @@ struct BioTipView: View {
 struct BioSuggestionsView: View {
     let onSelectSuggestion: (String) -> Void
     @Environment(\.dismiss) private var dismiss
-    
+
     private let suggestions = [
         "I love spending quality time with my kids",
         "Family adventures are my favorite weekends",
@@ -366,7 +366,7 @@ struct BioSuggestionsView: View {
         "Love exploring new places with my little ones",
         "Always up for a good laugh and meaningful conversations"
     ]
-    
+
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -380,9 +380,9 @@ struct BioSuggestionsView: View {
                                     .font(DesignSystem.Typography.callout)
                                     .foregroundColor(.primary)
                                     .multilineTextAlignment(.leading)
-                                
+
                                 Spacer()
-                                
+
                                 Image(systemName: "plus.circle.fill")
                                     .foregroundColor(.blue)
                             }
@@ -440,7 +440,7 @@ extension User.ParentingStyle {
         case .eclectic: return "Eclectic"
         }
     }
-    
+
     var systemImage: String {
         switch self {
         case .authoritative: return "scale.3d"

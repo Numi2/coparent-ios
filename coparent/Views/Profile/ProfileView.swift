@@ -7,7 +7,7 @@ struct ProfileView: View {
     @State private var showingEditProfile = false
     @State private var showingAddChild = false
     @State private var showingPreferences = false
-    
+
     var body: some View {
         ScrollView {
             VStack(spacing: DesignSystem.Layout.spacing * 2) {
@@ -32,12 +32,12 @@ struct ProfileView: View {
                         }
                     }
                     .glassCard()
-                    
+
                     // Name and Location
                     VStack(spacing: DesignSystem.Layout.spacing / 2) {
                         Text(viewModel.name)
                             .font(DesignSystem.Typography.title2)
-                        
+
                         Text(viewModel.location)
                             .font(DesignSystem.Typography.subheadline)
                             .foregroundColor(.secondary)
@@ -45,25 +45,25 @@ struct ProfileView: View {
                 }
                 .padding()
                 .glassCard()
-                
+
                 // About Me
                 GlassCardView {
                     VStack(alignment: .leading, spacing: DesignSystem.Layout.spacing) {
                         Text("About Me")
                             .font(DesignSystem.Typography.headline)
-                        
+
                         Text(viewModel.about)
                             .font(DesignSystem.Typography.body)
                             .foregroundColor(.secondary)
                     }
                 }
-                
+
                 // Parenting Style
                 GlassCardView {
                     VStack(alignment: .leading, spacing: DesignSystem.Layout.spacing) {
                         Text("Parenting Style")
                             .font(DesignSystem.Typography.headline)
-                        
+
                         ForEach(viewModel.parentingStyles, id: \.self) { style in
                             HStack {
                                 Image(systemName: "checkmark.circle.fill")
@@ -74,13 +74,13 @@ struct ProfileView: View {
                         }
                     }
                 }
-                
+
                 // Children
                 GlassCardView {
                     VStack(alignment: .leading, spacing: DesignSystem.Layout.spacing) {
                         Text("Children")
                             .font(DesignSystem.Typography.headline)
-                        
+
                         ForEach(viewModel.children) { child in
                             HStack {
                                 Image(systemName: "person.fill")
@@ -96,7 +96,7 @@ struct ProfileView: View {
                         }
                     }
                 }
-                
+
                 // Edit Profile Button
                 Button(action: { showingEditProfile = true }) {
                     Text("Edit Profile")
@@ -131,13 +131,13 @@ struct ProfileView: View {
 
 struct ChildRow: View {
     let child: User.Child
-    
+
     var body: some View {
         HStack {
             VStack(alignment: .leading, spacing: 4) {
                 Text(child.name)
                     .font(.headline)
-                
+
                 HStack {
                     Text("\(child.age) years old")
                     Text("•")
@@ -146,9 +146,9 @@ struct ChildRow: View {
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
             }
-            
+
             Spacer()
-            
+
             if !child.interests.isEmpty {
                 Text(child.interests.joined(separator: ", "))
                     .font(.caption)
@@ -165,43 +165,43 @@ struct ChildRow: View {
 
 struct FlowLayout: Layout {
     var spacing: CGFloat
-    
+
     func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
         let sizes = subviews.map { $0.sizeThatFits(.unspecified) }
         return layout(sizes: sizes, proposal: proposal).size
     }
-    
+
     func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
         let sizes = subviews.map { $0.sizeThatFits(.unspecified) }
         let positions = layout(sizes: sizes, proposal: proposal).positions
-        
+
         for (index, subview) in subviews.enumerated() {
             subview.place(at: positions[index], proposal: .unspecified)
         }
     }
-    
+
     private func layout(sizes: [CGSize], proposal: ProposedViewSize) -> (positions: [CGPoint], size: CGSize) {
         guard let width = proposal.width else { return ([], .zero) }
-        
+
         var positions: [CGPoint] = []
         var currentX: CGFloat = 0
         var currentY: CGFloat = 0
         var maxY: CGFloat = 0
         var rowHeight: CGFloat = 0
-        
+
         for size in sizes {
             if currentX + size.width > width {
                 currentX = 0
                 currentY += rowHeight + spacing
                 rowHeight = 0
             }
-            
+
             positions.append(CGPoint(x: currentX, y: currentY))
             currentX += size.width + spacing
             rowHeight = max(rowHeight, size.height)
             maxY = max(maxY, currentY + rowHeight)
         }
-        
+
         return (positions, CGSize(width: width, height: maxY))
     }
 }
@@ -233,4 +233,4 @@ struct FlowLayout: Layout {
             verificationStatus: .verified
         ))
     }
-} 
+}

@@ -2,21 +2,21 @@ import SwiftUI
 
 struct OnboardingCompleteView: View {
     @Environment(AppState.self) private var appState
-    
+
     var body: some View {
         VStack(spacing: 24) {
             Spacer()
-            
+
             Image(systemName: "checkmark.circle.fill")
                 .resizable()
                 .scaledToFit()
                 .frame(width: 120, height: 120)
                 .foregroundStyle(.green)
-            
+
             Text("Welcome to Co-Parents!")
                 .font(.largeTitle)
                 .bold()
-            
+
             Text(
                 "Your profile has been created successfully. "
                 + "You're now ready to start your co-parenting journey."
@@ -25,9 +25,9 @@ struct OnboardingCompleteView: View {
             .foregroundStyle(.secondary)
             .multilineTextAlignment(.center)
             .padding(.horizontal)
-            
+
             Spacer()
-            
+
             Button(action: {
                 Task {
                     await appState.connectToSendbird()
@@ -53,4 +53,4 @@ struct OnboardingCompleteView: View {
 #Preview {
     OnboardingCompleteView()
         .environment(AppState())
-} 
+}
