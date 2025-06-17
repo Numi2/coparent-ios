@@ -11,6 +11,13 @@ class SendbirdChatService {
     private(set) var error: Error?
     private(set) var typingUsers: [String] = []
     
+    // MARK: - Advanced Chat Features
+    private(set) var isLoadingOlderMessages = false
+    private(set) var hasMoreMessages = true
+    private(set) var searchResults: [BaseMessage] = []
+    private(set) var isSearching = false
+    private(set) var currentSearchQuery = ""
+    
     static let shared = SendbirdChatService()
     
     private init() {
@@ -68,6 +75,7 @@ class SendbirdChatService {
             await MainActor.run {
                 self.currentChannel = channel
                 self.messages = messages
+                self.hasMoreMessages = messages.count == AppConfig.Chat.messagePageSize
             }
         } catch {
             self.error = error
@@ -435,6 +443,130 @@ class SendbirdChatService {
     
     func getThreadReplyCount(for message: BaseMessage) -> Int {
         return Int(message.threadInfo?.replyCount ?? 0)
+    }
+    
+    // MARK: - Advanced Chat Features
+    
+    /// Refreshes messages for pull-to-refresh functionality
+    func refreshMessages() async throws {
+        guard let channel = currentChannel else {
+            throw NSError(domain: "SendbirdChatService", code: -8, userInfo: [NSLocalizedDescriptionKey: "No current channel"])
+        }
+        
+        isLoading = true
+        defer { isLoading = false }
+        
+        do {
+            let params = MessageListParams()
+            params.prevResultSize = AppConfig.Chat.messagePageSize
+            params.nextResultSize = 0
+            params.includeReactions = true
+            params.includeThreadInfo = true
+            
+            let newMessages = try await channel.getMessages(params: params)
+            
+            await MainActor.run {
+                self.messages = newMessages
+                self.hasMoreMessages = newMessages.count == AppConfig.Chat.messagePageSize
+            }
+        } catch {
+            self.error = error
+            throw error
+        }
+    }
+    
+    /// Loads older messages for infinite scrolling
+    func loadOlderMessages() async throws {
+        guard let channel = currentChannel else {
+            throw NSError(domain: "SendbirdChatService", code: -8, userInfo: [NSLocalizedDescriptionKey: "No current channel"])
+        }
+        
+        guard !isLoadingOlderMessages && hasMoreMessages else { return }
+        
+        isLoadingOlderMessages = true
+        defer { isLoadingOlderMessages = false }
+        
+        do {
+            let params = MessageListParams()
+            params.prevResultSize = AppConfig.Chat.messagePageSize
+            params.nextResultSize = 0
+            params.includeReactions = true
+            params.includeThreadInfo = true
+            
+            // Use the oldest message as timestamp reference
+            if let oldestMessage = messages.first {
+                params.inclusiveTimestamp = oldestMessage.createdAt - 1
+            }
+            
+            let olderMessages = try await channel.getMessages(params: params)
+            
+            await MainActor.run {
+                // Prepend older messages to maintain chronological order
+                self.messages = olderMessages + self.messages
+                self.hasMoreMessages = olderMessages.count == AppConfig.Chat.messagePageSize
+            }
+        } catch {
+            self.error = error
+            throw error
+        }
+    }
+    
+    /// Searches messages in the current channel
+    func searchMessages(query: String) async throws {
+        guard let channel = currentChannel else {
+            throw NSError(domain: "SendbirdChatService", code: -8, userInfo: [NSLocalizedDescriptionKey: "No current channel"])
+        }
+        
+        guard !query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            await MainActor.run {
+                self.searchResults = []
+                self.currentSearchQuery = ""
+                self.isSearching = false
+            }
+            return
+        }
+        
+        isSearching = true
+        defer { isSearching = false }
+        
+        do {
+            let params = MessageSearchQueryParams()
+            params.keyword = query
+            params.channelUrl = channel.channelUrl
+            params.order = .timestamp
+            params.reverse = true // Most recent first
+            params.limit = 50
+            params.messageTimestampFrom = 0
+            params.messageTimestampTo = Int64(Date().timeIntervalSince1970 * 1000)
+            
+            let searchQuery = SendbirdChat.createMessageSearchQuery(params: params)
+            let results = try await searchQuery.loadNextPage()
+            
+            await MainActor.run {
+                self.searchResults = results
+                self.currentSearchQuery = query
+            }
+        } catch {
+            self.error = error
+            throw error
+        }
+    }
+    
+    /// Clears search results and returns to normal message view
+    func clearSearch() {
+        searchResults = []
+        currentSearchQuery = ""
+        isSearching = false
+    }
+    
+    /// Gets the currently displayed messages (either search results or regular messages)
+    var displayedMessages: [BaseMessage] {
+        return currentSearchQuery.isEmpty ? messages : searchResults
+    }
+    
+    /// Checks if we're currently in search mode
+    var isInSearchMode: Bool {
+        return !currentSearchQuery.isEmpty
     }
 }
 

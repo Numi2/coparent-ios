@@ -16,110 +16,64 @@ struct ChatDetailView: View {
     @State private var showingVoiceMessageView = false
     @State private var typingTimer: Timer?
     
+    // MARK: - Advanced Chat Features
+    @State private var showingSearchBar = false
+    @State private var searchText = ""
+    @State private var searchTimer: Timer?
+    @State private var scrollPositionId: Int64?
+    @FocusState private var isSearchFocused: Bool
+    
     var body: some View {
         VStack(spacing: 0) {
-            ScrollViewReader { proxy in
-                ScrollView {
-                    LazyVStack(spacing: 12) {
-                        ForEach(chatService.messages, id: \.messageId) { message in
-                            MessageBubbleView(message: message)
-                                .id(message.messageId)
-                        }
-                        
-                        // Typing indicator
-                        if chatService.isAnyoneTyping {
-                            TypingIndicatorView()
-                                .transition(.opacity.combined(with: .move(edge: .bottom)))
-                        }
+            // Search Bar (when active)
+            if showingSearchBar {
+                ChatSearchBar(
+                    searchText: $searchText,
+                    onSearchSubmit: {
+                        performSearch()
+                    },
+                    onSearchCancel: {
+                        cancelSearch()
                     }
-                    .padding()
-                }
-                .onChange(of: chatService.messages) { _ in
-                    if let lastMessage = chatService.messages.last {
-                        withAnimation(.easeOut(duration: 0.3)) {
-                            proxy.scrollTo(lastMessage.messageId, anchor: .bottom)
-                        }
-                    }
-                }
+                )
+                .focused($isSearchFocused)
+                .transition(.move(edge: .top).combined(with: .opacity))
             }
             
-            Divider()
-                .background(.ultraThinMaterial)
-            
-            // Message Input
-            HStack(spacing: 12) {
-                // Image button
-                Button(action: { showingImagePicker = true }) {
-                    Image(systemName: "photo")
-                        .font(.system(size: DesignSystem.Layout.iconSize, weight: .medium))
-                        .foregroundColor(.blue)
-                        .frame(width: DesignSystem.Layout.buttonHeight, 
-                               height: DesignSystem.Layout.buttonHeight)
-                        .background(Color.blue.opacity(0.1))
-                        .background(.ultraThinMaterial)
-                        .clipShape(Circle())
-                }
-                .disabled(isUploading)
-                .accessibilityLabel("Add photo")
-                
-                // Voice message button
-                Button(action: { showingVoiceMessageView = true }) {
-                    Image(systemName: "mic")
-                        .font(.system(size: DesignSystem.Layout.iconSize, weight: .medium))
-                        .foregroundColor(.blue)
-                        .frame(width: DesignSystem.Layout.buttonHeight, 
-                               height: DesignSystem.Layout.buttonHeight)
-                        .background(Color.blue.opacity(0.1))
-                        .background(.ultraThinMaterial)
-                        .clipShape(Circle())
-                }
-                .disabled(isUploading)
-                .accessibilityLabel("Record voice message")
-                
-                // Message text field
-                TextField("Message", text: $messageText)
-                    .textFieldStyle(GlassTextFieldStyle())
-                    .focused($isInputFocused)
-                    .disabled(isUploading)
-                    .onSubmit {
-                        sendMessage()
+            // Main Content
+            if chatService.isInSearchMode {
+                // Search Results View
+                ChatSearchResultsView(
+                    searchResults: chatService.searchResults,
+                    searchQuery: chatService.currentSearchQuery,
+                    isSearching: chatService.isSearching,
+                    onMessageTap: { message in
+                        jumpToMessage(message)
                     }
-                    .onChange(of: messageText) { oldValue, newValue in
-                        handleTypingIndicator(oldText: oldValue, newText: newValue)
-                    }
-                
-                // Send button
-                Button(action: sendMessage) {
-                    if isUploading {
-                        ProgressView()
-                            .scaleEffect(0.8)
-                            .frame(width: DesignSystem.Layout.buttonHeight, 
-                                   height: DesignSystem.Layout.buttonHeight)
-                            .background(Color.blue.opacity(0.1))
-                            .background(.ultraThinMaterial)
-                            .clipShape(Circle())
-                    } else {
-                        Image(systemName: messageText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? 
-                              "arrow.up.circle" : "arrow.up.circle.fill")
-                            .font(.system(size: DesignSystem.Layout.iconSize, weight: .medium))
-                            .foregroundColor(.blue)
-                            .frame(width: DesignSystem.Layout.buttonHeight, 
-                                   height: DesignSystem.Layout.buttonHeight)
-                            .background(Color.blue.opacity(0.1))
-                            .background(.ultraThinMaterial)
-                            .clipShape(Circle())
-                            .scaleEffect(messageText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? 0.9 : 1.0)
-                            .animation(DesignSystem.Animation.spring, value: messageText.isEmpty)
-                    }
-                }
-                .disabled(messageText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isUploading)
-                .accessibilityLabel(isUploading ? "Uploading images" : "Send message")
+                )
+            } else {
+                // Normal Chat View
+                chatContentView
             }
-            .padding(DesignSystem.Layout.padding)
-            .background(.ultraThinMaterial)
+            
+            // Input Bar (hidden during search)
+            if !chatService.isInSearchMode {
+                Divider()
+                    .background(.ultraThinMaterial)
+                
+                messageInputView
+            }
         }
         .navigationTitle(channel.name ?? "Chat")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button(action: toggleSearch) {
+                    Image(systemName: showingSearchBar ? "xmark" : "magnifyingglass")
+                        .font(.system(size: DesignSystem.Layout.iconSize, weight: .medium))
+                }
+            }
+        }
         .sheet(isPresented: $showingImagePicker) {
             ModernImagePicker(
                 selectedImages: $selectedImages,
@@ -166,6 +120,230 @@ struct ChatDetailView: View {
             } catch {
                 errorMessage = error.localizedDescription
                 showingError = true
+            }
+        }
+        .onChange(of: searchText) { oldValue, newValue in
+            handleSearchTextChange(newValue)
+        }
+        .animation(.easeInOut(duration: 0.2), value: showingSearchBar)
+        .animation(.easeInOut(duration: 0.2), value: chatService.isInSearchMode)
+    }
+    
+    // MARK: - Chat Content View
+    
+    @ViewBuilder
+    private var chatContentView: some View {
+        ScrollViewReader { proxy in
+            ScrollView {
+                LazyVStack(spacing: 12) {
+                    // Loading indicator for older messages
+                    if chatService.isLoadingOlderMessages {
+                        HStack {
+                            ProgressView()
+                                .scaleEffect(0.8)
+                            Text("Loading older messages...")
+                                .font(DesignSystem.Typography.caption)
+                                .foregroundColor(.secondary)
+                        }
+                        .padding()
+                        .frame(maxWidth: .infinity)
+                    }
+                    
+                    ForEach(chatService.messages, id: \.messageId) { message in
+                        MessageBubbleView(message: message)
+                            .id(message.messageId)
+                            .onAppear {
+                                // Infinite scrolling: Load older messages when near the top
+                                if message == chatService.messages.first,
+                                   chatService.hasMoreMessages,
+                                   !chatService.isLoadingOlderMessages {
+                                    Task {
+                                        try? await chatService.loadOlderMessages()
+                                    }
+                                }
+                            }
+                    }
+                    
+                    // Typing indicator
+                    if chatService.isAnyoneTyping {
+                        TypingIndicatorView()
+                            .transition(.opacity.combined(with: .move(edge: .bottom)))
+                    }
+                }
+                .padding()
+            }
+            .refreshable {
+                // Pull-to-refresh functionality
+                do {
+                    try await chatService.refreshMessages()
+                } catch {
+                    errorMessage = error.localizedDescription
+                    showingError = true
+                }
+            }
+            .onChange(of: chatService.messages) { _ in
+                scrollToLatestMessage(proxy: proxy, animated: true)
+            }
+            .onChange(of: scrollPositionId) { _ in
+                if let messageId = scrollPositionId {
+                    withAnimation(.easeInOut(duration: 0.5)) {
+                        proxy.scrollTo(messageId, anchor: .center)
+                    }
+                    scrollPositionId = nil
+                }
+            }
+        }
+    }
+    
+    // MARK: - Message Input View
+    
+    @ViewBuilder
+    private var messageInputView: some View {
+        HStack(spacing: 12) {
+            // Image button
+            Button(action: { showingImagePicker = true }) {
+                Image(systemName: "photo")
+                    .font(.system(size: DesignSystem.Layout.iconSize, weight: .medium))
+                    .foregroundColor(.blue)
+                    .frame(width: DesignSystem.Layout.buttonHeight, 
+                           height: DesignSystem.Layout.buttonHeight)
+                    .background(Color.blue.opacity(0.1))
+                    .background(.ultraThinMaterial)
+                    .clipShape(Circle())
+            }
+            .disabled(isUploading)
+            .accessibilityLabel("Add photo")
+            
+            // Voice message button
+            Button(action: { showingVoiceMessageView = true }) {
+                Image(systemName: "mic")
+                    .font(.system(size: DesignSystem.Layout.iconSize, weight: .medium))
+                    .foregroundColor(.blue)
+                    .frame(width: DesignSystem.Layout.buttonHeight, 
+                           height: DesignSystem.Layout.buttonHeight)
+                    .background(Color.blue.opacity(0.1))
+                    .background(.ultraThinMaterial)
+                    .clipShape(Circle())
+            }
+            .disabled(isUploading)
+            .accessibilityLabel("Record voice message")
+            
+            // Message text field
+            TextField("Message", text: $messageText, axis: .vertical)
+                .textFieldStyle(GlassTextFieldStyle())
+                .focused($isInputFocused)
+                .disabled(isUploading)
+                .lineLimit(1...5)
+                .onSubmit {
+                    sendMessage()
+                }
+                .onChange(of: messageText) { oldValue, newValue in
+                    handleTypingIndicator(oldText: oldValue, newText: newValue)
+                }
+            
+            // Send button
+            Button(action: sendMessage) {
+                if isUploading {
+                    ProgressView()
+                        .scaleEffect(0.8)
+                        .frame(width: DesignSystem.Layout.buttonHeight, 
+                               height: DesignSystem.Layout.buttonHeight)
+                        .background(Color.blue.opacity(0.1))
+                        .background(.ultraThinMaterial)
+                        .clipShape(Circle())
+                } else {
+                    Image(systemName: messageText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? 
+                          "arrow.up.circle" : "arrow.up.circle.fill")
+                        .font(.system(size: DesignSystem.Layout.iconSize, weight: .medium))
+                        .foregroundColor(.blue)
+                        .frame(width: DesignSystem.Layout.buttonHeight, 
+                               height: DesignSystem.Layout.buttonHeight)
+                        .background(Color.blue.opacity(0.1))
+                        .background(.ultraThinMaterial)
+                        .clipShape(Circle())
+                        .scaleEffect(messageText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? 0.9 : 1.0)
+                        .animation(DesignSystem.Animation.spring, value: messageText.isEmpty)
+                }
+            }
+            .disabled(messageText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isUploading)
+            .accessibilityLabel(isUploading ? "Uploading images" : "Send message")
+        }
+        .padding(DesignSystem.Layout.padding)
+        .background(.ultraThinMaterial)
+        .keyboardAdaptive()
+    }
+    
+    // MARK: - Search Functions
+    
+    private func toggleSearch() {
+        withAnimation(.easeInOut(duration: 0.2)) {
+            showingSearchBar.toggle()
+            
+            if showingSearchBar {
+                isSearchFocused = true
+            } else {
+                cancelSearch()
+            }
+        }
+    }
+    
+    private func performSearch() {
+        guard !searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
+        
+        Task {
+            do {
+                try await chatService.searchMessages(query: searchText)
+            } catch {
+                errorMessage = error.localizedDescription
+                showingError = true
+            }
+        }
+    }
+    
+    private func cancelSearch() {
+        searchText = ""
+        isSearchFocused = false
+        chatService.clearSearch()
+        
+        withAnimation(.easeInOut(duration: 0.2)) {
+            showingSearchBar = false
+        }
+    }
+    
+    private func handleSearchTextChange(_ newValue: String) {
+        // Cancel previous timer
+        searchTimer?.invalidate()
+        
+        if newValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            chatService.clearSearch()
+        } else {
+            // Debounce search with 0.5 second delay
+            searchTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: false) { _ in
+                Task {
+                    try? await chatService.searchMessages(query: newValue)
+                }
+            }
+        }
+    }
+    
+    private func jumpToMessage(_ message: BaseMessage) {
+        // Exit search mode
+        cancelSearch()
+        
+        // Set scroll position to the message
+        scrollPositionId = message.messageId
+    }
+    
+    // MARK: - Helper Functions
+    
+    private func scrollToLatestMessage(proxy: ScrollViewProxy, animated: Bool = true) {
+        if let lastMessage = chatService.messages.last {
+            if animated {
+                withAnimation(.easeOut(duration: 0.3)) {
+                    proxy.scrollTo(lastMessage.messageId, anchor: .bottom)
+                }
+            } else {
+                proxy.scrollTo(lastMessage.messageId, anchor: .bottom)
             }
         }
     }
@@ -226,6 +404,49 @@ struct ChatDetailView: View {
             // Stop typing if text becomes empty
             chatService.endTyping(in: channel)
         }
+    }
+}
+
+// MARK: - Keyboard Adaptive Modifier
+
+struct KeyboardAdaptive: ViewModifier {
+    @State private var keyboardHeight: CGFloat = 0
+    
+    func body(content: Content) -> some View {
+        content
+            .padding(.bottom, keyboardHeight)
+            .onAppear {
+                NotificationCenter.default.addObserver(
+                    forName: UIResponder.keyboardWillShowNotification,
+                    object: nil,
+                    queue: .main
+                ) { notification in
+                    if let keyboardFrame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect {
+                        withAnimation(.easeOut(duration: 0.25)) {
+                            keyboardHeight = keyboardFrame.height - (UIApplication.shared.windows.first?.safeAreaInsets.bottom ?? 0)
+                        }
+                    }
+                }
+                
+                NotificationCenter.default.addObserver(
+                    forName: UIResponder.keyboardWillHideNotification,
+                    object: nil,
+                    queue: .main
+                ) { _ in
+                    withAnimation(.easeOut(duration: 0.25)) {
+                        keyboardHeight = 0
+                    }
+                }
+            }
+            .onDisappear {
+                NotificationCenter.default.removeObserver(self)
+            }
+    }
+}
+
+extension View {
+    func keyboardAdaptive() -> some View {
+        modifier(KeyboardAdaptive())
     }
 }
 

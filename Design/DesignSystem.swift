@@ -122,15 +122,16 @@ struct GlassButtonStyle: ButtonStyle {
 }
 
 struct GlassTextFieldStyle: TextFieldStyle {
-    // swiftlint:disable:next identifier_name
     func _body(configuration: TextField<Self._Label>) -> some View {
         configuration
-            .padding(DesignSystem.Layout.padding)
+            .padding(.horizontal, DesignSystem.Layout.padding)
+            .padding(.vertical, 12)
             .background(
                 RoundedRectangle(cornerRadius: DesignSystem.Layout.cornerRadius)
-                    .fill(Color.white.opacity(0.1))
+                    .fill(Color(.systemGray6).opacity(0.8))
                     .background(.ultraThinMaterial)
             )
+            .font(DesignSystem.Typography.body)
     }
 }
 
