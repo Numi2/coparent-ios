@@ -121,6 +121,53 @@ struct GlassButtonStyle: ButtonStyle {
     }
 }
 
+struct GlassPrimaryButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(DesignSystem.Typography.callout.weight(.medium))
+            .foregroundColor(.white)
+            .padding(.horizontal, DesignSystem.Layout.padding)
+            .frame(height: DesignSystem.Layout.buttonHeight)
+            .background(
+                RoundedRectangle(cornerRadius: DesignSystem.Layout.cornerRadius)
+                    .fill(
+                        LinearGradient(
+                            colors: [Color.blue, Color.blue.opacity(0.8)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: DesignSystem.Layout.cornerRadius)
+                            .fill(Color.white.opacity(configuration.isPressed ? 0.2 : 0.1))
+                    )
+            )
+            .scaleEffect(configuration.isPressed ? 0.98 : 1)
+            .animation(DesignSystem.Animation.spring, value: configuration.isPressed)
+    }
+}
+
+struct GlassSecondaryButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(DesignSystem.Typography.callout.weight(.medium))
+            .foregroundColor(.primary)
+            .padding(.horizontal, DesignSystem.Layout.padding)
+            .frame(height: DesignSystem.Layout.buttonHeight)
+            .background(
+                RoundedRectangle(cornerRadius: DesignSystem.Layout.cornerRadius)
+                    .stroke(Color.primary.opacity(0.3), lineWidth: 1)
+                    .background(
+                        RoundedRectangle(cornerRadius: DesignSystem.Layout.cornerRadius)
+                            .fill(Color.white.opacity(configuration.isPressed ? 0.2 : 0.1))
+                            .background(.ultraThinMaterial)
+                    )
+            )
+            .scaleEffect(configuration.isPressed ? 0.98 : 1)
+            .animation(DesignSystem.Animation.spring, value: configuration.isPressed)
+    }
+}
+
 struct GlassTextFieldStyle: TextFieldStyle {
     func _body(configuration: TextField<Self._Label>) -> some View {
         configuration
@@ -305,5 +352,17 @@ extension View {
     // Legacy method for backward compatibility
     func toast(data toast: Binding<ToastData?>) -> some View {
         modifier(ToastModifier(toast: toast))
+    }
+    
+    // New method for simple message + isShowing binding
+    func toast(message: String, isShowing: Binding<Bool>) -> some View {
+        self.toast(Binding<ToastData?>(
+            get: {
+                isShowing.wrappedValue ? ToastData.info(message) : nil
+            },
+            set: { newValue in
+                isShowing.wrappedValue = newValue != nil
+            }
+        ))
     }
 } 
