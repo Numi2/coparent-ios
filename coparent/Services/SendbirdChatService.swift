@@ -53,13 +53,7 @@ class SendbirdChatService {
     
     func fetchChannels() async throws {
         guard SendbirdChat.isInitialized else {
-            throw NSError(
-                domain: "SendbirdChatService", 
-                code: -1, 
-                userInfo: [
-                    NSLocalizedDescriptionKey: "SDK not initialized"
-                ]
-            )
+            throw ChatServiceError.sdkNotInitialized
         }
         
         isLoading = true
@@ -85,13 +79,7 @@ class SendbirdChatService {
     
     func fetchMessages(for channel: GroupChannel) async throws {
         guard SendbirdChat.isInitialized else {
-            throw NSError(
-                domain: "SendbirdChatService", 
-                code: -1, 
-                userInfo: [
-                    NSLocalizedDescriptionKey: "SDK not initialized"
-                ]
-            )
+            throw ChatServiceError.sdkNotInitialized
         }
         
         isLoading = true
@@ -118,13 +106,7 @@ class SendbirdChatService {
     
     func sendMessage(_ text: String, in channel: GroupChannel) async throws {
         guard SendbirdChat.isInitialized else {
-            throw NSError(
-                domain: "SendbirdChatService", 
-                code: -1, 
-                userInfo: [
-                    NSLocalizedDescriptionKey: "SDK not initialized"
-                ]
-            )
+            throw ChatServiceError.sdkNotInitialized
         }
         
         do {
@@ -142,13 +124,7 @@ class SendbirdChatService {
     
     func sendImage(_ image: UIImage, in channel: GroupChannel) async throws {
         guard SendbirdChat.isInitialized else {
-            throw NSError(
-                domain: "SendbirdChatService", 
-                code: -1, 
-                userInfo: [
-                    NSLocalizedDescriptionKey: "SDK not initialized"
-                ]
-            )
+            throw ChatServiceError.sdkNotInitialized
         }
         
         do {
@@ -171,13 +147,7 @@ class SendbirdChatService {
     
     func sendImages(_ images: [UIImage], in channel: GroupChannel) async throws {
         guard SendbirdChat.isInitialized else {
-            throw NSError(
-                domain: "SendbirdChatService", 
-                code: -1, 
-                userInfo: [
-                    NSLocalizedDescriptionKey: "SDK not initialized"
-                ]
-            )
+            throw ChatServiceError.sdkNotInitialized
         }
         
         do {
@@ -203,13 +173,7 @@ class SendbirdChatService {
     
     func createChannel(with userIds: [String]) async throws -> GroupChannel {
         guard SendbirdChat.isInitialized else {
-            throw NSError(
-                domain: "SendbirdChatService", 
-                code: -1, 
-                userInfo: [
-                    NSLocalizedDescriptionKey: "SDK not initialized"
-                ]
-            )
+            throw ChatServiceError.sdkNotInitialized
         }
         
         do {
@@ -233,13 +197,7 @@ class SendbirdChatService {
     
     func sendVoiceMessage(_ audioURL: URL, in channel: GroupChannel) async throws {
         guard SendbirdChat.currentUser != nil else {
-            throw NSError(
-                domain: "SendbirdChatService", 
-                code: -1, 
-                userInfo: [
-                    NSLocalizedDescriptionKey: "User not authenticated"
-                ]
-            )
+            throw ChatServiceError.userNotAuthenticated
         }
         
         let params = FileMessageCreateParams()
@@ -254,13 +212,7 @@ class SendbirdChatService {
             
             _ = try await channel.sendFileMessage(params: params)
         } catch {
-            throw NSError(
-                domain: "SendbirdChatService", 
-                code: -2, 
-                userInfo: [
-                    NSLocalizedDescriptionKey: "Failed to send voice message: \(error.localizedDescription)"
-                ]
-            )
+            throw ChatServiceError.failedToSendVoiceMessage(error.localizedDescription)
         }
     }
     
@@ -289,13 +241,7 @@ class SendbirdChatService {
                 updateMessageInList(updatedMessage)
             }
         } catch {
-            throw NSError(
-                domain: "SendbirdChatService", 
-                code: -4, 
-                userInfo: [
-                    NSLocalizedDescriptionKey: "Failed to update message: \(error.localizedDescription)"
-                ]
-            )
+            throw ChatServiceError.failedToUpdateMessage(error.localizedDescription)
         }
     }
     
@@ -307,13 +253,7 @@ class SendbirdChatService {
                 messages.removeAll { $0.messageId == message.messageId }
             }
         } catch {
-            throw NSError(
-                domain: "SendbirdChatService", 
-                code: -5, 
-                userInfo: [
-                    NSLocalizedDescriptionKey: "Failed to delete message: \(error.localizedDescription)"
-                ]
-            )
+            throw ChatServiceError.failedToDeleteMessage(error.localizedDescription)
         }
     }
     
@@ -633,23 +573,11 @@ class SendbirdChatService {
     
     private func prepareImageData(from image: UIImage) throws -> Data {
         guard let imageData = image.jpegData(compressionQuality: 0.7) else {
-            throw NSError(
-                domain: "SendbirdChatService", 
-                code: -2, 
-                userInfo: [
-                    NSLocalizedDescriptionKey: "Failed to compress image"
-                ]
-            )
+            throw ChatServiceError.failedToCompressImage
         }
         
         if imageData.count > AppConfig.Chat.maxImageSize {
-            throw NSError(
-                domain: "SendbirdChatService", 
-                code: -3, 
-                userInfo: [
-                    NSLocalizedDescriptionKey: "Image size exceeds maximum allowed size"
-                ]
-            )
+            throw ChatServiceError.imageSizeExceedsLimit
         }
         
         return imageData
@@ -830,6 +758,36 @@ extension SendbirdChatService: ConnectionDelegate {
             } catch {
                 print("Failed to reload data after reconnection: \(error)")
             }
+        }
+    }
+}
+
+// MARK: - Chat Service Errors
+enum ChatServiceError: LocalizedError {
+    case sdkNotInitialized
+    case userNotAuthenticated
+    case failedToCompressImage
+    case imageSizeExceedsLimit
+    case failedToSendVoiceMessage(String)
+    case failedToUpdateMessage(String)
+    case failedToDeleteMessage(String)
+    
+    var errorDescription: String? {
+        switch self {
+        case .sdkNotInitialized:
+            return "SDK not initialized"
+        case .userNotAuthenticated:
+            return "User not authenticated"
+        case .failedToCompressImage:
+            return "Failed to compress image"
+        case .imageSizeExceedsLimit:
+            return "Image size exceeds maximum allowed size"
+        case .failedToSendVoiceMessage(let message):
+            return "Failed to send voice message: \(message)"
+        case .failedToUpdateMessage(let message):
+            return "Failed to update message: \(message)"
+        case .failedToDeleteMessage(let message):
+            return "Failed to delete message: \(message)"
         }
     }
 } 
