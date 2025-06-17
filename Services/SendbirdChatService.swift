@@ -127,6 +127,43 @@ class SendbirdChatService {
         }
     }
     
+    func sendImages(_ images: [UIImage], in channel: GroupChannel) async throws {
+        guard SendbirdChat.isInitialized else {
+            throw NSError(domain: "SendbirdChatService", code: -1, userInfo: [NSLocalizedDescriptionKey: "SDK not initialized"])
+        }
+        
+        do {
+            // Send images sequentially to maintain order
+            for (index, image) in images.enumerated() {
+                // Compress image if needed
+                guard let imageData = image.jpegData(compressionQuality: 0.7) else {
+                    throw NSError(domain: "SendbirdChatService", code: -2, userInfo: [NSLocalizedDescriptionKey: "Failed to compress image \(index + 1)"])
+                }
+                
+                // Check file size
+                if imageData.count > AppConfig.Chat.maxImageSize {
+                    throw NSError(domain: "SendbirdChatService", code: -3, userInfo: [NSLocalizedDescriptionKey: "Image \(index + 1) size exceeds maximum allowed size"])
+                }
+                
+                // Create file message params
+                let params = FileMessageCreateParams()
+                params.file = imageData
+                params.fileName = "image_\(Date().timeIntervalSince1970)_\(index).jpg"
+                params.mimeType = "image/jpeg"
+                
+                // Send file message
+                let message = try await channel.sendFileMessage(params: params)
+                
+                await MainActor.run {
+                    self.messages.append(message)
+                }
+            }
+        } catch {
+            self.error = error
+            throw error
+        }
+    }
+    
     func createChannel(with userIds: [String]) async throws -> GroupChannel {
         guard SendbirdChat.isInitialized else {
             throw NSError(domain: "SendbirdChatService", code: -1, userInfo: [NSLocalizedDescriptionKey: "SDK not initialized"])

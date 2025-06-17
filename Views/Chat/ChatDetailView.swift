@@ -7,13 +7,13 @@ struct ChatDetailView: View {
     @State private var chatService = SendbirdChatService.shared
     @State private var messageText = ""
     @State private var showingImagePicker = false
-    @State private var selectedImage: UIImage?
+    @State private var selectedImages: [UIImage] = []
+    @State private var showingImagePreview = false
     @FocusState private var isInputFocused: Bool
     @State private var errorMessage: String?
     @State private var showingError = false
     @State private var isUploading = false
     @State private var showingVoiceMessageView = false
-    @State private var showImagePicker = false
     @State private var typingTimer: Timer?
     
     var body: some View {
@@ -49,7 +49,7 @@ struct ChatDetailView: View {
             // Message Input
             HStack(spacing: 12) {
                 // Image button
-                Button(action: { showImagePicker = true }) {
+                Button(action: { showingImagePicker = true }) {
                     Image(systemName: "photo")
                         .font(.system(size: DesignSystem.Layout.iconSize, weight: .medium))
                         .foregroundColor(.blue)
@@ -113,7 +113,7 @@ struct ChatDetailView: View {
                     }
                 }
                 .disabled(messageText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isUploading)
-                .accessibilityLabel("Send message")
+                .accessibilityLabel(isUploading ? "Uploading images" : "Send message")
             }
             .padding(DesignSystem.Layout.padding)
             .background(.ultraThinMaterial)
@@ -121,7 +121,25 @@ struct ChatDetailView: View {
         .navigationTitle(channel.name ?? "Chat")
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $showingImagePicker) {
-            ImagePicker(image: $selectedImage)
+            ModernImagePicker(
+                selectedImages: $selectedImages,
+                maxSelection: 5
+            ) {
+                showingImagePicker = false
+                if !selectedImages.isEmpty {
+                    showingImagePreview = true
+                }
+            }
+        }
+        .sheet(isPresented: $showingImagePreview) {
+            ImagePreviewView(
+                images: $selectedImages,
+                onSend: sendImages,
+                onCancel: {
+                    showingImagePreview = false
+                    selectedImages.removeAll()
+                }
+            )
         }
         .sheet(isPresented: $showingVoiceMessageView) {
             VoiceMessageView { url in
@@ -134,13 +152,6 @@ struct ChatDetailView: View {
                     }
                 }
             }
-        }
-        .sheet(isPresented: $showImagePicker) {
-            ImagePicker(image: $selectedImage)
-        }
-        .onChange(of: selectedImage) { image in
-            guard let image else { return }
-            sendImage(image)
         }
         .alert("Error", isPresented: $showingError) {
             Button("OK", role: .cancel) {}
@@ -175,14 +186,21 @@ struct ChatDetailView: View {
         }
     }
     
-    private func sendImage(_ image: UIImage) {
+    private func sendImages(_ images: [UIImage]) {
         Task {
             isUploading = true
             defer { isUploading = false }
             
             do {
-                try await chatService.sendImage(image, in: channel)
-                selectedImage = nil
+                if images.count == 1 {
+                    try await chatService.sendImage(images[0], in: channel)
+                } else {
+                    try await chatService.sendImages(images, in: channel)
+                }
+                await MainActor.run {
+                    selectedImages.removeAll()
+                    showingImagePreview = false
+                }
             } catch {
                 errorMessage = error.localizedDescription
                 showingError = true
@@ -371,15 +389,7 @@ struct MessageBubbleView: View {
                     .background(Color(.systemGray6))
                     .cornerRadius(16)
             } else if let image = image {
-                Image(uiImage: image)
-                    .resizable()
-                    .scaledToFill()
-                    .frame(maxWidth: 200, maxHeight: 200)
-                    .clipped()
-                    .cornerRadius(16)
-                    .onTapGesture {
-                        // TODO: Implement image expansion
-                    }
+                ImageMessageView(image: image, isCurrentUser: isCurrentUser)
             } else {
                 RoundedRectangle(cornerRadius: 16)
                     .fill(Color(.systemGray6))
@@ -609,41 +619,7 @@ struct EditMessageView: View {
     }
 }
 
-struct ImagePicker: UIViewControllerRepresentable {
-    @Binding var image: UIImage?
-    @Environment(\.presentationMode) private var presentationMode
-    
-    func makeUIViewController(context: Context) -> UIImagePickerController {
-        let picker = UIImagePickerController()
-        picker.delegate = context.coordinator
-        return picker
-    }
-    
-    func updateUIViewController(_ uiViewController: UIImagePickerController, context: Context) {}
-    
-    func makeCoordinator() -> Coordinator {
-        Coordinator(self)
-    }
-    
-    class Coordinator: NSObject, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
-        let parent: ImagePicker
-        
-        init(_ parent: ImagePicker) {
-            self.parent = parent
-        }
-        
-        func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
-            if let image = info[.originalImage] as? UIImage {
-                parent.image = image
-            }
-            parent.presentationMode.wrappedValue.dismiss()
-        }
-        
-        func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
-            parent.presentationMode.wrappedValue.dismiss()
-        }
-    }
-}
+
 
 #Preview("Chat Detail View") {
     NavigationView {
