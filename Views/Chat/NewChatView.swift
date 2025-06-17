@@ -1,10 +1,11 @@
 import SwiftUI
 import FirebaseFirestore
+import SendbirdChatSDK
 
 struct NewChatView: View {
     @Environment(\.dismiss) private var dismiss
-    @EnvironmentObject var appState: AppState
-    @StateObject private var chatService = ChatService()
+    @Environment(AppState.self) private var appState
+    @State private var chatService = SendbirdChatService.shared
     @State private var searchText = ""
     @State private var selectedUsers: [User] = []
     @State private var showingError = false
@@ -114,7 +115,7 @@ struct NewChatView: View {
             
             Task {
                 do {
-                    let chat = try await chatService.createChat(with: allParticipants)
+                    let channel = try await chatService.createChannel(with: allParticipants)
                     dismiss()
                 } catch {
                     errorMessage = error.localizedDescription
@@ -197,9 +198,7 @@ struct UserRowView: View {
     }
 }
 
-struct NewChatView_Previews: PreviewProvider {
-    static var previews: some View {
-        NewChatView()
-            .environmentObject(AppState())
-    }
+#Preview {
+    NewChatView()
+        .environment(AppState())
 } 

@@ -1,16 +1,31 @@
 import SwiftUI
+import SendbirdChatSDK
 
 struct ChatListView: View {
-    @EnvironmentObject var appState: AppState
-    @StateObject private var chatService = ChatService()
+    @Environment(AppState.self) private var appState
+    @State private var chatService = SendbirdChatService.shared
     @State private var showingNewChat = false
+    @State private var errorMessage: String?
+    @State private var showingError = false
     
     var body: some View {
         NavigationView {
-            List {
-                ForEach(chatService.chats) { chat in
-                    NavigationLink(destination: ChatDetailView(chat: chat)) {
-                        ChatRowView(chat: chat)
+            Group {
+                if chatService.isLoading {
+                    ProgressView()
+                } else if chatService.channels.isEmpty {
+                    ContentUnavailableView(
+                        "No Messages",
+                        systemImage: "message",
+                        description: Text("Start a conversation with your matches")
+                    )
+                } else {
+                    List {
+                        ForEach(chatService.channels, id: \.channelUrl) { channel in
+                            NavigationLink(destination: ChatDetailView(channel: channel)) {
+                                ChatRowView(channel: channel)
+                            }
+                        }
                     }
                 }
             }
@@ -25,11 +40,19 @@ struct ChatListView: View {
             .sheet(isPresented: $showingNewChat) {
                 NewChatView()
             }
+            .alert("Error", isPresented: $showingError) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                if let error = errorMessage {
+                    Text(error)
+                }
+            }
             .task {
                 do {
-                    try await chatService.fetchChats(for: appState.currentUser?.id ?? "")
+                    try await chatService.fetchChannels()
                 } catch {
-                    print("Error fetching chats: \(error)")
+                    errorMessage = error.localizedDescription
+                    showingError = true
                 }
             }
         }
@@ -37,9 +60,7 @@ struct ChatListView: View {
 }
 
 struct ChatRowView: View {
-    let chat: Chat
-    @EnvironmentObject var appState: AppState
-    @StateObject private var userService = UserService()
+    let channel: GroupChannel
     @State private var otherUser: User?
     @State private var isLoading = false
     
@@ -69,11 +90,11 @@ struct ChatRowView: View {
             }
             
             VStack(alignment: .leading, spacing: 4) {
-                Text(otherUser?.name ?? "Unknown User")
+                Text(channel.name ?? "Unknown User")
                     .font(.headline)
                 
-                if let lastMessage = chat.lastMessage {
-                    Text(lastMessage.content)
+                if let lastMessage = channel.lastMessage {
+                    Text(lastMessage.message)
                         .font(.subheadline)
                         .foregroundColor(.gray)
                         .lineLimit(1)
@@ -83,14 +104,14 @@ struct ChatRowView: View {
             Spacer()
             
             VStack(alignment: .trailing, spacing: 4) {
-                if let lastMessage = chat.lastMessage {
-                    Text(lastMessage.timestamp, style: .time)
+                if let lastMessage = channel.lastMessage {
+                    Text(lastMessage.createdAt, style: .time)
                         .font(.caption)
                         .foregroundColor(.gray)
                 }
                 
-                if chat.unreadCount > 0 {
-                    Text("\(chat.unreadCount)")
+                if channel.unreadMessageCount > 0 {
+                    Text("\(channel.unreadMessageCount)")
                         .font(.caption)
                         .foregroundColor(.white)
                         .padding(6)
@@ -106,8 +127,7 @@ struct ChatRowView: View {
     }
     
     private func loadOtherUser() async {
-        guard let currentUserId = appState.currentUser?.id,
-              let otherUserId = chat.participants.first(where: { $0 != currentUserId }) else {
+        guard let otherMember = channel.members.first(where: { $0.userId != SendbirdChat.currentUser?.userId }) else {
             return
         }
         
@@ -115,16 +135,15 @@ struct ChatRowView: View {
         defer { isLoading = false }
         
         do {
-            otherUser = try await userService.fetchUser(id: otherUserId)
+            let userService = UserService()
+            otherUser = try await userService.fetchUser(id: otherMember.userId)
         } catch {
             print("Failed to load user: \(error)")
         }
     }
 }
 
-struct ChatListView_Previews: PreviewProvider {
-    static var previews: some View {
-        ChatListView()
-            .environmentObject(AppState())
-    }
+#Preview {
+    ChatListView()
+        .environment(AppState())
 } 

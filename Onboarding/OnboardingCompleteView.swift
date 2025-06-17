@@ -26,8 +26,11 @@ struct OnboardingCompleteView: View {
             Spacer()
             
             Button(action: {
-                withAnimation {
-                    appState.isOnboarded = true
+                Task {
+                    await appState.connectToSendbird()
+                    withAnimation {
+                        appState.isOnboarded = true
+                    }
                 }
             }) {
                 Text("Get Started")

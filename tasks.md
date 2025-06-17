@@ -12,15 +12,63 @@
 
 ## Pre-Production Tasks
 
-### 1. Chat System Enhancements
-- [ ] Implement real-time message updates using Firebase listeners
-- [ ] Add message delivery status indicators
-- [ ] Implement message deletion and editing
-- [ ] Add support for voice messages
-- [ ] Implement chat backup and restore functionality
-- [ ] Add message reactions and replies
-- [ ] Implement group chat management features
-- [ ] Add chat search functionality
+### 1. Chat System Refactoring to integrating sendbird SDK
+- [x] Integrate Sendbird Chat SDK
+  - [x] Initialize SDK with `SendbirdChat.initialize()`.
+  - [x] Authenticate users with `SendbirdChat.connect()`.
+  - [x] Create SendbirdService for SDK initialization and connection
+  - [x] Create SendbirdChatService for chat functionality
+  - [x] Set up proper error handling and state management
+
+### 2. Messaging Core
+- [x] Use `GroupChannel` with `distinct = true` for 1:1 and group chats.
+  - [x] Basic channel creation and management
+  - [x] Real-time message updates with SDK event delegates
+  - [x] Implement reconnect logic using built-in SDK connection handlers
+  - [x] Migrate existing chat UI to use Sendbird channels
+  - [x] Update chat list view to use Sendbird channels
+  - [x] Update chat detail view to use Sendbird messages
+  - [ ] Implement image message support
+  - [ ] Add message status indicators
+  - [ ] Add typing indicators
+
+### 3. Message Status
+- [ ] Enable and display delivery receipts (sent, delivered, read).
+  - [ ] Implement message status tracking
+  - [ ] Update UI to show message status
+  - [ ] Add status indicators in chat list
+
+### 4. Message Operations
+- [ ] Implement message editing with `updateUserMessage()`.
+- [ ] Implement message deletion with `deleteMessage()`.
+- [ ] Add message context menu (edit, delete, copy)
+- [ ] Add message reactions
+
+### 5. Voice Messages
+- [ ] Enable voice messages: `SBUGlobals.voiceMessageConfig.isVoiceMessageEnabled = true`.
+- [ ] Use `SBUVoiceMessageInputView` for recording.
+- [ ] Use `SBUVoiceContentView` for playback.
+- [ ] Handle microphone permissions via `AVAudioSession`.
+
+### 6. Local Caching
+- [x] Enable local caching: `isLocalCachingEnabled = true`.
+- [ ] Sync message history automatically on app launch.
+- [ ] Implement offline message queue
+- [ ] Add message retry mechanism
+
+### 7. Reactions & Threads
+- [ ] Enable emoji reactions using UIKit default picker.
+- [ ] Enable message threading: `SendbirdUI.config.groupChannel.channel.replyType = .thread`.
+- [ ] Add thread view UI
+- [ ] Implement thread message navigation
+
+
+### 10. Push Notifications
+- [x] Integrate APNs
+- [x] Register device tokens with Sendbird
+- [x] Handle push events with SDK handlers
+- [x] Add notification settings
+- [ ] Implement notification grouping
 
 ### 2. User Experience Improvements
 - [ ] Add pull-to-refresh for chat and match lists

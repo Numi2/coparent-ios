@@ -13,6 +13,24 @@ class AppState {
         case terms
         case complete
     }
+    
+    func initializeServices() async {
+        do {
+            try await SendbirdService.shared.initialize()
+        } catch {
+            print("Failed to initialize Sendbird: \(error)")
+        }
+    }
+    
+    func connectToSendbird() async {
+        guard let user = currentUser else { return }
+        
+        do {
+            try await SendbirdService.shared.connect(userId: user.id, nickname: user.name)
+        } catch {
+            print("Failed to connect to Sendbird: \(error)")
+        }
+    }
 }
 
 struct User {
@@ -42,6 +60,9 @@ struct CoParentApp: App {
                 MainTabView()
                     .environment(appState)
             }
+        }
+        .task {
+            await appState.initializeServices()
         }
     }
 } 
