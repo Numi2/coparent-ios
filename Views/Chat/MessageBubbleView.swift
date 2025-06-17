@@ -9,8 +9,10 @@ struct MessageBubbleView: View {
     @State private var showingEditMessage = false
     @State private var showingDeleteConfirmation = false
     @State private var showingReactionPicker = false
+    @State private var showingThreadView = false
     @State private var editText = ""
     @State private var toast: ToastData?
+    @State private var chatService = SendbirdChatService.shared
     
     private var isCurrentUser: Bool {
         message.sender?.userId == SendbirdChat.currentUser?.userId
@@ -39,6 +41,12 @@ struct MessageBubbleView: View {
             MessageReactionsView(message: message)
                 .padding(.horizontal, 4)
             
+            // Thread indicator
+            ThreadIndicatorView(message: message) {
+                showingThreadView = true
+            }
+            .padding(.horizontal, 4)
+            
             // Message status
             if isCurrentUser {
                 HStack(spacing: 4) {
@@ -50,6 +58,13 @@ struct MessageBubbleView: View {
             }
         }
         .contextMenu {
+            // Reply button
+            Button(action: {
+                showingThreadView = true
+            }) {
+                Label("Reply in thread", systemImage: "arrowshape.turn.up.left")
+            }
+            
             // Reaction button
             Button(action: {
                 showingReactionPicker = true
@@ -119,6 +134,12 @@ struct MessageBubbleView: View {
             ReactionPickerView(message: message, isPresented: $showingReactionPicker)
                 .presentationDetents([.height(300)])
                 .presentationDragIndicator(.visible)
+        }
+        .fullScreenCover(isPresented: $showingThreadView) {
+            ThreadView(
+                parentMessage: message,
+                channel: chatService.currentChannel ?? GroupChannel()
+            )
         }
         .toast($toast)
     }
