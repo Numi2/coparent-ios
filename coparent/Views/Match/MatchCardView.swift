@@ -181,8 +181,8 @@ struct MatchCardView: View {
                         Image(systemName: "location.fill")
                             .foregroundColor(.blue)
                         Text(
-                            "\(formatDistance(to: coordinates)) km away • "
-                            + "\(user.location.city)"
+                            "\(formatDistance(to: coordinates)) km away • " +
+                            "\(user.location.city)"
                         )
                         .font(DesignSystem.Typography.callout)
                         .foregroundColor(.secondary)
@@ -359,10 +359,12 @@ struct MatchCardView: View {
                 // Haptic feedback for swipe zones
                 let threshold: CGFloat = 100
                 
-                if abs(gesture.translation.width) > threshold && abs(dragAmount.width) <= threshold {
+                if abs(gesture.translation.width) > threshold && 
+                   abs(dragAmount.width) <= threshold {
                     let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
                     impactFeedback.impactOccurred()
-                } else if abs(gesture.translation.height) > threshold && abs(dragAmount.height) <= threshold && canUseSuperLike {
+                } else if abs(gesture.translation.height) > threshold && 
+                          abs(dragAmount.height) <= threshold && canUseSuperLike {
                     // Special haptic for super like
                     let impactFeedback = UINotificationFeedbackGenerator()
                     impactFeedback.notificationOccurred(.success)
@@ -761,16 +763,27 @@ struct ProfileDetailView: View {
             phoneNumber: "+1987654321",
             dateOfBirth: Date().addingTimeInterval(-30 * 365 * 24 * 60 * 60),
             profileImageURL: nil,
-            bio: "Single mother looking for a co-parent. Love outdoor activities, cooking, and spending quality time with my daughter. Looking for someone who shares similar values and parenting philosophy.",
+            bio: "Single mother looking for a co-parent. Love outdoor activities, " +
+                 "cooking, and spending quality time with my daughter. Looking for " +
+                 "someone who shares similar values and parenting philosophy.",
             location: User.Location(
                 city: "San Jose",
                 state: "CA",
                 country: "USA",
-                coordinates: User.Location.Coordinates(latitude: 37.3382, longitude: -121.8863)
+                coordinates: User.Location.Coordinates(
+                    latitude: 37.3382, 
+                    longitude: -121.8863
+                )
             ),
             parentingStyle: .gentle,
             children: [
-                User.Child(id: "1", name: "Sophia", age: 6, gender: .female, interests: ["dancing", "art"])
+                User.Child(
+                    id: "1", 
+                    name: "Sophia", 
+                    age: 6, 
+                    gender: .female, 
+                    interests: ["dancing", "art"]
+                )
             ],
             preferences: User.Preferences(
                 ageRange: 28...42,
@@ -778,7 +791,9 @@ struct ProfileDetailView: View {
                 parentingStyles: [.gentle, .authoritative],
                 dealBreakers: []
             ),
-            interests: [.outdoorActivities, .cooking, .music, .reading, .artsAndCrafts],
+            interests: [
+                .outdoorActivities, .cooking, .music, .reading, .artsAndCrafts
+            ],
             verificationStatus: .verified
         ),
         onLike: {},

@@ -29,9 +29,37 @@ class SendbirdChatService {
         SendbirdChat.addConnectionDelegate(self, identifier: "SendbirdChatService")
     }
     
+    // MARK: - Helper Methods for Other Services
+    
+    func setLoading(_ loading: Bool) {
+        isLoading = loading
+    }
+    
+    func setError(_ error: Error) {
+        self.error = error
+    }
+    
+    func setMessages(_ messages: [BaseMessage]) {
+        self.messages = messages
+    }
+    
+    func updateMessageInList(_ message: BaseMessage) {
+        if let index = messages.firstIndex(where: { $0.messageId == message.messageId }) {
+            messages[index] = message
+        }
+    }
+    
+    // MARK: - Core Chat Functionality
+    
     func fetchChannels() async throws {
         guard SendbirdChat.isInitialized else {
-            throw NSError(domain: "SendbirdChatService", code: -1, userInfo: [NSLocalizedDescriptionKey: "SDK not initialized"])
+            throw NSError(
+                domain: "SendbirdChatService", 
+                code: -1, 
+                userInfo: [
+                    NSLocalizedDescriptionKey: "SDK not initialized"
+                ]
+            )
         }
         
         isLoading = true
@@ -57,7 +85,13 @@ class SendbirdChatService {
     
     func fetchMessages(for channel: GroupChannel) async throws {
         guard SendbirdChat.isInitialized else {
-            throw NSError(domain: "SendbirdChatService", code: -1, userInfo: [NSLocalizedDescriptionKey: "SDK not initialized"])
+            throw NSError(
+                domain: "SendbirdChatService", 
+                code: -1, 
+                userInfo: [
+                    NSLocalizedDescriptionKey: "SDK not initialized"
+                ]
+            )
         }
         
         isLoading = true
@@ -75,7 +109,6 @@ class SendbirdChatService {
             await MainActor.run {
                 self.currentChannel = channel
                 self.messages = messages
-                self.hasMoreMessages = messages.count == AppConfig.Chat.messagePageSize
             }
         } catch {
             self.error = error
@@ -85,7 +118,13 @@ class SendbirdChatService {
     
     func sendMessage(_ text: String, in channel: GroupChannel) async throws {
         guard SendbirdChat.isInitialized else {
-            throw NSError(domain: "SendbirdChatService", code: -1, userInfo: [NSLocalizedDescriptionKey: "SDK not initialized"])
+            throw NSError(
+                domain: "SendbirdChatService", 
+                code: -1, 
+                userInfo: [
+                    NSLocalizedDescriptionKey: "SDK not initialized"
+                ]
+            )
         }
         
         do {
@@ -103,27 +142,22 @@ class SendbirdChatService {
     
     func sendImage(_ image: UIImage, in channel: GroupChannel) async throws {
         guard SendbirdChat.isInitialized else {
-            throw NSError(domain: "SendbirdChatService", code: -1, userInfo: [NSLocalizedDescriptionKey: "SDK not initialized"])
+            throw NSError(
+                domain: "SendbirdChatService", 
+                code: -1, 
+                userInfo: [
+                    NSLocalizedDescriptionKey: "SDK not initialized"
+                ]
+            )
         }
         
         do {
-            // Compress image if needed
-            guard let imageData = image.jpegData(compressionQuality: 0.7) else {
-                throw NSError(domain: "SendbirdChatService", code: -2, userInfo: [NSLocalizedDescriptionKey: "Failed to compress image"])
-            }
+            let imageData = try prepareImageData(from: image)
+            let params = createFileMessageParams(
+                with: imageData, 
+                fileName: "image_\(Date().timeIntervalSince1970).jpg"
+            )
             
-            // Check file size
-            if imageData.count > AppConfig.Chat.maxImageSize {
-                throw NSError(domain: "SendbirdChatService", code: -3, userInfo: [NSLocalizedDescriptionKey: "Image size exceeds maximum allowed size"])
-            }
-            
-            // Create file message params
-            let params = FileMessageCreateParams()
-            params.file = imageData
-            params.fileName = "image_\(Date().timeIntervalSince1970).jpg"
-            params.mimeType = "image/jpeg"
-            
-            // Send file message
             let message = try await channel.sendFileMessage(params: params)
             
             await MainActor.run {
@@ -137,29 +171,24 @@ class SendbirdChatService {
     
     func sendImages(_ images: [UIImage], in channel: GroupChannel) async throws {
         guard SendbirdChat.isInitialized else {
-            throw NSError(domain: "SendbirdChatService", code: -1, userInfo: [NSLocalizedDescriptionKey: "SDK not initialized"])
+            throw NSError(
+                domain: "SendbirdChatService", 
+                code: -1, 
+                userInfo: [
+                    NSLocalizedDescriptionKey: "SDK not initialized"
+                ]
+            )
         }
         
         do {
             // Send images sequentially to maintain order
             for (index, image) in images.enumerated() {
-                // Compress image if needed
-                guard let imageData = image.jpegData(compressionQuality: 0.7) else {
-                    throw NSError(domain: "SendbirdChatService", code: -2, userInfo: [NSLocalizedDescriptionKey: "Failed to compress image \(index + 1)"])
-                }
+                let imageData = try prepareImageData(from: image)
+                let params = createFileMessageParams(
+                    with: imageData, 
+                    fileName: "image_\(Date().timeIntervalSince1970)_\(index).jpg"
+                )
                 
-                // Check file size
-                if imageData.count > AppConfig.Chat.maxImageSize {
-                    throw NSError(domain: "SendbirdChatService", code: -3, userInfo: [NSLocalizedDescriptionKey: "Image \(index + 1) size exceeds maximum allowed size"])
-                }
-                
-                // Create file message params
-                let params = FileMessageCreateParams()
-                params.file = imageData
-                params.fileName = "image_\(Date().timeIntervalSince1970)_\(index).jpg"
-                params.mimeType = "image/jpeg"
-                
-                // Send file message
                 let message = try await channel.sendFileMessage(params: params)
                 
                 await MainActor.run {
@@ -174,7 +203,13 @@ class SendbirdChatService {
     
     func createChannel(with userIds: [String]) async throws -> GroupChannel {
         guard SendbirdChat.isInitialized else {
-            throw NSError(domain: "SendbirdChatService", code: -1, userInfo: [NSLocalizedDescriptionKey: "SDK not initialized"])
+            throw NSError(
+                domain: "SendbirdChatService", 
+                code: -1, 
+                userInfo: [
+                    NSLocalizedDescriptionKey: "SDK not initialized"
+                ]
+            )
         }
         
         do {
@@ -197,20 +232,35 @@ class SendbirdChatService {
     }
     
     func sendVoiceMessage(_ audioURL: URL, in channel: GroupChannel) async throws {
-        guard let currentUser = SendbirdChat.currentUser else {
-            throw NSError(domain: "SendbirdChatService", code: -1, userInfo: [NSLocalizedDescriptionKey: "User not authenticated"])
+        guard SendbirdChat.currentUser != nil else {
+            throw NSError(
+                domain: "SendbirdChatService", 
+                code: -1, 
+                userInfo: [
+                    NSLocalizedDescriptionKey: "User not authenticated"
+                ]
+            )
         }
         
         let params = FileMessageCreateParams()
         params.file = audioURL
         params.fileName = audioURL.lastPathComponent
         params.mimeType = "audio/m4a"
-        params.fileSize = try FileManager.default.attributesOfItem(atPath: audioURL.path)[.size] as? UInt64 ?? 0
         
         do {
+            let fileSize = try FileManager.default
+                .attributesOfItem(atPath: audioURL.path)[.size] as? UInt64 ?? 0
+            params.fileSize = fileSize
+            
             _ = try await channel.sendFileMessage(params: params)
         } catch {
-            throw NSError(domain: "SendbirdChatService", code: -2, userInfo: [NSLocalizedDescriptionKey: "Failed to send voice message: \(error.localizedDescription)"])
+            throw NSError(
+                domain: "SendbirdChatService", 
+                code: -2, 
+                userInfo: [
+                    NSLocalizedDescriptionKey: "Failed to send voice message: \(error.localizedDescription)"
+                ]
+            )
         }
     }
     
@@ -236,12 +286,16 @@ class SendbirdChatService {
             let updatedMessage = try await message.update(params: params)
             
             await MainActor.run {
-                if let index = messages.firstIndex(where: { $0.messageId == message.messageId }) {
-                    messages[index] = updatedMessage
-                }
+                updateMessageInList(updatedMessage)
             }
         } catch {
-            throw NSError(domain: "SendbirdChatService", code: -4, userInfo: [NSLocalizedDescriptionKey: "Failed to update message: \(error.localizedDescription)"])
+            throw NSError(
+                domain: "SendbirdChatService", 
+                code: -4, 
+                userInfo: [
+                    NSLocalizedDescriptionKey: "Failed to update message: \(error.localizedDescription)"
+                ]
+            )
         }
     }
     
@@ -253,7 +307,13 @@ class SendbirdChatService {
                 messages.removeAll { $0.messageId == message.messageId }
             }
         } catch {
-            throw NSError(domain: "SendbirdChatService", code: -5, userInfo: [NSLocalizedDescriptionKey: "Failed to delete message: \(error.localizedDescription)"])
+            throw NSError(
+                domain: "SendbirdChatService", 
+                code: -5, 
+                userInfo: [
+                    NSLocalizedDescriptionKey: "Failed to delete message: \(error.localizedDescription)"
+                ]
+            )
         }
     }
     
@@ -568,6 +628,40 @@ class SendbirdChatService {
     var isInSearchMode: Bool {
         return !currentSearchQuery.isEmpty
     }
+    
+    // MARK: - Private Helper Methods
+    
+    private func prepareImageData(from image: UIImage) throws -> Data {
+        guard let imageData = image.jpegData(compressionQuality: 0.7) else {
+            throw NSError(
+                domain: "SendbirdChatService", 
+                code: -2, 
+                userInfo: [
+                    NSLocalizedDescriptionKey: "Failed to compress image"
+                ]
+            )
+        }
+        
+        if imageData.count > AppConfig.Chat.maxImageSize {
+            throw NSError(
+                domain: "SendbirdChatService", 
+                code: -3, 
+                userInfo: [
+                    NSLocalizedDescriptionKey: "Image size exceeds maximum allowed size"
+                ]
+            )
+        }
+        
+        return imageData
+    }
+    
+    private func createFileMessageParams(with data: Data, fileName: String) -> FileMessageCreateParams {
+        let params = FileMessageCreateParams()
+        params.file = data
+        params.fileName = fileName
+        params.mimeType = "image/jpeg"
+        return params
+    }
 }
 
 // MARK: - ChannelDelegate
@@ -578,19 +672,13 @@ extension SendbirdChatService: GroupChannelDelegate {
                 messages.append(message)
             }
             
-            // Update channel list
-            if let index = channels.firstIndex(where: { $0.channelUrl == channel.channelUrl }) {
-                channels.remove(at: index)
-                channels.insert(channel, at: 0)
-            }
+            updateChannelInList(channel)
         }
     }
     
     func channelDidUpdate(_ channel: GroupChannel) {
         Task { @MainActor in
-            if let index = channels.firstIndex(where: { $0.channelUrl == channel.channelUrl }) {
-                channels[index] = channel
-            }
+            updateChannelInList(channel)
             
             if channel.channelUrl == currentChannel?.channelUrl {
                 currentChannel = channel
@@ -600,9 +688,8 @@ extension SendbirdChatService: GroupChannelDelegate {
     
     func channel(_ channel: GroupChannel, didUpdate message: BaseMessage) {
         Task { @MainActor in
-            if channel.channelUrl == currentChannel?.channelUrl,
-               let index = messages.firstIndex(where: { $0.messageId == message.messageId }) {
-                messages[index] = message
+            if channel.channelUrl == currentChannel?.channelUrl {
+                updateMessageInList(message)
             }
         }
     }
@@ -617,38 +704,95 @@ extension SendbirdChatService: GroupChannelDelegate {
     
     func channel(_ channel: GroupChannel, didUpdateReadStatus message: BaseMessage) {
         Task { @MainActor in
-            if channel.channelUrl == currentChannel?.channelUrl,
-               let index = messages.firstIndex(where: { $0.messageId == message.messageId }) {
-                messages[index] = message
+            if channel.channelUrl == currentChannel?.channelUrl {
+                updateMessageInList(message)
             }
         }
     }
     
     func channel(_ channel: GroupChannel, userDidStartTyping user: User) {
         Task { @MainActor in
-            if channel.channelUrl == currentChannel?.channelUrl,
-               user.userId != SendbirdChat.currentUser?.userId,
-               !typingUsers.contains(user.userId) {
-                typingUsers.append(user.userId)
-            }
+            handleTypingStart(in: channel, by: user)
         }
     }
     
     func channel(_ channel: GroupChannel, userDidStopTyping user: User) {
         Task { @MainActor in
-            if channel.channelUrl == currentChannel?.channelUrl {
-                typingUsers.removeAll { $0 == user.userId }
-            }
+            handleTypingStop(in: channel, by: user)
         }
     }
     
     func channel(_ channel: GroupChannel, updatedReaction reactionEvent: ReactionEvent) {
         Task { @MainActor in
-            if channel.channelUrl == currentChannel?.channelUrl,
-               let index = messages.firstIndex(where: { $0.messageId == reactionEvent.messageId }) {
-                // Fetch the updated message with latest reactions
+            await handleReactionUpdate(in: channel, event: reactionEvent)
+        }
+    }
+    
+    func channel(
+        _ channel: GroupChannel, 
+        didReceiveThreadInfo threadInfoUpdateEvent: ThreadInfoUpdateEvent
+    ) {
+        Task { @MainActor in
+            await handleThreadInfoUpdate(in: channel, event: threadInfoUpdateEvent)
+        }
+    }
+    
+    // MARK: - Private Delegate Helper Methods
+    
+    private func updateChannelInList(_ channel: GroupChannel) {
+        if let index = channels.firstIndex(where: { $0.channelUrl == channel.channelUrl }) {
+            channels.remove(at: index)
+            channels.insert(channel, at: 0)
+        }
+    }
+    
+    private func handleTypingStart(in channel: GroupChannel, by user: User) {
+        if channel.channelUrl == currentChannel?.channelUrl,
+           user.userId != SendbirdChat.currentUser?.userId,
+           !typingUsers.contains(user.userId) {
+            typingUsers.append(user.userId)
+        }
+    }
+    
+    private func handleTypingStop(in channel: GroupChannel, by user: User) {
+        if channel.channelUrl == currentChannel?.channelUrl {
+            typingUsers.removeAll { $0 == user.userId }
+        }
+    }
+    
+    private func handleReactionUpdate(
+        in channel: GroupChannel, 
+        event: ReactionEvent
+    ) async {
+        if channel.channelUrl == currentChannel?.channelUrl,
+           let index = messages.firstIndex(where: { $0.messageId == event.messageId }) {
+            // Fetch the updated message with latest reactions
+            let params = MessageRetrievalParams()
+            params.messageId = event.messageId
+            params.includeReactions = true
+            
+            do {
+                if let updatedMessage = try await channel.getMessage(params: params) {
+                    messages[index] = updatedMessage
+                }
+            } catch {
+                print("Failed to fetch updated message with reactions: \(error)")
+            }
+        }
+    }
+    
+    private func handleThreadInfoUpdate(
+        in channel: GroupChannel, 
+        event: ThreadInfoUpdateEvent
+    ) async {
+        if channel.channelUrl == currentChannel?.channelUrl {
+            // Update parent message in main messages list
+            if let index = messages.firstIndex(where: { 
+                $0.messageId == event.targetMessageId 
+            }) {
                 let params = MessageRetrievalParams()
-                params.messageId = reactionEvent.messageId
+                params.messageId = event.targetMessageId
+                params.includeThreadInfo = true
                 params.includeReactions = true
                 
                 do {
@@ -656,39 +800,18 @@ extension SendbirdChatService: GroupChannelDelegate {
                         messages[index] = updatedMessage
                     }
                 } catch {
-                    print("Failed to fetch updated message with reactions: \(error)")
+                    print("Failed to fetch updated parent message with thread info: \(error)")
                 }
             }
-        }
-    }
-    
-    func channel(_ channel: GroupChannel, didReceiveThreadInfo threadInfoUpdateEvent: ThreadInfoUpdateEvent) {
-        Task { @MainActor in
-            if channel.channelUrl == currentChannel?.channelUrl {
-                // Update parent message in main messages list
-                if let index = messages.firstIndex(where: { $0.messageId == threadInfoUpdateEvent.targetMessageId }) {
-                    let params = MessageRetrievalParams()
-                    params.messageId = threadInfoUpdateEvent.targetMessageId
-                    params.includeThreadInfo = true
-                    params.includeReactions = true
-                    
-                    do {
-                        if let updatedMessage = try await channel.getMessage(params: params) {
-                            messages[index] = updatedMessage
-                        }
-                    } catch {
-                        print("Failed to fetch updated parent message with thread info: \(error)")
-                    }
-                }
-                
-                // Update thread messages if currently viewing this thread
-                if let currentThread = currentThread,
-                   currentThread.messageId == threadInfoUpdateEvent.targetMessageId {
-                    do {
-                        try await fetchThreadMessages(for: currentThread)
-                    } catch {
-                        print("Failed to refresh thread messages: \(error)")
-                    }
+            
+            // Notify threading service about the update
+            let threadingService = SendbirdThreadingService.shared
+            if let currentThread = threadingService.currentThread,
+               currentThread.messageId == event.targetMessageId {
+                do {
+                    try await threadingService.fetchThreadMessages(for: currentThread)
+                } catch {
+                    print("Failed to refresh thread messages: \(error)")
                 }
             }
         }
