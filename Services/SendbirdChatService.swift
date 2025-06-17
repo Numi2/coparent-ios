@@ -196,6 +196,32 @@ extension SendbirdChatService: GroupChannelDelegate {
             }
         }
     }
+    
+    func channel(_ channel: GroupChannel, didUpdate message: BaseMessage) {
+        Task { @MainActor in
+            if channel.channelUrl == currentChannel?.channelUrl,
+               let index = messages.firstIndex(where: { $0.messageId == message.messageId }) {
+                messages[index] = message
+            }
+        }
+    }
+    
+    func channel(_ channel: GroupChannel, messageWasDeleted messageId: Int64) {
+        Task { @MainActor in
+            if channel.channelUrl == currentChannel?.channelUrl {
+                messages.removeAll { $0.messageId == messageId }
+            }
+        }
+    }
+    
+    func channel(_ channel: GroupChannel, didUpdateReadStatus message: BaseMessage) {
+        Task { @MainActor in
+            if channel.channelUrl == currentChannel?.channelUrl,
+               let index = messages.firstIndex(where: { $0.messageId == message.messageId }) {
+                messages[index] = message
+            }
+        }
+    }
 }
 
 // MARK: - ConnectionDelegate

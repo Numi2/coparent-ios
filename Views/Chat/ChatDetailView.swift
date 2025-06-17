@@ -12,6 +12,8 @@ struct ChatDetailView: View {
     @State private var showingError = false
     @State private var isUploading = false
     @State private var showingVoiceMessageView = false
+    @State private var showImagePicker = false
+    @ObservedObject var viewModel: ChatViewModel
     
     var body: some View {
         VStack(spacing: 0) {
@@ -39,13 +41,9 @@ struct ChatDetailView: View {
             // Message Input
             HStack(spacing: 12) {
                 // Image button
-                Button(action: { showingImagePicker = true }) {
+                Button(action: { showImagePicker = true }) {
                     Image(systemName: "photo")
-                        .font(.system(size: 24, weight: .medium))
-                        .foregroundColor(.blue)
-                        .frame(width: 44, height: 44)
-                        .background(Color.blue.opacity(0.1))
-                        .clipShape(Circle())
+                        .glassIconButtonStyle()
                 }
                 .disabled(isUploading)
                 .accessibilityLabel("Add photo")
@@ -107,10 +105,12 @@ struct ChatDetailView: View {
                 }
             }
         }
-        .onChange(of: selectedImage) { newImage in
-            if let image = newImage {
-                sendImage(image)
-            }
+        .sheet(isPresented: $showImagePicker) {
+            ImagePicker(image: $selectedImage)
+        }
+        .onChange(of: selectedImage) { image in
+            guard let image else { return }
+            viewModel.sendImageMessage(image)
         }
         .alert("Error", isPresented: $showingError) {
             Button("OK", role: .cancel) {}
@@ -163,6 +163,7 @@ struct MessageBubbleView: View {
     let message: BaseMessage
     @State private var image: UIImage?
     @State private var isLoading = false
+    @State private var messageStatusService = MessageStatusService.shared
     
     private var isCurrentUser: Bool {
         message.sender?.userId == SendbirdChat.currentUser?.userId
@@ -205,9 +206,20 @@ struct MessageBubbleView: View {
                     }
                 }
                 
-                Text(message.createdAt, style: .time)
-                    .font(.caption2)
-                    .foregroundColor(.gray)
+                HStack(spacing: 4) {
+                    Text(message.createdAt, style: .time)
+                        .font(.caption2)
+                        .foregroundColor(.gray)
+                    
+                    if isCurrentUser {
+                        let status = messageStatusService.getMessageStatus(message)
+                        if status != .none {
+                            Image(systemName: messageStatusService.getStatusIcon(status))
+                                .font(.caption2)
+                                .foregroundColor(messageStatusService.getStatusColor(status))
+                        }
+                    }
+                }
             }
             
             if !isCurrentUser { Spacer() }

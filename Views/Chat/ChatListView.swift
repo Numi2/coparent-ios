@@ -4,6 +4,7 @@ import SendbirdChatSDK
 struct ChatListView: View {
     @Environment(AppState.self) private var appState
     @State private var chatService = SendbirdChatService.shared
+    @State private var messageStatusService = MessageStatusService.shared
     @State private var showingNewChat = false
     @State private var errorMessage: String?
     @State private var showingError = false
@@ -62,31 +63,30 @@ struct ChatListView: View {
 struct ChatRowView: View {
     let channel: GroupChannel
     @State private var otherUser: User?
-    @State private var isLoading = false
+    @State private var messageStatusService = MessageStatusService.shared
     
     var body: some View {
         HStack(spacing: 12) {
             // Profile Image
-            if isLoading {
-                ProgressView()
-                    .frame(width: 50, height: 50)
-            } else if let user = otherUser {
-                AsyncImage(url: URL(string: user.profileImageURL ?? "")) { image in
+            if let coverURL = channel.coverURL {
+                AsyncImage(url: URL(string: coverURL)) { image in
                     image
                         .resizable()
                         .scaledToFill()
                 } placeholder: {
-                    Image(systemName: "person.circle.fill")
-                        .resizable()
-                        .foregroundColor(.gray)
+                    Color.gray.opacity(0.2)
                 }
                 .frame(width: 50, height: 50)
                 .clipShape(Circle())
             } else {
-                Image(systemName: "person.circle.fill")
-                    .resizable()
+                Circle()
+                    .fill(Color.gray.opacity(0.2))
                     .frame(width: 50, height: 50)
-                    .foregroundColor(.gray)
+                    .overlay(
+                        Text(String(channel.name?.prefix(1) ?? "C"))
+                            .font(.title2)
+                            .foregroundColor(.gray)
+                    )
             }
             
             VStack(alignment: .leading, spacing: 4) {
@@ -94,10 +94,22 @@ struct ChatRowView: View {
                     .font(.headline)
                 
                 if let lastMessage = channel.lastMessage {
-                    Text(lastMessage.message)
-                        .font(.subheadline)
-                        .foregroundColor(.gray)
-                        .lineLimit(1)
+                    HStack(spacing: 4) {
+                        Text(lastMessage.message)
+                            .font(.subheadline)
+                            .foregroundColor(.gray)
+                            .lineLimit(1)
+                        
+                        if let userMessage = lastMessage as? UserMessage,
+                           userMessage.sender?.userId == SendbirdChat.currentUser?.userId {
+                            let status = messageStatusService.getMessageStatus(userMessage)
+                            if status != .none {
+                                Image(systemName: messageStatusService.getStatusIcon(status))
+                                    .font(.caption2)
+                                    .foregroundColor(messageStatusService.getStatusColor(status))
+                            }
+                        }
+                    }
                 }
             }
             
@@ -130,9 +142,6 @@ struct ChatRowView: View {
         guard let otherMember = channel.members.first(where: { $0.userId != SendbirdChat.currentUser?.userId }) else {
             return
         }
-        
-        isLoading = true
-        defer { isLoading = false }
         
         do {
             let userService = UserService()
