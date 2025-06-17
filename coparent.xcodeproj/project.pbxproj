@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		F4FEF8732E01FF8A002A51FF /* SendbirdChatSDK in Frameworks */ = {isa = PBXBuildFile; productRef = F4FEF8722E01FF8A002A51FF /* SendbirdChatSDK */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		F4FEF7752E00F26E002A51FF /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -52,6 +56,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F4FEF8732E01FF8A002A51FF /* SendbirdChatSDK in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -112,6 +117,7 @@
 			);
 			name = coparent;
 			packageProductDependencies = (
+				F4FEF8722E01FF8A002A51FF /* SendbirdChatSDK */,
 			);
 			productName = coparent;
 			productReference = F4FEF7652E00F26D002A51FF /* coparent.app */;
@@ -195,6 +201,9 @@
 			);
 			mainGroup = F4FEF75C2E00F26D002A51FF;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				F4FEF8712E01FE8A002A51FF /* XCRemoteSwiftPackageReference "sendbird-chat-sdk-ios" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = F4FEF7662E00F26D002A51FF /* Products */;
 			projectDirPath = "";
@@ -558,6 +567,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		F4FEF8712E01FE8A002A51FF /* XCRemoteSwiftPackageReference "sendbird-chat-sdk-ios" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sendbird/sendbird-chat-sdk-ios";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 4.27.2;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		F4FEF8722E01FF8A002A51FF /* SendbirdChatSDK */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = F4FEF8712E01FE8A002A51FF /* XCRemoteSwiftPackageReference "sendbird-chat-sdk-ios" */;
+			productName = SendbirdChatSDK;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = F4FEF75D2E00F26D002A51FF /* Project object */;
 }
