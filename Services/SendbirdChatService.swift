@@ -62,6 +62,7 @@ class SendbirdChatService {
             params.nextResultSize = 0
             params.includeReactions = true
             params.includeThreadInfo = true
+            params.includeParentMessageInfo = true
             
             let messages = try await channel.getMessages(params: params)
             
