@@ -2,46 +2,120 @@ import SwiftUI
 import PhotosUI
 
 struct ProfileView: View {
-    @Environment(AppState.self) private var appState
-    @State private var viewModel: ProfileViewModel
+    @StateObject private var viewModel = ProfileViewModel()
+    @State private var showingImagePicker = false
     @State private var showingEditProfile = false
     @State private var showingAddChild = false
     @State private var showingPreferences = false
     
-    init(user: User) {
-        _viewModel = State(initialValue: ProfileViewModel(user: user))
-    }
-    
     var body: some View {
         ScrollView {
-            VStack(spacing: 24) {
-                profileHeader
+            VStack(spacing: DesignSystem.Layout.spacing * 2) {
+                // Profile Header
+                VStack(spacing: DesignSystem.Layout.spacing) {
+                    // Profile Image
+                    Button(action: { showingImagePicker = true }) {
+                        if let image = viewModel.profileImage {
+                            Image(uiImage: image)
+                                .resizable()
+                                .scaledToFill()
+                                .frame(width: 120, height: 120)
+                                .clipShape(Circle())
+                                .overlay(
+                                    Circle()
+                                        .stroke(DesignSystem.Colors.primary, lineWidth: 2)
+                                )
+                        } else {
+                            Image(systemName: "person.circle.fill")
+                                .font(.system(size: 120))
+                                .foregroundColor(DesignSystem.Colors.primary)
+                        }
+                    }
+                    .glassCard()
+                    
+                    // Name and Location
+                    VStack(spacing: DesignSystem.Layout.spacing / 2) {
+                        Text(viewModel.name)
+                            .font(DesignSystem.Typography.title2)
+                        
+                        Text(viewModel.location)
+                            .font(DesignSystem.Typography.subheadline)
+                            .foregroundColor(.secondary)
+                    }
+                }
+                .padding()
+                .glassCard()
                 
-                Divider()
+                // About Me
+                GlassCardView {
+                    VStack(alignment: .leading, spacing: DesignSystem.Layout.spacing) {
+                        Text("About Me")
+                            .font(DesignSystem.Typography.headline)
+                        
+                        Text(viewModel.about)
+                            .font(DesignSystem.Typography.body)
+                            .foregroundColor(.secondary)
+                    }
+                }
                 
-                aboutSection
+                // Parenting Style
+                GlassCardView {
+                    VStack(alignment: .leading, spacing: DesignSystem.Layout.spacing) {
+                        Text("Parenting Style")
+                            .font(DesignSystem.Typography.headline)
+                        
+                        ForEach(viewModel.parentingStyles, id: \.self) { style in
+                            HStack {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .foregroundColor(DesignSystem.Colors.primary)
+                                Text(style)
+                                    .font(DesignSystem.Typography.body)
+                            }
+                        }
+                    }
+                }
                 
-                Divider()
+                // Children
+                GlassCardView {
+                    VStack(alignment: .leading, spacing: DesignSystem.Layout.spacing) {
+                        Text("Children")
+                            .font(DesignSystem.Typography.headline)
+                        
+                        ForEach(viewModel.children) { child in
+                            HStack {
+                                Image(systemName: "person.fill")
+                                    .foregroundColor(DesignSystem.Colors.primary)
+                                VStack(alignment: .leading) {
+                                    Text(child.name)
+                                        .font(DesignSystem.Typography.body)
+                                    Text("Age: \(child.age)")
+                                        .font(DesignSystem.Typography.caption)
+                                        .foregroundColor(.secondary)
+                                }
+                            }
+                        }
+                    }
+                }
                 
-                childrenSection
-                
-                Divider()
-                
-                preferencesSection
-                
-                Divider()
-                
-                verificationSection
+                // Edit Profile Button
+                Button(action: { showingEditProfile = true }) {
+                    Text("Edit Profile")
+                        .font(DesignSystem.Typography.headline)
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: DesignSystem.Layout.buttonHeight)
+                        .background(DesignSystem.Colors.primary)
+                        .cornerRadius(DesignSystem.Layout.cornerRadius)
+                }
+                .buttonStyle(GlassButtonStyle())
+                .padding(.horizontal)
             }
             .padding()
         }
+        .glassBackground()
         .navigationTitle("Profile")
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button("Edit") {
-                    showingEditProfile = true
-                }
-            }
+        .sheet(isPresented: $showingImagePicker) {
+            ImagePicker(image: $viewModel.profileImage)
         }
         .sheet(isPresented: $showingEditProfile) {
             EditProfileView(viewModel: viewModel)
@@ -51,165 +125,6 @@ struct ProfileView: View {
         }
         .sheet(isPresented: $showingPreferences) {
             PreferencesView(viewModel: viewModel)
-        }
-    }
-    
-    private var profileHeader: some View {
-        VStack(spacing: 16) {
-            PhotosPicker(selection: $viewModel.selectedPhotos, maxSelectionCount: 1, matching: .images) {
-                if let profileImage = viewModel.profileImage {
-                    profileImage
-                        .resizable()
-                        .scaledToFill()
-                        .frame(width: 120, height: 120)
-                        .clipShape(Circle())
-                } else {
-                    Image(systemName: "person.circle.fill")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 120, height: 120)
-                        .foregroundStyle(.gray)
-                }
-            }
-            
-            Text(viewModel.user.name)
-                .font(.title2)
-                .bold()
-            
-            Text(viewModel.user.userType.rawValue.capitalized)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-        }
-    }
-    
-    private var aboutSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("About")
-                .font(.title3)
-                .bold()
-            
-            Text(viewModel.user.bio)
-                .font(.body)
-            
-            HStack {
-                Image(systemName: "mappin.circle.fill")
-                Text("\(viewModel.user.location.city), \(viewModel.user.location.state)")
-            }
-            .foregroundStyle(.secondary)
-            
-            HStack {
-                Image(systemName: "heart.circle.fill")
-                Text("Parenting Style: \(viewModel.user.parentingStyle.rawValue.capitalized)")
-            }
-            .foregroundStyle(.secondary)
-            
-            FlowLayout(spacing: 8) {
-                ForEach(viewModel.user.interests, id: \.self) { interest in
-                    Text(interest.rawValue.capitalized)
-                        .font(.caption)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-                        .background(.blue.opacity(0.1))
-                        .foregroundStyle(.blue)
-                        .clipShape(Capsule())
-                }
-            }
-        }
-    }
-    
-    private var childrenSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            HStack {
-                Text("Children")
-                    .font(.title3)
-                    .bold()
-                
-                Spacer()
-                
-                Button(action: { showingAddChild = true }) {
-                    Image(systemName: "plus.circle.fill")
-                        .foregroundStyle(.blue)
-                }
-            }
-            
-            if viewModel.user.children.isEmpty {
-                Text("No children added yet")
-                    .foregroundStyle(.secondary)
-            } else {
-                ForEach(viewModel.user.children) { child in
-                    ChildRow(child: child)
-                }
-            }
-        }
-    }
-    
-    private var preferencesSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            HStack {
-                Text("Preferences")
-                    .font(.title3)
-                    .bold()
-                
-                Spacer()
-                
-                Button(action: { showingPreferences = true }) {
-                    Image(systemName: "slider.horizontal.3")
-                        .foregroundStyle(.blue)
-                }
-            }
-            
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Age Range: \(viewModel.user.preferences.ageRange.lowerBound)-\(viewModel.user.preferences.ageRange.upperBound)")
-                Text("Distance: \(viewModel.user.preferences.distance) km")
-                Text("Parenting Styles: \(viewModel.user.preferences.parentingStyles.map { $0.rawValue.capitalized }.joined(separator: ", "))")
-            }
-            .font(.subheadline)
-            .foregroundStyle(.secondary)
-        }
-    }
-    
-    private var verificationSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Verification")
-                .font(.title3)
-                .bold()
-            
-            switch viewModel.user.verificationStatus {
-            case .unverified:
-                Button("Request Verification") {
-                    Task {
-                        await viewModel.requestVerification()
-                    }
-                }
-                .buttonStyle(.borderedProminent)
-            case .pending:
-                HStack {
-                    Image(systemName: "clock.fill")
-                    Text("Verification Pending")
-                }
-                .foregroundStyle(.orange)
-            case .verified:
-                HStack {
-                    Image(systemName: "checkmark.seal.fill")
-                    Text("Verified")
-                }
-                .foregroundStyle(.green)
-            case .rejected:
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack {
-                        Image(systemName: "xmark.seal.fill")
-                        Text("Verification Rejected")
-                    }
-                    .foregroundStyle(.red)
-                    
-                    Button("Try Again") {
-                        Task {
-                            await viewModel.requestVerification()
-                        }
-                    }
-                    .buttonStyle(.borderedProminent)
-                }
-            }
         }
     }
 }

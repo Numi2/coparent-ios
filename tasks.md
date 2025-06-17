@@ -45,10 +45,10 @@
 - [ ] Add message reactions
 
 ### 5. Voice Messages
-- [ ] Enable voice messages: `SBUGlobals.voiceMessageConfig.isVoiceMessageEnabled = true`.
-- [ ] Use `SBUVoiceMessageInputView` for recording.
-- [ ] Use `SBUVoiceContentView` for playback.
-- [ ] Handle microphone permissions via `AVAudioSession`.
+- [x] Enable voice messages: `SBUGlobals.voiceMessageConfig.isVoiceMessageEnabled = true`
+- [x] Use `SBUVoiceMessageInputView` for recording
+- [x] Use `SBUVoiceContentView` for playback
+- [x] Handle microphone permissions via `AVAudioSession`
 
 ### 6. Local Caching
 - [x] Enable local caching: `isLocalCachingEnabled = true`.

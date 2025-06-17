@@ -38,38 +38,57 @@ struct ChatDetailView: View {
             
             // Message Input
             HStack(spacing: 12) {
+                // Image button
                 Button(action: { showingImagePicker = true }) {
                     Image(systemName: "photo")
-                        .font(.system(size: 24))
+                        .font(.system(size: 24, weight: .medium))
                         .foregroundColor(.blue)
+                        .frame(width: 44, height: 44)
+                        .background(Color.blue.opacity(0.1))
+                        .clipShape(Circle())
                 }
                 .disabled(isUploading)
+                .accessibilityLabel("Add photo")
                 
+                // Voice message button
                 Button(action: { showingVoiceMessageView = true }) {
                     Image(systemName: "mic")
-                        .font(.system(size: 24))
+                        .font(.system(size: 24, weight: .medium))
                         .foregroundColor(.blue)
+                        .frame(width: 44, height: 44)
+                        .background(Color.blue.opacity(0.1))
+                        .clipShape(Circle())
                 }
                 .disabled(isUploading)
+                .accessibilityLabel("Record voice message")
                 
+                // Message text field
                 TextField("Message", text: $messageText)
                     .textFieldStyle(RoundedBorderTextFieldStyle())
                     .focused($isInputFocused)
                     .disabled(isUploading)
                 
+                // Send button
                 Button(action: sendMessage) {
                     if isUploading {
                         ProgressView()
-                            .frame(width: 24, height: 24)
+                            .frame(width: 44, height: 44)
+                            .background(Color.blue.opacity(0.1))
+                            .clipShape(Circle())
                     } else {
                         Image(systemName: "arrow.up.circle.fill")
-                            .font(.system(size: 24))
+                            .font(.system(size: 24, weight: .medium))
                             .foregroundColor(.blue)
+                            .frame(width: 44, height: 44)
+                            .background(Color.blue.opacity(0.1))
+                            .clipShape(Circle())
                     }
                 }
                 .disabled(messageText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isUploading)
+                .accessibilityLabel("Send message")
             }
             .padding()
+            .background(.ultraThinMaterial)
         }
         .navigationTitle(channel.name ?? "Chat")
         .navigationBarTitleDisplayMode(.inline)
