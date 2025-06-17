@@ -1,0 +1,30 @@
+{
+  "configurations" : [
+    {
+      "id" : "P1E2R3F4-5O6R-7M8A-9N0C-1E2T3E4S5T6S",
+      "name" : "Performance Configuration",
+      "options" : {
+        "maximumTestExecutionTimeAllowance" : 300
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "codeCoverage" : false,
+    "performanceMetricsEnabled" : true,
+    "targetForVariableExpansion" : {
+      "containerPath" : "container:coparent.xcodeproj",
+      "identifier" : "coparent",
+      "name" : "coparent"
+    }
+  },
+  "testTargets" : [
+    {
+      "target" : {
+        "containerPath" : "container:coparent.xcodeproj",
+        "identifier" : "coparentTests",
+        "name" : "coparentTests"
+      }
+    }
+  ],
+  "version" : 1
+} 

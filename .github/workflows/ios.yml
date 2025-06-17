@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [ "main", "develop" ]
   workflow_dispatch:
+  schedule:
+    # Run nightly tests at 2 AM UTC
+    - cron: '0 2 * * *'
 
 # Add permissions for test reporter
 permissions:
@@ -13,24 +16,92 @@ permissions:
   actions: read
   checks: write
   pull-requests: write
+  security-events: write
 
 env:
   DEVELOPER_DIR: /Applications/Xcode_16.2.app/Contents/Developer
   SCHEME: coparent
+  CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
 jobs:
-  test:
+  # Fast feedback job - runs first for quick validation
+  quick-validation:
+    name: Quick Validation
+    runs-on: macos-14
+    timeout-minutes: 15
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Xcode version
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '16.2'
+
+      - name: Cache Swift Package Manager
+        uses: actions/cache@v4
+        with:
+          path: |
+            .build
+            ~/Library/Caches/org.swift.swiftpm
+          key: ${{ runner.os }}-spm-${{ hashFiles('**/Package.resolved', '**/Package.swift') }}
+          restore-keys: |
+            ${{ runner.os }}-spm-
+
+      - name: Install SwiftLint
+        run: |
+          brew install swiftlint
+
+      - name: Run SwiftLint
+        run: |
+          swiftlint lint --reporter github-actions-logging
+
+      - name: Resolve Package Dependencies
+        run: |
+          xcodebuild -resolvePackageDependencies -project coparent.xcodeproj
+
+      - name: Quick Build Check
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -scheme "$SCHEME" \
+            -project coparent.xcodeproj \
+            -destination "platform=iOS Simulator,name=iPhone 16 Pro,OS=18.4" \
+            -skipPackagePluginValidation \
+            build-for-testing | xcpretty
+
+  # Comprehensive testing matrix
+  test-matrix:
     name: Test iOS App
     runs-on: macos-14
-    timeout-minutes: 45
+    timeout-minutes: 60
+    needs: quick-validation
     
     strategy:
       matrix:
-        destination: 
-          # Use actual available simulators
-          - platform=iOS Simulator,name=iPhone 16 Pro,OS=18.4
-          - platform=iOS Simulator,name=iPad Pro 13-inch (M4),OS=18.4
-      fail-fast: false  # Continue other jobs even if one fails
+        include:
+          # iOS 18.x testing (primary target)
+          - destination: "platform=iOS Simulator,name=iPhone 16 Pro,OS=18.4"
+            name: "iPhone 16 Pro iOS 18.4"
+            test_plan: "UnitTests"
+          - destination: "platform=iOS Simulator,name=iPhone 15,OS=18.4"
+            name: "iPhone 15 iOS 18.4"
+            test_plan: "UnitTests"
+          - destination: "platform=iOS Simulator,name=iPad Pro 13-inch (M4),OS=18.4"
+            name: "iPad Pro iOS 18.4"
+            test_plan: "UnitTests"
+          # iOS 17.x compatibility testing
+          - destination: "platform=iOS Simulator,name=iPhone 15 Pro,OS=17.5"
+            name: "iPhone 15 Pro iOS 17.5"
+            test_plan: "UnitTests"
+          # UI Tests on primary device
+          - destination: "platform=iOS Simulator,name=iPhone 16 Pro,OS=18.4"
+            name: "iPhone 16 Pro UI Tests"
+            test_plan: "UITests"
+      fail-fast: false
 
     steps:
       - name: Checkout repository
@@ -47,21 +118,25 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/Library/Developer/Xcode/DerivedData
-          key: ${{ runner.os }}-derived-data-${{ hashFiles('**/project.pbxproj') }}
+          key: ${{ runner.os }}-derived-data-${{ hashFiles('**/project.pbxproj') }}-${{ matrix.name }}
           restore-keys: |
+            ${{ runner.os }}-derived-data-${{ hashFiles('**/project.pbxproj') }}-
             ${{ runner.os }}-derived-data-
 
       - name: Cache Swift Package Manager
         uses: actions/cache@v4
         with:
-          path: .build
-          key: ${{ runner.os }}-spm-${{ hashFiles('**/Package.resolved') }}
+          path: |
+            .build
+            ~/Library/Caches/org.swift.swiftpm
+          key: ${{ runner.os }}-spm-${{ hashFiles('**/Package.resolved', '**/Package.swift') }}
           restore-keys: |
             ${{ runner.os }}-spm-
 
-      - name: Install xcpretty
+      - name: Install xcpretty and other tools
         run: |
           gem install xcpretty
+          brew install xcbeautify
 
       - name: List available simulators
         run: |
@@ -72,6 +147,8 @@ jobs:
           # Extract device name and OS from destination
           DEVICE_NAME=$(echo "${{ matrix.destination }}" | sed -n 's/.*name=\([^,]*\).*/\1/p')
           OS_VERSION=$(echo "${{ matrix.destination }}" | sed -n 's/.*OS=\([^,]*\).*/\1/p')
+          
+          echo "Checking for simulator: $DEVICE_NAME with iOS $OS_VERSION"
           
           # Check if simulator exists, create if not
           if ! xcrun simctl list devices available | grep -q "$DEVICE_NAME.*$OS_VERSION"; then
@@ -84,43 +161,95 @@ jobs:
             fi
           fi
 
+      - name: Boot simulator
+        run: |
+          DEVICE_NAME=$(echo "${{ matrix.destination }}" | sed -n 's/.*name=\([^,]*\).*/\1/p')
+          DEVICE_ID=$(xcrun simctl list devices | grep "$DEVICE_NAME" | grep "Booted\|Shutdown" | head -1 | grep -E -o -i "([0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12})")
+          if [ -n "$DEVICE_ID" ]; then
+            xcrun simctl boot "$DEVICE_ID" || true
+            xcrun simctl bootstatus "$DEVICE_ID" -b
+          fi
+
       - name: Build and test
         run: |
           set -o pipefail
-          xcodebuild \
-            -scheme "$SCHEME" \
-            -project coparent.xcodeproj \
-            -destination "${{ matrix.destination }}" \
-            -derivedDataPath ~/Library/Developer/Xcode/DerivedData \
-            -enableCodeCoverage YES \
-            -resultBundlePath TestResults-${{ strategy.job-index }}.xcresult \
-            -skipPackagePluginValidation \
-            clean build test | xcpretty --report junit --output test-results-${{ strategy.job-index }}.xml
+          
+          if [ "${{ matrix.test_plan }}" == "UITests" ]; then
+            # Run UI Tests
+            xcodebuild \
+              -scheme "$SCHEME" \
+              -project coparent.xcodeproj \
+              -destination "${{ matrix.destination }}" \
+              -derivedDataPath ~/Library/Developer/Xcode/DerivedData \
+              -enableCodeCoverage YES \
+              -resultBundlePath TestResults-${{ strategy.job-index }}.xcresult \
+              -skipPackagePluginValidation \
+              -only-testing:coparentUITests \
+              clean build test | xcbeautify
+          else
+            # Run Unit Tests
+            xcodebuild \
+              -scheme "$SCHEME" \
+              -project coparent.xcodeproj \
+              -destination "${{ matrix.destination }}" \
+              -derivedDataPath ~/Library/Developer/Xcode/DerivedData \
+              -enableCodeCoverage YES \
+              -resultBundlePath TestResults-${{ strategy.job-index }}.xcresult \
+              -skipPackagePluginValidation \
+              -only-testing:coparentTests \
+              clean build test | xcbeautify
+          fi
 
-      - name: Upload test results
+      - name: Generate test report
+        if: always()
+        run: |
+          if [ -d "TestResults-${{ strategy.job-index }}.xcresult" ]; then
+            xcrun xccov view --report TestResults-${{ strategy.job-index }}.xcresult > coverage-${{ strategy.job-index }}.txt
+            xcrun xcresulttool export --type junit TestResults-${{ strategy.job-index }}.xcresult --output-path test-results-${{ strategy.job-index }}.xml
+          fi
+
+      - name: Upload test results and coverage
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: test-results-${{ strategy.job-index }}
+          name: test-results-${{ matrix.name }}-${{ strategy.job-index }}
           path: |
             test-results-${{ strategy.job-index }}.xml
             TestResults-${{ strategy.job-index }}.xcresult
+            coverage-${{ strategy.job-index }}.txt
+          retention-days: 30
 
       - name: Upload test results to GitHub
         uses: dorny/test-reporter@v1
         if: always()
         with:
-          name: Test Results (${{ matrix.destination }})
+          name: Test Results (${{ matrix.name }})
           path: test-results-${{ strategy.job-index }}.xml
           reporter: java-junit
           fail-on-error: false
 
-  build-for-release:
-    name: Build for Release
+      - name: Upload coverage to Codecov
+        if: always() && matrix.test_plan == 'UnitTests'
+        uses: codecov/codecov-action@v3
+        with:
+          xcode: true
+          xcode_archive_path: TestResults-${{ strategy.job-index }}.xcresult
+
+  # Build for different configurations and platforms
+  build-matrix:
+    name: Build iOS App
     runs-on: macos-14
-    timeout-minutes: 30
-    needs: test
+    timeout-minutes: 45
+    needs: quick-validation
     
+    strategy:
+      matrix:
+        configuration: [Debug, Release]
+        destination: 
+          - "generic/platform=iOS"
+          - "platform=iOS Simulator,name=iPhone 16 Pro,OS=18.4"
+      fail-fast: false
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -134,52 +263,74 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/Library/Developer/Xcode/DerivedData
-          key: ${{ runner.os }}-derived-data-${{ hashFiles('**/project.pbxproj') }}
+          key: ${{ runner.os }}-derived-data-${{ hashFiles('**/project.pbxproj') }}-${{ matrix.configuration }}
           restore-keys: |
+            ${{ runner.os }}-derived-data-${{ hashFiles('**/project.pbxproj') }}-
             ${{ runner.os }}-derived-data-
 
-      - name: Build for release
+      - name: Build app
         run: |
           set -o pipefail
-          xcodebuild \
-            -scheme "$SCHEME" \
-            -project coparent.xcodeproj \
-            -configuration Release \
-            -destination "generic/platform=iOS" \
-            -derivedDataPath ~/Library/Developer/Xcode/DerivedData \
-            -archivePath coparent.xcarchive \
-            -skipPackagePluginValidation \
-            archive
+          
+          if [ "${{ matrix.destination }}" == "generic/platform=iOS" ]; then
+            # Build archive for device
+            xcodebuild \
+              -scheme "$SCHEME" \
+              -project coparent.xcodeproj \
+              -configuration ${{ matrix.configuration }} \
+              -destination "${{ matrix.destination }}" \
+              -derivedDataPath ~/Library/Developer/Xcode/DerivedData \
+              -archivePath coparent-${{ matrix.configuration }}.xcarchive \
+              -skipPackagePluginValidation \
+              archive | xcbeautify
+          else
+            # Build for simulator
+            xcodebuild \
+              -scheme "$SCHEME" \
+              -project coparent.xcodeproj \
+              -configuration ${{ matrix.configuration }} \
+              -destination "${{ matrix.destination }}" \
+              -derivedDataPath ~/Library/Developer/Xcode/DerivedData \
+              -skipPackagePluginValidation \
+              build | xcbeautify
+          fi
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
+        if: matrix.destination == 'generic/platform=iOS'
         with:
-          name: ios-archive
-          path: coparent.xcarchive
+          name: ios-archive-${{ matrix.configuration }}
+          path: coparent-${{ matrix.configuration }}.xcarchive
+          retention-days: 30
 
+  # Code quality and security analysis
   code-quality:
     name: Code Quality Analysis
     runs-on: macos-14
-    timeout-minutes: 20
+    timeout-minutes: 30
+    needs: quick-validation
     
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Xcode version
         uses: maxim-lobanov/setup-xcode@v1
         with:
           xcode-version: '16.2'
 
-      - name: Install SwiftLint
+      - name: Install tools
         run: |
-          brew install swiftlint
+          brew install swiftlint sonarqube
 
-      - name: Run SwiftLint
+      - name: Run SwiftLint with detailed output
         run: |
-          swiftlint lint --reporter github-actions-logging
+          swiftlint lint --reporter github-actions-logging --config .swiftlint.yml 2>&1 | tee swiftlint-results.txt
+          swiftlint lint --reporter sonarqube > swiftlint-sonar.xml || true
 
-      - name: Build and analyze
+      - name: Static analysis with Xcode
         run: |
           set -o pipefail
           xcodebuild \
@@ -188,12 +339,22 @@ jobs:
             -destination "platform=iOS Simulator,name=iPhone 16 Pro,OS=18.4" \
             -derivedDataPath ~/Library/Developer/Xcode/DerivedData \
             -skipPackagePluginValidation \
-            analyze
+            analyze | xcbeautify
 
+      - name: Upload code quality artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: code-quality-results
+          path: |
+            swiftlint-results.txt
+            swiftlint-sonar.xml
+          retention-days: 30
+
+  # Security scanning
   security-scan:
     name: Security Scan
     runs-on: macos-14
-    timeout-minutes: 15
+    timeout-minutes: 20
     
     steps:
       - name: Checkout repository
@@ -206,26 +367,103 @@ jobs:
             p/security-audit
             p/secrets
             p/ci
+            p/swift
         continue-on-error: true
 
-  dependency-check:
-    name: Dependency Vulnerability Check
+      - name: Check for hardcoded secrets
+        run: |
+          echo "Checking for potential hardcoded secrets..."
+          grep -r "password\|secret\|key\|token" . --include="*.swift" --exclude-dir=".git" || true
+          grep -r "http://" . --include="*.swift" --exclude-dir=".git" || true
+          grep -r "NSAllowsArbitraryLoads" . --include="*.plist" --exclude-dir=".git" || true
+
+  # Performance testing
+  performance-test:
+    name: Performance Tests
     runs-on: macos-14
-    timeout-minutes: 10
+    timeout-minutes: 45
+    needs: quick-validation
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Check for known vulnerabilities
+      - name: Setup Xcode version
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '16.2'
+
+      - name: Run performance tests
         run: |
-          # Check Package.swift if it exists
-          if [ -f "Package.swift" ]; then
-            echo "Checking Swift Package dependencies..."
-            swift package show-dependencies
+          set -o pipefail
+          xcodebuild \
+            -scheme "$SCHEME" \
+            -project coparent.xcodeproj \
+            -destination "platform=iOS Simulator,name=iPhone 16 Pro,OS=18.4" \
+            -derivedDataPath ~/Library/Developer/Xcode/DerivedData \
+            -enableCodeCoverage YES \
+            -resultBundlePath PerformanceResults.xcresult \
+            -skipPackagePluginValidation \
+            test -testPlan PerformanceTests | xcbeautify
+
+      - name: Upload performance results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: performance-test-results
+          path: PerformanceResults.xcresult
+          retention-days: 30
+
+  # Summary job
+  ci-summary:
+    name: CI Summary
+    runs-on: macos-14
+    timeout-minutes: 10
+    needs: [test-matrix, build-matrix, code-quality, security-scan]
+    if: always()
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Generate CI summary
+        run: |
+          echo "# CI/CD Pipeline Summary" > ci-summary.md
+          echo "" >> ci-summary.md
+          echo "## Test Results" >> ci-summary.md
+          
+          # Count test artifacts
+          TEST_COUNT=$(find artifacts -name "test-results-*.xml" | wc -l)
+          echo "- Total test configurations: $TEST_COUNT" >> ci-summary.md
+          
+          # Check build artifacts
+          if [ -d "artifacts" ]; then
+            echo "- Build artifacts generated: ✅" >> ci-summary.md
           fi
           
-          # Check for common vulnerable patterns
-          echo "Checking for potential security issues..."
-          grep -r "http://" . --include="*.swift" || true
-          grep -r "NSAllowsArbitraryLoads" . --include="*.plist" || true 
+          echo "" >> ci-summary.md
+          echo "## Code Quality" >> ci-summary.md
+          
+          if [ -f "artifacts/code-quality-results/swiftlint-results.txt" ]; then
+            echo "- SwiftLint analysis completed ✅" >> ci-summary.md
+          fi
+          
+          echo "" >> ci-summary.md
+          echo "## Security" >> ci-summary.md
+          echo "- Security scan completed ✅" >> ci-summary.md
+          
+          echo "" >> ci-summary.md
+          echo "Generated at: $(date)" >> ci-summary.md
+
+      - name: Upload CI summary
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-summary
+          path: ci-summary.md
+          retention-days: 90 

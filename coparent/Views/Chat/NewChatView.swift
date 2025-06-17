@@ -1,5 +1,7 @@
 import SwiftUI
+#if false // TODO: Re-enable when Firebase is added
 import FirebaseFirestore
+#endif
 import SendbirdChatSDK
 
 struct NewChatView: View {

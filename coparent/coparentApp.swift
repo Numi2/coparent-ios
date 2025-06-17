@@ -33,19 +33,7 @@ class AppState {
     }
 }
 
-struct User {
-    var id: String
-    var name: String
-    var userType: UserType
-    var email: String?
-    var phoneNumber: String?
-    
-    enum UserType {
-        case singleParent
-        case coParent
-        case potentialCoParent
-    }
-}
+// User model is defined in Models/User.swift
 
 @main
 struct CoParentApp: App {

@@ -1,0 +1,29 @@
+{
+  "configurations" : [
+    {
+      "id" : "A1B2C3D4-5E6F-7A8B-9C0D-1E2F3A4B5C6D",
+      "name" : "Configuration 1",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "codeCoverage" : false,
+    "targetForVariableExpansion" : {
+      "containerPath" : "container:coparent.xcodeproj",
+      "identifier" : "coparent",
+      "name" : "coparent"
+    }
+  },
+  "testTargets" : [
+    {
+      "target" : {
+        "containerPath" : "container:coparent.xcodeproj",
+        "identifier" : "coparentUITests",
+        "name" : "coparentUITests"
+      }
+    }
+  ],
+  "version" : 1
+} 
