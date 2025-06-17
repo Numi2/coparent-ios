@@ -104,7 +104,10 @@ struct UserTypeButton: View {
             .frame(maxWidth: .infinity)
             .background(
                 RoundedRectangle(cornerRadius: 12)
-                    .stroke(isSelected ? .blue : .gray.opacity(0.3), lineWidth: 2)
+                    .stroke(
+                        isSelected ? .blue : .gray.opacity(0.3),
+                        lineWidth: 2
+                    )
             )
         }
         .buttonStyle(.plain)

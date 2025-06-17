@@ -22,7 +22,9 @@ class PushNotificationService: NSObject, UNUserNotificationCenterDelegate {
     }
     
     func registerDeviceToken(_ deviceToken: Data) async throws {
-        let tokenString = deviceToken.map { String(format: "%02.2hhx", $0) }.joined()
+        let tokenString = deviceToken
+            .map { String(format: "%02.2hhx", $0) }
+            .joined()
         try await SendbirdChat.registerPushToken(tokenString, unique: true)
     }
     

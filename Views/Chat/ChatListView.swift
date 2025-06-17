@@ -38,16 +38,16 @@ struct ChatListView: View {
                     }
                 }
             }
-            .sheet(isPresented: $showingNewChat) {
+            .sheet(isPresented: $showingNewChat, content: {
                 NewChatView()
-            }
-            .alert("Error", isPresented: $showingError) {
-                Button("OK", role: .cancel) {}
-            } message: {
+            })
+            .alert("Error", isPresented: $showingError, actions: {
+                Button("OK", role: .cancel, action: {})
+            }, message: {
                 if let error = errorMessage {
                     Text(error)
                 }
-            }
+            })
             .task {
                 do {
                     try await chatService.fetchChannels()
@@ -69,24 +69,24 @@ struct ChatRowView: View {
         HStack(spacing: 12) {
             // Profile Image
             if let coverURL = channel.coverURL {
-                AsyncImage(url: URL(string: coverURL)) { image in
+                AsyncImage(url: URL(string: coverURL), content: { image in
                     image
                         .resizable()
                         .scaledToFill()
-                } placeholder: {
+                }, placeholder: {
                     Color.gray.opacity(0.2)
-                }
+                })
                 .frame(width: 50, height: 50)
                 .clipShape(Circle())
             } else {
                 Circle()
                     .fill(Color.gray.opacity(0.2))
                     .frame(width: 50, height: 50)
-                    .overlay(
+                    .overlay(content: {
                         Text(String(channel.name?.prefix(1) ?? "C"))
                             .font(.title2)
                             .foregroundColor(.gray)
-                    )
+                    })
             }
             
             VStack(alignment: .leading, spacing: 4) {

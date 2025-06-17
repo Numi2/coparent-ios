@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 env:
-  DEVELOPER_DIR: /Applications/Xcode_15.4.app/Contents/Developer
+  DEVELOPER_DIR: /Applications/Xcode_16.3.app/Contents/Developer
   SCHEME: coparent
 
 jobs:
@@ -33,7 +33,7 @@ jobs:
       - name: Setup Xcode version
         uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: '15.4'
+          xcode-version: '16.3'
 
       - name: Cache derived data
         uses: actions/cache@v4
@@ -102,7 +102,7 @@ jobs:
       - name: Setup Xcode version
         uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: '15.4'
+          xcode-version: '16.3'
 
       - name: Cache derived data
         uses: actions/cache@v4
@@ -142,7 +142,7 @@ jobs:
       - name: Setup Xcode version
         uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: '15.4'
+          xcode-version: '16.3'
 
       - name: Install SwiftLint
         run: |

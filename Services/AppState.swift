@@ -11,7 +11,9 @@ class AppState: ObservableObject {
                     pushNotificationService.registerForRemoteNotifications()
                 }
             } catch {
-                print("Failed to request push notification authorization: \(error)")
+                print(
+                    "Failed to request push notification authorization: \(error)"
+                )
             }
         }
     }

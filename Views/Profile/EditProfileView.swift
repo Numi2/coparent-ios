@@ -26,7 +26,11 @@ struct EditProfileView: View {
         NavigationStack {
             Form {
                 Section("Profile Photo") {
-                    PhotosPicker(selection: $viewModel.selectedPhotos, maxSelectionCount: 1, matching: .images) {
+                    PhotosPicker(
+                        selection: $viewModel.selectedPhotos,
+                        maxSelectionCount: 1,
+                        matching: .images
+                    ) {
                         if let profileImage = viewModel.profileImage {
                             profileImage
                                 .resizable()
@@ -65,16 +69,19 @@ struct EditProfileView: View {
                 
                 Section("Interests") {
                     ForEach(User.Interest.allCases, id: \.self) { interest in
-                        Toggle(interest.rawValue.capitalized, isOn: Binding(
-                            get: { selectedInterests.contains(interest) },
-                            set: { isSelected in
-                                if isSelected {
-                                    selectedInterests.insert(interest)
-                                } else {
-                                    selectedInterests.remove(interest)
+                        Toggle(
+                            interest.rawValue.capitalized,
+                            isOn: Binding(
+                                get: { selectedInterests.contains(interest) },
+                                set: { isSelected in
+                                    if isSelected {
+                                        selectedInterests.insert(interest)
+                                    } else {
+                                        selectedInterests.remove(interest)
+                                    }
                                 }
-                            }
-                        ))
+                            )
+                        )
                     }
                 }
             }
@@ -122,25 +129,34 @@ struct EditProfileView: View {
 }
 
 #Preview {
-    EditProfileView(viewModel: ProfileViewModel(user: User(
-        id: "1",
-        name: "John Doe",
-        userType: .singleParent,
-        email: "john@example.com",
-        phoneNumber: "+1234567890",
-        dateOfBirth: Date(),
-        profileImageURL: nil,
-        bio: "Single father of two amazing kids. Love outdoor activities and cooking.",
-        location: User.Location(city: "San Francisco", state: "CA", country: "USA"),
-        parentingStyle: .authoritative,
-        children: [],
-        preferences: User.Preferences(
-            ageRange: 30...45,
-            distance: 50,
-            parentingStyles: [.authoritative, .gentle],
-            dealBreakers: []
-        ),
-        interests: [.outdoorActivities, .cooking, .sports],
-        verificationStatus: .verified
-    )))
+    EditProfileView(
+        viewModel: ProfileViewModel(
+            user: User(
+                id: "1",
+                name: "John Doe",
+                userType: .singleParent,
+                email: "john@example.com",
+                phoneNumber: "+1234567890",
+                dateOfBirth: Date(),
+                profileImageURL: nil,
+                bio: "Single father of two amazing kids. "
+                    + "Love outdoor activities and cooking.",
+                location: User.Location(
+                    city: "San Francisco",
+                    state: "CA",
+                    country: "USA"
+                ),
+                parentingStyle: .authoritative,
+                children: [],
+                preferences: User.Preferences(
+                    ageRange: 30...45,
+                    distance: 50,
+                    parentingStyles: [.authoritative, .gentle],
+                    dealBreakers: []
+                ),
+                interests: [.outdoorActivities, .cooking, .sports],
+                verificationStatus: .verified
+            )
+        )
+    )
 } 

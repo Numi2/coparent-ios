@@ -63,7 +63,10 @@ struct MatchCardView: View {
             } placeholder: {
                 ZStack {
                     LinearGradient(
-                        colors: [Color.blue.opacity(0.3), Color.purple.opacity(0.3)],
+                        colors: [
+                            Color.blue.opacity(0.3),
+                            Color.purple.opacity(0.3)
+                        ],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     )
@@ -119,9 +122,12 @@ struct MatchCardView: View {
                     HStack(spacing: 4) {
                         Image(systemName: "location.fill")
                             .foregroundColor(.blue)
-                        Text("\(formatDistance(to: coordinates)) km away • \(user.location.city)")
-                            .font(DesignSystem.Typography.callout)
-                            .foregroundColor(.secondary)
+                        Text(
+                            "\(formatDistance(to: coordinates)) km away • "
+                            + "\(user.location.city)"
+                        )
+                        .font(DesignSystem.Typography.callout)
+                        .foregroundColor(.secondary)
                     }
                 }
             }
@@ -249,105 +255,49 @@ struct MatchCardView: View {
                 dragAmount = gesture.translation
             }
             .onEnded { gesture in
-                let threshold: CGFloat = 150
-                
-                if gesture.translation.width > threshold {
-                    // Like action
-                    withAnimation(.spring()) {
-                        offset = CGSize(width: 1000, height: 0)
-                        rotation = 30
-                    }
-                    
-                    let successFeedback = UINotificationFeedbackGenerator()
-                    successFeedback.notificationOccurred(.success)
-                    
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                        onLike()
-                    }
-                    
-                } else if gesture.translation.width < -threshold {
-                    // Pass action
-                    withAnimation(.spring()) {
-                        offset = CGSize(width: -1000, height: 0)
-                        rotation = -30
-                    }
-                    
-                    let impactFeedback = UIImpactFeedbackGenerator(style: .light)
-                    impactFeedback.impactOccurred()
-                    
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                        onPass()
-                    }
-                    
-                } else {
-                    // Reset position
-                    withAnimation(.spring()) {
+                withAnimation(.spring()) {
+                    if abs(gesture.translation.width) > 100 {
+                        if gesture.translation.width > 0 {
+                            onLike()
+                        } else {
+                            onPass()
+                        }
+                    } else {
                         offset = .zero
                         rotation = 0
                     }
                 }
-                
                 dragAmount = .zero
             }
     }
     
     private func calculateAge(from date: Date) -> Int {
         let calendar = Calendar.current
-        let ageComponents = calendar.dateComponents([.year], from: date, to: Date())
+        let ageComponents = calendar.dateComponents(
+            [.year],
+            from: date,
+            to: Date()
+        )
         return ageComponents.year ?? 0
     }
     
-    private func formatDistance(to location: User.Location.Coordinates) -> String {
-        // TODO: Implement actual distance calculation based on user's location
-        return "\(Int.random(in: 1...25))"
+    private func formatDistance(to coordinates: CLLocationCoordinate2D) -> Int {
+        // TODO: Implement actual distance calculation
+        return Int.random(in: 1...50)
     }
 }
 
 struct InterestTag: View {
-    let interest: User.Interest
+    let interest: String
     
     var body: some View {
-        HStack(spacing: 4) {
-            Image(systemName: iconForInterest(interest))
-                .font(.caption)
-            
-            Text(interest.rawValue.replacingOccurrences(of: "([a-z])([A-Z])", with: "$1 $2", options: .regularExpression).capitalized)
-                .font(DesignSystem.Typography.caption)
-        }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 4)
-        .background(.blue.opacity(0.1))
-        .foregroundColor(.blue)
-        .clipShape(Capsule())
-    }
-    
-    private func iconForInterest(_ interest: User.Interest) -> String {
-        switch interest {
-        case .outdoorActivities:
-            return "leaf.fill"
-        case .artsAndCrafts:
-            return "paintbrush.fill"
-        case .sports:
-            return "sportscourt.fill"
-        case .music:
-            return "music.note"
-        case .reading:
-            return "book.fill"
-        case .cooking:
-            return "fork.knife"
-        case .travel:
-            return "airplane"
-        case .technology:
-            return "laptopcomputer"
-        case .nature:
-            return "tree.fill"
-        case .communityService:
-            return "heart.hands"
-        case .education:
-            return "graduationcap.fill"
-        case .healthAndFitness:
-            return "figure.run"
-        }
+        Text(interest)
+            .font(DesignSystem.Typography.caption)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+            .background(.blue.opacity(0.1))
+            .foregroundColor(.blue)
+            .clipShape(Capsule())
     }
 }
 

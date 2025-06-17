@@ -619,8 +619,6 @@ struct EditMessageView: View {
     }
 }
 
-
-
 #Preview("Chat Detail View") {
     NavigationView {
         ChatDetailView(channel: GroupChannel())

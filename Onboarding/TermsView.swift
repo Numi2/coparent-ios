@@ -38,10 +38,14 @@ struct TermsView: View {
                         }
                     }
                     
-                    Text("By continuing, you agree to our Terms of Service and Privacy Policy. We take your privacy seriously and will never share your personal information with third parties without your consent.")
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
-                        .padding(.top)
+                    Text(
+                        "By continuing, you agree to our Terms of Service and Privacy Policy. "
+                        + "We take your privacy seriously and will never share your personal "
+                        + "information with third parties without your consent."
+                    )
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .padding(.top)
                 }
                 .padding(.horizontal, 24)
                 

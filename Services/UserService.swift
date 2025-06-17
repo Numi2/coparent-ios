@@ -14,7 +14,11 @@ class UserService: ObservableObject {
         // Fetch from Firestore
         let document = try await db.collection("users").document(id).getDocument()
         guard let user = try? document.data(as: User.self) else {
-            throw NSError(domain: "UserService", code: -1, userInfo: [NSLocalizedDescriptionKey: "User not found"])
+            throw NSError(
+                domain: "UserService",
+                code: -1,
+                userInfo: [NSLocalizedDescriptionKey: "User not found"]
+            )
         }
         
         // Cache the user

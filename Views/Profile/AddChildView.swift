@@ -30,8 +30,12 @@ struct AddChildView: View {
                 }
                 
                 Section("Interests") {
-                    TextField("Interests (comma-separated)", text: $interests, axis: .vertical)
-                        .lineLimit(3...)
+                    TextField(
+                        "Interests (comma-separated)",
+                        text: $interests,
+                        axis: .vertical
+                    )
+                    .lineLimit(3...)
                 }
             }
             .navigationTitle("Add Child")
@@ -71,25 +75,34 @@ struct AddChildView: View {
 }
 
 #Preview {
-    AddChildView(viewModel: ProfileViewModel(user: User(
-        id: "1",
-        name: "John Doe",
-        userType: .singleParent,
-        email: "john@example.com",
-        phoneNumber: "+1234567890",
-        dateOfBirth: Date(),
-        profileImageURL: nil,
-        bio: "Single father of two amazing kids. Love outdoor activities and cooking.",
-        location: User.Location(city: "San Francisco", state: "CA", country: "USA"),
-        parentingStyle: .authoritative,
-        children: [],
-        preferences: User.Preferences(
-            ageRange: 30...45,
-            distance: 50,
-            parentingStyles: [.authoritative, .gentle],
-            dealBreakers: []
-        ),
-        interests: [.outdoorActivities, .cooking, .sports],
-        verificationStatus: .verified
-    )))
+    AddChildView(
+        viewModel: ProfileViewModel(
+            user: User(
+                id: "1",
+                name: "John Doe",
+                userType: .singleParent,
+                email: "john@example.com",
+                phoneNumber: "+1234567890",
+                dateOfBirth: Date(),
+                profileImageURL: nil,
+                bio: "Single father of two amazing kids. "
+                    + "Love outdoor activities and cooking.",
+                location: User.Location(
+                    city: "San Francisco",
+                    state: "CA",
+                    country: "USA"
+                ),
+                parentingStyle: .authoritative,
+                children: [],
+                preferences: User.Preferences(
+                    ageRange: 30...45,
+                    distance: 50,
+                    parentingStyles: [.authoritative, .gentle],
+                    dealBreakers: []
+                ),
+                interests: [.outdoorActivities, .cooking, .sports],
+                verificationStatus: .verified
+            )
+        )
+    )
 } 

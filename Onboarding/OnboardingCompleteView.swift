@@ -17,11 +17,14 @@ struct OnboardingCompleteView: View {
                 .font(.largeTitle)
                 .bold()
             
-            Text("Your profile has been created successfully. You're now ready to start your co-parenting journey.")
-                .font(.title3)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal)
+            Text(
+                "Your profile has been created successfully. "
+                + "You're now ready to start your co-parenting journey."
+            )
+            .font(.title3)
+            .foregroundStyle(.secondary)
+            .multilineTextAlignment(.center)
+            .padding(.horizontal)
             
             Spacer()
             
