@@ -411,24 +411,29 @@ struct ChatDetailView: View {
 
 struct KeyboardAdaptive: ViewModifier {
     @State private var keyboardHeight: CGFloat = 0
+    @State private var keyboardWillShowObserver: NSObjectProtocol?
+    @State private var keyboardWillHideObserver: NSObjectProtocol?
     
     func body(content: Content) -> some View {
         content
             .padding(.bottom, keyboardHeight)
             .onAppear {
-                NotificationCenter.default.addObserver(
+                keyboardWillShowObserver = NotificationCenter.default.addObserver(
                     forName: UIResponder.keyboardWillShowNotification,
                     object: nil,
                     queue: .main
                 ) { notification in
                     if let keyboardFrame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect {
                         withAnimation(.easeOut(duration: 0.25)) {
-                            keyboardHeight = keyboardFrame.height - (UIApplication.shared.windows.first?.safeAreaInsets.bottom ?? 0)
+                            keyboardHeight = keyboardFrame.height - (UIApplication.shared.connectedScenes
+                                .compactMap { $0 as? UIWindowScene }
+                                .flatMap { $0.windows }
+                                .first { $0.isKeyWindow }?.safeAreaInsets.bottom ?? 0)
                         }
                     }
                 }
                 
-                NotificationCenter.default.addObserver(
+                keyboardWillHideObserver = NotificationCenter.default.addObserver(
                     forName: UIResponder.keyboardWillHideNotification,
                     object: nil,
                     queue: .main
@@ -439,7 +444,14 @@ struct KeyboardAdaptive: ViewModifier {
                 }
             }
             .onDisappear {
-                NotificationCenter.default.removeObserver(self)
+                if let observer = keyboardWillShowObserver {
+                    NotificationCenter.default.removeObserver(observer)
+                    keyboardWillShowObserver = nil
+                }
+                if let observer = keyboardWillHideObserver {
+                    NotificationCenter.default.removeObserver(observer)
+                    keyboardWillHideObserver = nil
+                }
             }
     }
 }
