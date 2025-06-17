@@ -228,12 +228,13 @@ jobs:
           reporter: java-junit
           fail-on-error: false
 
-      - name: Upload coverage to Codecov
+      - name: Upload coverage reports to Codecov
         if: always() && matrix.test_plan == 'UnitTests'
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v5
         with:
-          xcode: true
-          xcode_archive_path: TestResults-${{ strategy.job-index }}.xcresult
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage-${{ strategy.job-index }}.txt
+          fail_ci_if_error: false
 
   # Build for different configurations and platforms
   build-matrix:

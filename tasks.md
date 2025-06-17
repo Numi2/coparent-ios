@@ -119,6 +119,30 @@ Quick Validation (15min) → [Test Matrix, Build Matrix, Code Quality] → CI Su
 - **Performance monitoring** with trend analysis
 - **Security vulnerability detection** before deployment
 
+#### Codecov Integration Setup:
+To enable code coverage reporting, follow these steps:
+
+1. **Sign up at Codecov.io**:
+   - Go to [codecov.io](https://codecov.io)
+   - Sign in with your GitHub account
+   - Add your repository (`coparent`)
+
+2. **Get Repository Token**:
+   - Navigate to your repository settings in Codecov
+   - Copy the repository upload token
+
+3. **Add GitHub Secret**:
+   - Go to your GitHub repository → Settings → Secrets and variables → Actions
+   - Click "New repository secret"
+   - Name: `CODECOV_TOKEN`
+   - Value: [paste your Codecov token]
+   - Click "Add secret"
+
+4. **Verify Integration**:
+   - Push code or run workflow manually
+   - Check Codecov dashboard for coverage reports
+   - Coverage badges and PR comments will be automatically generated
+
 #### Future Actions Required:
 1. **Add Firebase Dependencies**: Complete Firebase integration in Xcode
 2. **Architectural Cleanup**: Resolve remaining duplicate type declarations  

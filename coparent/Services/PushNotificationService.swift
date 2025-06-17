@@ -40,7 +40,7 @@ class PushNotificationService: NSObject, UNUserNotificationCenterDelegate {
         withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
     ) {
         // Show notification when app is in foreground
-        completionHandler([.banner, .sound, .badge])
+        completionHagitndler([.banner, .sound, .badge])
     }
     
     func userNotificationCenter(
