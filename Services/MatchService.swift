@@ -7,11 +7,22 @@ class MatchService {
     private(set) var isLoading = false
     private(set) var error: Error?
     
+    // Super Like Properties
+    private(set) var superLikesRemaining: Int = 1
+    private(set) var nextSuperLikeAvailable: Date = Date()
+    private(set) var isPremiumUser: Bool = false
+    
     private let currentUser: User
     private let locationManager = CLLocationManager()
     
+    // Super Like Configuration
+    private let maxSuperLikesPerDay: Int = 1
+    private let premiumSuperLikesPerDay: Int = 5
+    private let superLikeCooldownHours: Int = 24
+    
     init(currentUser: User) {
         self.currentUser = currentUser
+        loadSuperLikeState()
     }
     
     func loadPotentialMatches() async {
@@ -55,10 +66,145 @@ class MatchService {
         }
     }
     
+    @MainActor
+    func superLike() async {
+        guard !potentialMatches.isEmpty else { return }
+        guard canUseSuperLike else { return }
+        
+        let match = potentialMatches[0]
+        
+        do {
+            // Use super like
+            superLikesRemaining -= 1
+            saveSuperLikeState()
+            
+            // Calculate next available time if no super likes remaining
+            if superLikesRemaining <= 0 {
+                nextSuperLikeAvailable = Calendar.current.date(
+                    byAdding: .hour,
+                    value: superLikeCooldownHours,
+                    to: Date()
+                ) ?? Date().addingTimeInterval(TimeInterval(superLikeCooldownHours * 3600))
+            }
+            
+            // TODO: Replace with actual API call
+            try await Task.sleep(nanoseconds: 800_000_000) // Simulated network delay
+            
+            // Super likes have higher match probability
+            let superLikeMatchProbability: Double = isPremiumUser ? 0.8 : 0.6
+            
+            if Double.random(in: 0...1) < superLikeMatchProbability {
+                NotificationCenter.default.post(
+                    name: .newMatch,
+                    object: nil,
+                    userInfo: [
+                        "match": match,
+                        "isSuperLikeMatch": true
+                    ]
+                )
+                
+                // Track super like success
+                trackSuperLikeAnalytics(success: true, userId: match.id)
+            } else {
+                // Track super like usage (no match)
+                trackSuperLikeAnalytics(success: false, userId: match.id)
+            }
+            
+            potentialMatches.removeFirst()
+            
+        } catch {
+            // Restore super like if API call failed
+            superLikesRemaining += 1
+            saveSuperLikeState()
+            self.error = error
+        }
+    }
+    
     func pass() {
         guard !potentialMatches.isEmpty else { return }
         potentialMatches.removeFirst()
     }
+    
+    // MARK: - Super Like State Management
+    
+    var canUseSuperLike: Bool {
+        return superLikesRemaining > 0 && Date() >= nextSuperLikeAvailable
+    }
+    
+    var superLikeCooldownTimeRemaining: TimeInterval {
+        guard Date() < nextSuperLikeAvailable else { return 0 }
+        return nextSuperLikeAvailable.timeIntervalSince(Date())
+    }
+    
+    func refreshSuperLikes() {
+        let calendar = Calendar.current
+        let now = Date()
+        
+        // Check if it's a new day
+        if let lastRefresh = UserDefaults.standard.object(forKey: "lastSuperLikeRefresh") as? Date {
+            if !calendar.isDate(lastRefresh, inSameDayAs: now) {
+                // Reset super likes for new day
+                superLikesRemaining = isPremiumUser ? premiumSuperLikesPerDay : maxSuperLikesPerDay
+                nextSuperLikeAvailable = now
+                saveSuperLikeState()
+            }
+        } else {
+            // First time setup
+            superLikesRemaining = isPremiumUser ? premiumSuperLikesPerDay : maxSuperLikesPerDay
+            nextSuperLikeAvailable = now
+            saveSuperLikeState()
+        }
+        
+        UserDefaults.standard.set(now, forKey: "lastSuperLikeRefresh")
+    }
+    
+    func updatePremiumStatus(_ isPremium: Bool) {
+        isPremiumUser = isPremium
+        
+        // Premium users get more super likes
+        if isPremium && superLikesRemaining <= 0 {
+            superLikesRemaining = premiumSuperLikesPerDay
+            nextSuperLikeAvailable = Date()
+        }
+        
+        saveSuperLikeState()
+    }
+    
+    private func loadSuperLikeState() {
+        superLikesRemaining = UserDefaults.standard.integer(forKey: "superLikesRemaining")
+        
+        if let nextAvailableDate = UserDefaults.standard.object(forKey: "nextSuperLikeAvailable") as? Date {
+            nextSuperLikeAvailable = nextAvailableDate
+        }
+        
+        isPremiumUser = UserDefaults.standard.bool(forKey: "isPremiumUser")
+        
+        // Set defaults if first time
+        if superLikesRemaining == 0 && nextSuperLikeAvailable <= Date() {
+            refreshSuperLikes()
+        }
+    }
+    
+    private func saveSuperLikeState() {
+        UserDefaults.standard.set(superLikesRemaining, forKey: "superLikesRemaining")
+        UserDefaults.standard.set(nextSuperLikeAvailable, forKey: "nextSuperLikeAvailable")
+        UserDefaults.standard.set(isPremiumUser, forKey: "isPremiumUser")
+    }
+    
+    private func trackSuperLikeAnalytics(success: Bool, userId: String) {
+        // TODO: Implement analytics tracking
+        let analyticsData: [String: Any] = [
+            "event": "super_like_used",
+            "success": success,
+            "target_user_id": userId,
+            "is_premium": isPremiumUser,
+            "timestamp": Date().timeIntervalSince1970
+        ]
+        
+        print("Super Like Analytics: \(analyticsData)")
+    }
+    
+    // MARK: - Existing Methods
     
     private func fetchPotentialMatches() async throws -> [User] {
         // TODO: Replace with actual API call

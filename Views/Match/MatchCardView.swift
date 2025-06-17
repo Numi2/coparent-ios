@@ -4,11 +4,16 @@ struct MatchCardView: View {
     let user: User
     let onLike: () -> Void
     let onPass: () -> Void
+    let onSuperLike: () -> Void
+    let canUseSuperLike: Bool
+    let isPremium: Bool
+    let superLikeCooldownTimeRemaining: TimeInterval
     
     @State private var offset = CGSize.zero
     @State private var rotation: Double = 0
     @State private var isShowingDetails = false
     @State private var dragAmount = CGSize.zero
+    @State private var showingSuperLikeAnimation = false
     
     var body: some View {
         ZStack {
@@ -34,6 +39,31 @@ struct MatchCardView: View {
             
             // Swipe feedback overlay
             swipeFeedbackOverlay
+            
+            // Super Like Button (bottom right)
+            VStack {
+                Spacer()
+                HStack {
+                    Spacer()
+                    
+                    SuperLikeButton(
+                        onSuperLike: {
+                            showingSuperLikeAnimation = true
+                        },
+                        isEnabled: canUseSuperLike,
+                        isPremium: isPremium,
+                        cooldownTimeRemaining: superLikeCooldownTimeRemaining
+                    )
+                    .padding(.trailing, 16)
+                    .padding(.bottom, 16)
+                }
+            }
+            
+            // Super Like Animation Overlay
+            SuperLikeView(isVisible: showingSuperLikeAnimation) {
+                showingSuperLikeAnimation = false
+                onSuperLike()
+            }
         }
         .frame(maxWidth: .infinity)
         .frame(height: 600)
@@ -48,7 +78,16 @@ struct MatchCardView: View {
             }
         }
         .sheet(isPresented: $isShowingDetails) {
-            ProfileDetailView(user: user, onLike: onLike, onPass: onPass)
+            ProfileDetailView(
+                user: user,
+                onLike: onLike,
+                onPass: onPass,
+                onSuperLike: {
+                    showingSuperLikeAnimation = true
+                },
+                canUseSuperLike: canUseSuperLike,
+                isPremium: isPremium
+            )
         }
     }
     
@@ -188,7 +227,51 @@ struct MatchCardView: View {
     
     @ViewBuilder
     private var swipeFeedbackOverlay: some View {
-        // Like overlay
+        // Super Like overlay (swipe up)
+        if offset.height < -50 {
+            VStack {
+                HStack {
+                    Spacer()
+                    
+                    ZStack {
+                        Circle()
+                            .fill(
+                                LinearGradient(
+                                    colors: [.blue, .purple],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .frame(width: 100, height: 100)
+                        
+                        Image(systemName: "star.fill")
+                            .font(.system(size: 30, weight: .bold))
+                            .foregroundColor(.white)
+                    }
+                    .scaleEffect(min(abs(offset.height) / 150, 1.3))
+                    .animation(.spring(), value: offset.height)
+                    
+                    Spacer()
+                }
+                .padding(.top, 50)
+                
+                Text("SUPER LIKE")
+                    .font(DesignSystem.Typography.title3)
+                    .fontWeight(.bold)
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: [.blue, .purple],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                    .padding(.top, 16)
+                
+                Spacer()
+            }
+        }
+        
+        // Like overlay (swipe right)
         if offset.width > 50 {
             VStack {
                 Spacer()
@@ -213,7 +296,7 @@ struct MatchCardView: View {
             }
         }
         
-        // Pass overlay
+        // Pass overlay (swipe left)
         if offset.width < -50 {
             VStack {
                 Spacer()
@@ -244,25 +327,47 @@ struct MatchCardView: View {
         DragGesture()
             .onChanged { gesture in
                 offset = gesture.translation
-                rotation = Double(gesture.translation.width / 20)
+                
+                // Different rotation for vertical vs horizontal swipes
+                if abs(gesture.translation.height) > abs(gesture.translation.width) {
+                    // Vertical swipe - no rotation for super like
+                    rotation = 0
+                } else {
+                    // Horizontal swipe - normal rotation
+                    rotation = Double(gesture.translation.width / 20)
+                }
                 
                 // Haptic feedback for swipe zones
-                if abs(gesture.translation.width) > 100 && abs(dragAmount.width) <= 100 {
+                let threshold: CGFloat = 100
+                
+                if abs(gesture.translation.width) > threshold && abs(dragAmount.width) <= threshold {
                     let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
                     impactFeedback.impactOccurred()
+                } else if abs(gesture.translation.height) > threshold && abs(dragAmount.height) <= threshold && canUseSuperLike {
+                    // Special haptic for super like
+                    let impactFeedback = UINotificationFeedbackGenerator()
+                    impactFeedback.notificationOccurred(.success)
                 }
                 
                 dragAmount = gesture.translation
             }
             .onEnded { gesture in
                 withAnimation(.spring()) {
-                    if abs(gesture.translation.width) > 100 {
+                    let threshold: CGFloat = 100
+                    
+                    // Check for super like (swipe up)
+                    if gesture.translation.height < -threshold && canUseSuperLike {
+                        showingSuperLikeAnimation = true
+                    }
+                    // Check for horizontal swipes
+                    else if abs(gesture.translation.width) > threshold {
                         if gesture.translation.width > 0 {
                             onLike()
                         } else {
                             onPass()
                         }
                     } else {
+                        // Return to center
                         offset = .zero
                         rotation = 0
                     }
@@ -305,6 +410,9 @@ struct ProfileDetailView: View {
     let user: User
     let onLike: () -> Void
     let onPass: () -> Void
+    let onSuperLike: () -> Void
+    let canUseSuperLike: Bool
+    let isPremium: Bool
     @Environment(\.presentationMode) private var presentationMode
     
     var body: some View {
@@ -462,6 +570,7 @@ struct ProfileDetailView: View {
             .safeAreaInset(edge: .bottom) {
                 // Action buttons
                 HStack(spacing: DesignSystem.Layout.spacing) {
+                    // Pass button
                     Button(action: {
                         presentationMode.wrappedValue.dismiss()
                         onPass()
@@ -478,6 +587,44 @@ struct ProfileDetailView: View {
                     
                     Spacer()
                     
+                    // Super Like button (if available)
+                    if canUseSuperLike {
+                        Button(action: {
+                            presentationMode.wrappedValue.dismiss()
+                            onSuperLike()
+                        }) {
+                            Image(systemName: "star.fill")
+                                .font(.title2)
+                                .foregroundStyle(
+                                    LinearGradient(
+                                        colors: [.blue, .purple],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                                .frame(width: 60, height: 60)
+                                .background(.ultraThinMaterial)
+                                .overlay(
+                                    Circle()
+                                        .stroke(
+                                            LinearGradient(
+                                                colors: [.blue, .purple],
+                                                startPoint: .topLeading,
+                                                endPoint: .bottomTrailing
+                                            ),
+                                            lineWidth: 2
+                                        )
+                                )
+                                .clipShape(Circle())
+                                .shadow(radius: 4)
+                        }
+                        .disabled(!isPremium)
+                        .opacity(isPremium ? 1.0 : 0.6)
+                        
+                        Spacer()
+                    }
+                    
+                    // Like button
                     Button(action: {
                         presentationMode.wrappedValue.dismiss()
                         onLike()
@@ -540,7 +687,11 @@ struct ProfileDetailView: View {
             verificationStatus: .verified
         ),
         onLike: {},
-        onPass: {}
+        onPass: {},
+        onSuperLike: {},
+        canUseSuperLike: true,
+        isPremium: true,
+        superLikeCooldownTimeRemaining: 0
     )
     .padding()
 }
@@ -577,6 +728,9 @@ struct ProfileDetailView: View {
             verificationStatus: .verified
         ),
         onLike: {},
-        onPass: {}
+        onPass: {},
+        onSuperLike: {},
+        canUseSuperLike: true,
+        isPremium: true
     )
 } 

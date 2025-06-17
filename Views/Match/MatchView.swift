@@ -6,6 +6,7 @@ struct MatchView: View {
     @State private var showingMatchAlert = false
     @State private var matchedUser: User?
     @State private var showingFilters = false
+    @State private var isSuperLikeMatch = false
     
     init(user: User) {
         _matchService = State(initialValue: MatchService(currentUser: user))
@@ -50,21 +51,27 @@ struct MatchView: View {
         .navigationBarHidden(true)
         .task {
             await matchService.loadPotentialMatches()
+            matchService.refreshSuperLikes()
         }
         .onReceive(NotificationCenter.default.publisher(for: .newMatch)) { notification in
             if let match = notification.userInfo?["match"] as? User {
                 matchedUser = match
+                isSuperLikeMatch = notification.userInfo?["isSuperLikeMatch"] as? Bool ?? false
                 showingMatchAlert = true
             }
         }
-        .alert("It's a Match! 🎉", isPresented: $showingMatchAlert) {
+        .alert(isSuperLikeMatch ? "Super Like Match! ⭐" : "It's a Match! 🎉", isPresented: $showingMatchAlert) {
             Button("Start Chat") {
                 // TODO: Navigate to chat
             }
             Button("Keep Swiping", role: .cancel) {}
         } message: {
             if let match = matchedUser {
-                Text("You and \(match.name) have matched! Start a conversation now.")
+                if isSuperLikeMatch {
+                    Text("Your Super Like worked! You and \(match.name) have matched! 🌟")
+                } else {
+                    Text("You and \(match.name) have matched! Start a conversation now.")
+                }
             }
         }
         .sheet(isPresented: $showingFilters) {
@@ -80,10 +87,35 @@ struct MatchView: View {
                     .font(DesignSystem.Typography.largeTitle)
                     .fontWeight(.bold)
                 
-                if !matchService.potentialMatches.isEmpty {
-                    Text("\(matchService.potentialMatches.count) potential matches")
-                        .font(DesignSystem.Typography.subheadline)
-                        .foregroundColor(.secondary)
+                HStack(spacing: 12) {
+                    if !matchService.potentialMatches.isEmpty {
+                        Text("\(matchService.potentialMatches.count) potential matches")
+                            .font(DesignSystem.Typography.subheadline)
+                            .foregroundColor(.secondary)
+                    }
+                    
+                    // Super Like status indicator
+                    if matchService.isPremiumUser {
+                        HStack(spacing: 4) {
+                            Image(systemName: "star.fill")
+                                .font(.caption)
+                                .foregroundColor(.blue)
+                            
+                            if matchService.canUseSuperLike {
+                                Text("\(matchService.superLikesRemaining) Super Likes")
+                                    .font(DesignSystem.Typography.caption)
+                                    .foregroundColor(.blue)
+                            } else {
+                                Text(formatCooldownTime(matchService.superLikeCooldownTimeRemaining))
+                                    .font(DesignSystem.Typography.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(.blue.opacity(0.1))
+                        .clipShape(Capsule())
+                    }
                 }
             }
             
@@ -150,7 +182,15 @@ struct MatchView: View {
                         withAnimation(.spring()) {
                             handlePass()
                         }
-                    }
+                    },
+                    onSuperLike: {
+                        withAnimation(.spring()) {
+                            handleSuperLike()
+                        }
+                    },
+                    canUseSuperLike: matchService.canUseSuperLike,
+                    isPremium: matchService.isPremiumUser,
+                    superLikeCooldownTimeRemaining: matchService.superLikeCooldownTimeRemaining
                 )
                 .frame(width: cardWidth, height: cardHeight)
                 .scaleEffect(scale)
@@ -185,18 +225,18 @@ struct MatchView: View {
             .scaleEffect(1.0)
             .animation(.spring(), value: matchService.potentialMatches.count)
             
-            // Super like button (placeholder for future feature)
-            Button(action: {
-                // TODO: Implement super like
-            }) {
-                Image(systemName: "star.fill")
-                    .font(.title3)
-                    .foregroundColor(.white)
-                    .frame(width: 50, height: 50)
-                    .background(.blue.gradient)
-                    .clipShape(Circle())
-                    .shadow(color: .blue.opacity(0.3), radius: 6, x: 0, y: 3)
-            }
+            // Super Like button
+            SuperLikeButton(
+                onSuperLike: {
+                    withAnimation(.spring()) {
+                        handleSuperLike()
+                    }
+                },
+                isEnabled: matchService.canUseSuperLike,
+                isPremium: matchService.isPremiumUser,
+                cooldownTimeRemaining: matchService.superLikeCooldownTimeRemaining
+            )
+            .scaleEffect(0.8) // Slightly smaller for action button area
             
             // Like button
             Button(action: {
@@ -226,10 +266,32 @@ struct MatchView: View {
         }
     }
     
+    private func handleSuperLike() {
+        guard !matchService.potentialMatches.isEmpty else { return }
+        guard matchService.canUseSuperLike else { return }
+        
+        Task {
+            await matchService.superLike()
+        }
+    }
+    
     private func handlePass() {
         guard !matchService.potentialMatches.isEmpty else { return }
         
         matchService.pass()
+    }
+    
+    private func formatCooldownTime(_ timeInterval: TimeInterval) -> String {
+        let hours = Int(timeInterval) / 3600
+        let minutes = (Int(timeInterval) % 3600) / 60
+        
+        if hours > 0 {
+            return "\(hours)h \(minutes)m"
+        } else if minutes > 0 {
+            return "\(minutes)m"
+        } else {
+            return "Ready soon"
+        }
     }
 }
 
