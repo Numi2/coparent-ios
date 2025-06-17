@@ -13,7 +13,9 @@ struct MessageInputView: View {
     var body: some View {
         HStack(spacing: 12) {
             // Image button
-            Button(action: { showingImagePicker = true }) {
+            Button {
+                showingImagePicker = true
+            } label: {
                 Image(systemName: "photo")
                     .font(.system(size: DesignSystem.Layout.iconSize, weight: .medium))
                     .foregroundColor(.blue)
@@ -27,7 +29,9 @@ struct MessageInputView: View {
             .accessibilityLabel("Add photo")
             
             // Voice message button
-            Button(action: { showingVoiceMessageView = true }) {
+            Button {
+                showingVoiceMessageView = true
+            } label: {
                 Image(systemName: "mic")
                     .font(.system(size: DesignSystem.Layout.iconSize, weight: .medium))
                     .foregroundColor(.blue)

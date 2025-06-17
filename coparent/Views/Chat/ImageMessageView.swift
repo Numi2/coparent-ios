@@ -554,12 +554,12 @@ extension Array {
 #Preview("Image Message View") {
     VStack {
         ImageMessageView(
-            image: UIImage(systemName: "photo")!,
+            image: UIImage(systemName: "photo") ?? UIImage(),
             isCurrentUser: true
         )
         
         ImageMessageView(
-            image: UIImage(systemName: "photo")!,
+            image: UIImage(systemName: "photo") ?? UIImage(),
             isCurrentUser: false
         )
     }
@@ -568,7 +568,7 @@ extension Array {
 
 #Preview("Image Preview View") {
     ImagePreviewView(
-        images: .constant([UIImage(systemName: "photo")!]),
+        images: .constant([UIImage(systemName: "photo") ?? UIImage()]),
         onSend: { _ in },
         onCancel: {}
     )

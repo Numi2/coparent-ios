@@ -13,7 +13,7 @@ struct NotificationSettingsView: View {
         Form {
             Section(header: Text("Push Notifications")) {
                 Toggle("Enable Notifications", isOn: $isEnabled)
-                    .onChange(of: isEnabled) { newValue in
+                    .onChange(of: isEnabled) { _ in
                         updateNotificationSettings()
                     }
                 

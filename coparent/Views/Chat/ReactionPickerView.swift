@@ -25,7 +25,10 @@ struct ReactionPickerView: View {
                 .padding(.top, 8)
             
             // Reaction grid
-            LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 4), spacing: DesignSystem.Layout.spacing) {
+            LazyVGrid(
+                columns: Array(repeating: GridItem(.flexible()), count: 4), 
+                spacing: DesignSystem.Layout.spacing
+            ) {
                 ForEach(commonReactions, id: \.self) { emoji in
                     ReactionButton(
                         emoji: emoji,

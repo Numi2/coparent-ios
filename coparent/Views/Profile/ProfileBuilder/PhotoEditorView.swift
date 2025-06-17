@@ -97,9 +97,9 @@ struct PhotoEditorView: View {
         }
         .gesture(
             MagnificationGesture()
-                .onChanged { value in
+                .onChanged({ value in
                     scale = max(0.5, min(3.0, value))
-                }
+                })
         )
     }
     
@@ -181,7 +181,7 @@ struct PhotoEditorView: View {
             
             Slider(value: $brightness, in: -1.0...1.0, step: 0.01)
                 .accentColor(.blue)
-                .onChange(of: brightness) { _, newValue in
+                .onChange(of: brightness) { _, _ in
                     applyImageFilters()
                 }
         }
@@ -201,7 +201,7 @@ struct PhotoEditorView: View {
             
             Slider(value: $contrast, in: 0.5...2.0, step: 0.01)
                 .accentColor(.blue)
-                .onChange(of: contrast) { _, newValue in
+                .onChange(of: contrast) { _, _ in
                     applyImageFilters()
                 }
         }
@@ -367,7 +367,7 @@ struct PhotoEditorView: View {
 
 #Preview {
     PhotoEditorView(
-        image: UIImage(systemName: "photo")!,
+        image: UIImage(systemName: "photo") ?? UIImage(),
         onSave: { _ in },
         onCancel: { }
     )

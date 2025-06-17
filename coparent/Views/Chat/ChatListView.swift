@@ -38,9 +38,9 @@ struct ChatListView: View {
                     }
                 }
             }
-            .sheet(isPresented: $showingNewChat, content: {
+            .sheet(isPresented: $showingNewChat) {
                 NewChatView()
-            })
+            }
             .alert("Error", isPresented: $showingError, actions: {
                 Button("OK", role: .cancel, action: {})
             }, message: {
@@ -69,13 +69,13 @@ struct ChatRowView: View {
         HStack(spacing: 12) {
             // Profile Image
             if let coverURL = channel.coverURL {
-                AsyncImage(url: URL(string: coverURL), content: { image in
+                AsyncImage(url: URL(string: coverURL)) { image in
                     image
                         .resizable()
                         .scaledToFill()
-                }, placeholder: {
+                } placeholder: {
                     Color.gray.opacity(0.2)
-                })
+                }
                 .frame(width: 50, height: 50)
                 .clipShape(Circle())
             } else {

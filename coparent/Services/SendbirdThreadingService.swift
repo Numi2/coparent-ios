@@ -113,67 +113,23 @@ class SendbirdThreadingService {
     
     func sendThreadImage(_ image: UIImage, to parentMessage: BaseMessage) async throws {
         guard SendbirdChat.isInitialized else {
-            throw NSError(
-                domain: "SendbirdThreadingService", 
-                code: -1, 
-                userInfo: [
-                    NSLocalizedDescriptionKey: "SDK not initialized"
-                ]
-            )
+            throw ThreadingServiceError.sdkNotInitialized
         }
         
         guard let channel = chatService.currentChannel else {
-            throw NSError(
-                domain: "SendbirdThreadingService", 
-                code: -8, 
-                userInfo: [
-                    NSLocalizedDescriptionKey: "No current channel"
-                ]
-            )
+            throw ThreadingServiceError.noCurrentChannel
         }
         
         do {
-            // Compress image if needed
-            guard let imageData = image.jpegData(compressionQuality: 0.7) else {
-                throw NSError(
-                    domain: "SendbirdThreadingService", 
-                    code: -2, 
-                    userInfo: [
-                        NSLocalizedDescriptionKey: "Failed to compress image"
-                    ]
-                )
-            }
-            
-            // Check file size
-            if imageData.count > AppConfig.Chat.maxImageSize {
-                throw NSError(
-                    domain: "SendbirdThreadingService", 
-                    code: -3, 
-                    userInfo: [
-                        NSLocalizedDescriptionKey: "Image size exceeds maximum allowed size"
-                    ]
-                )
-            }
-            
-            let params = FileMessageCreateParams()
-            params.file = imageData
-            params.fileName = "image_\(Date().timeIntervalSince1970).jpg"
-            params.mimeType = "image/jpeg"
-            params.parentMessageId = parentMessage.messageId
-            
+            let imageData = try prepareImageData(from: image)
+            let params = createThreadImageParams(from: imageData, parentId: parentMessage.messageId)
             let message = try await channel.sendFileMessage(params: params)
             
             await MainActor.run {
                 self.threadMessages.append(message)
             }
         } catch {
-            throw NSError(
-                domain: "SendbirdThreadingService", 
-                code: -11, 
-                userInfo: [
-                    NSLocalizedDescriptionKey: "Failed to send thread image: \(error.localizedDescription)"
-                ]
-            )
+            throw ThreadingServiceError.failedToSendThreadImage(error.localizedDescription)
         }
     }
     
@@ -216,6 +172,51 @@ class SendbirdThreadingService {
             } catch {
                 print("Failed to update parent message with thread info: \(error)")
             }
+        }
+    }
+    
+    private func prepareImageData(from image: UIImage) throws -> Data {
+        guard let imageData = image.jpegData(compressionQuality: 0.7) else {
+            throw ThreadingServiceError.failedToCompressImage
+        }
+        
+        if imageData.count > AppConfig.Chat.maxImageSize {
+            throw ThreadingServiceError.imageSizeExceedsLimit
+        }
+        
+        return imageData
+    }
+    
+    private func createThreadImageParams(from imageData: Data, parentId: Int64) -> FileMessageCreateParams {
+        let params = FileMessageCreateParams()
+        params.file = imageData
+        params.fileName = "image_\(Date().timeIntervalSince1970).jpg"
+        params.mimeType = "image/jpeg"
+        params.parentMessageId = parentId
+        return params
+    }
+}
+
+// MARK: - Threading Service Errors
+enum ThreadingServiceError: LocalizedError {
+    case sdkNotInitialized
+    case noCurrentChannel
+    case failedToCompressImage
+    case imageSizeExceedsLimit
+    case failedToSendThreadImage(String)
+    
+    var errorDescription: String? {
+        switch self {
+        case .sdkNotInitialized:
+            return "SDK not initialized"
+        case .noCurrentChannel:
+            return "No current channel"
+        case .failedToCompressImage:
+            return "Failed to compress image"
+        case .imageSizeExceedsLimit:
+            return "Image size exceeds maximum allowed size"
+        case .failedToSendThreadImage(let message):
+            return "Failed to send thread image: \(message)"
         }
     }
 }

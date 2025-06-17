@@ -13,7 +13,7 @@ struct MessageReactionsView: View {
     var body: some View {
         if !reactions.isEmpty {
             HStack(spacing: 8) {
-                ForEach(Array(reactions.enumerated()), id: \.offset) { index, reaction in
+                ForEach(Array(reactions.enumerated()), id: \.offset) { _, reaction in
                     ReactionCountView(
                         reaction: reaction,
                         message: message,

@@ -22,7 +22,7 @@ struct ChatSearchBar: View {
                     .onSubmit {
                         onSearchSubmit()
                     }
-                    .onChange(of: searchText) { oldValue, newValue in
+                    .onChange(of: searchText) { _, newValue in
                         // Trigger search with a slight delay for better performance
                         if newValue.isEmpty {
                             onSearchCancel()
@@ -30,10 +30,10 @@ struct ChatSearchBar: View {
                     }
                 
                 if !searchText.isEmpty {
-                    Button(action: {
+                    Button {
                         searchText = ""
                         onSearchCancel()
-                    }) {
+                    } label: {
                         Image(systemName: "xmark.circle.fill")
                             .font(.system(size: 16, weight: .medium))
                             .foregroundColor(.secondary)

@@ -35,7 +35,11 @@ class VoiceMessageService: NSObject, ObservableObject {
     
     func startRecording() async throws {
         guard let recordingSession = recordingSession else {
-            throw NSError(domain: "VoiceMessageService", code: -1, userInfo: [NSLocalizedDescriptionKey: "Audio session not initialized"])
+            throw NSError(
+                domain: "VoiceMessageService", 
+                code: -1, 
+                userInfo: [NSLocalizedDescriptionKey: "Audio session not initialized"]
+            )
         }
         
         // Request microphone permission
@@ -46,7 +50,11 @@ class VoiceMessageService: NSObject, ObservableObject {
         }
         
         guard granted else {
-            throw NSError(domain: "VoiceMessageService", code: -2, userInfo: [NSLocalizedDescriptionKey: "Microphone permission denied"])
+            throw NSError(
+                domain: "VoiceMessageService", 
+                code: -2, 
+                userInfo: [NSLocalizedDescriptionKey: "Microphone permission denied"]
+            )
         }
         
         // Create recording URL
@@ -55,7 +63,11 @@ class VoiceMessageService: NSObject, ObservableObject {
         recordingURL = documentsPath.appendingPathComponent(fileName)
         
         guard let recordingURL = recordingURL else {
-            throw NSError(domain: "VoiceMessageService", code: -3, userInfo: [NSLocalizedDescriptionKey: "Failed to create recording URL"])
+            throw NSError(
+                domain: "VoiceMessageService", 
+                code: -3, 
+                userInfo: [NSLocalizedDescriptionKey: "Failed to create recording URL"]
+            )
         }
         
         // Configure recording settings

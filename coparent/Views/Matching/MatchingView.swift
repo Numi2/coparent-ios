@@ -47,7 +47,7 @@ struct MatchingView: View {
                     ScrollView {
                         LazyVStack(spacing: DesignSystem.Layout.spacing) {
                             ForEach(viewModel.matches) { match in
-                                MatchCard(match: match) { action in
+                                MatchCard(match: match, onAction: { action in
                                     switch action {
                                     case .like:
                                         Task {
@@ -60,7 +60,7 @@ struct MatchingView: View {
                                     case .message:
                                         viewModel.startChat(with: match)
                                     }
-                                }
+                                })
                             }
                         }
                         .padding()
