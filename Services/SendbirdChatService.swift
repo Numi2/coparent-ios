@@ -9,6 +9,7 @@ class SendbirdChatService {
     private(set) var messages: [BaseMessage] = []
     private(set) var isLoading = false
     private(set) var error: Error?
+    private(set) var typingUsers: [String] = []
     
     static let shared = SendbirdChatService()
     
@@ -167,6 +168,49 @@ class SendbirdChatService {
             throw NSError(domain: "SendbirdChatService", code: -2, userInfo: [NSLocalizedDescriptionKey: "Failed to send voice message: \(error.localizedDescription)"])
         }
     }
+    
+    // MARK: - Typing Indicators
+    
+    func startTyping(in channel: GroupChannel) {
+        channel.startTyping()
+    }
+    
+    func endTyping(in channel: GroupChannel) {
+        channel.endTyping()
+    }
+    
+    var isAnyoneTyping: Bool {
+        !typingUsers.isEmpty
+    }
+    
+    // MARK: - Message Operations
+    
+    func updateMessage(_ message: UserMessage, with newText: String) async throws {
+        do {
+            let params = UserMessageUpdateParams(message: newText)
+            let updatedMessage = try await message.update(params: params)
+            
+            await MainActor.run {
+                if let index = messages.firstIndex(where: { $0.messageId == message.messageId }) {
+                    messages[index] = updatedMessage
+                }
+            }
+        } catch {
+            throw NSError(domain: "SendbirdChatService", code: -4, userInfo: [NSLocalizedDescriptionKey: "Failed to update message: \(error.localizedDescription)"])
+        }
+    }
+    
+    func deleteMessage(_ message: BaseMessage) async throws {
+        do {
+            try await message.delete()
+            
+            await MainActor.run {
+                messages.removeAll { $0.messageId == message.messageId }
+            }
+        } catch {
+            throw NSError(domain: "SendbirdChatService", code: -5, userInfo: [NSLocalizedDescriptionKey: "Failed to delete message: \(error.localizedDescription)"])
+        }
+    }
 }
 
 // MARK: - ChannelDelegate
@@ -219,6 +263,24 @@ extension SendbirdChatService: GroupChannelDelegate {
             if channel.channelUrl == currentChannel?.channelUrl,
                let index = messages.firstIndex(where: { $0.messageId == message.messageId }) {
                 messages[index] = message
+            }
+        }
+    }
+    
+    func channel(_ channel: GroupChannel, userDidStartTyping user: User) {
+        Task { @MainActor in
+            if channel.channelUrl == currentChannel?.channelUrl,
+               user.userId != SendbirdChat.currentUser?.userId,
+               !typingUsers.contains(user.userId) {
+                typingUsers.append(user.userId)
+            }
+        }
+    }
+    
+    func channel(_ channel: GroupChannel, userDidStopTyping user: User) {
+        Task { @MainActor in
+            if channel.channelUrl == currentChannel?.channelUrl {
+                typingUsers.removeAll { $0 == user.userId }
             }
         }
     }

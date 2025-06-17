@@ -163,4 +163,112 @@ struct GlassCardView<Content: View>: View {
             .padding(DesignSystem.Layout.padding)
             .glassCard()
     }
+}
+
+struct ToastView: View {
+    let message: String
+    let systemImage: String
+    let color: Color
+    @Binding var isShowing: Bool
+    
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: systemImage)
+                .foregroundColor(color)
+            
+            Text(message)
+                .font(DesignSystem.Typography.callout)
+                .foregroundColor(.primary)
+            
+            Spacer()
+        }
+        .padding(DesignSystem.Layout.padding)
+        .background(.ultraThinMaterial)
+        .cornerRadius(DesignSystem.Layout.cornerRadius)
+        .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 4)
+        .scaleEffect(isShowing ? 1.0 : 0.8)
+        .opacity(isShowing ? 1.0 : 0.0)
+        .animation(DesignSystem.Animation.spring, value: isShowing)
+    }
+}
+
+// MARK: - Toast Modifier
+struct ToastModifier: ViewModifier {
+    @Binding var toast: ToastData?
+    @State private var workItem: DispatchWorkItem?
+    
+    func body(content: Content) -> some View {
+        content
+            .overlay(
+                ZStack {
+                    if let toast = toast {
+                        VStack {
+                            Spacer()
+                            ToastView(
+                                message: toast.message,
+                                systemImage: toast.systemImage,
+                                color: toast.color,
+                                isShowing: .constant(true)
+                            )
+                            .onTapGesture {
+                                dismissToast()
+                            }
+                        }
+                        .padding(DesignSystem.Layout.padding)
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                    }
+                }
+                .animation(DesignSystem.Animation.spring, value: toast)
+            )
+            .onChange(of: toast) { newValue in
+                showToastIfNeeded()
+            }
+    }
+    
+    private func showToastIfNeeded() {
+        guard let _ = toast else { return }
+        
+        // Cancel previous work item
+        workItem?.cancel()
+        
+        // Create new work item to dismiss toast
+        let task = DispatchWorkItem {
+            dismissToast()
+        }
+        
+        workItem = task
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3, execute: task)
+    }
+    
+    private func dismissToast() {
+        withAnimation(DesignSystem.Animation.spring) {
+            toast = nil
+        }
+        workItem?.cancel()
+        workItem = nil
+    }
+}
+
+struct ToastData: Equatable {
+    let message: String
+    let systemImage: String
+    let color: Color
+    
+    static func success(_ message: String) -> ToastData {
+        ToastData(message: message, systemImage: "checkmark.circle.fill", color: .green)
+    }
+    
+    static func error(_ message: String) -> ToastData {
+        ToastData(message: message, systemImage: "exclamationmark.circle.fill", color: .red)
+    }
+    
+    static func info(_ message: String) -> ToastData {
+        ToastData(message: message, systemImage: "info.circle.fill", color: .blue)
+    }
+}
+
+extension View {
+    func toast(_ toast: Binding<ToastData?>) -> some View {
+        modifier(ToastModifier(toast: toast))
+    }
 } 

@@ -1,4 +1,5 @@
 import Foundation
+import SwiftUI
 import SendbirdChatSDK
 
 @Observable
@@ -53,7 +54,7 @@ class MessageStatusService {
         case .sent:
             return .gray
         case .delivered:
-            return .gray
+            return .blue.opacity(0.7)
         case .read:
             return .blue
         case .failed:
@@ -61,6 +62,17 @@ class MessageStatusService {
         case .none:
             return .clear
         }
+    }
+    
+    // Convenience methods for UI
+    func getStatusIcon(for message: BaseMessage) -> String {
+        let status = getMessageStatus(message)
+        return getStatusIcon(status)
+    }
+    
+    func getStatusColor(for message: BaseMessage) -> Color {
+        let status = getMessageStatus(message)
+        return getStatusColor(status)
     }
 }
 

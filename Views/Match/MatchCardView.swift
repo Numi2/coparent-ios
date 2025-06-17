@@ -6,121 +6,544 @@ struct MatchCardView: View {
     let onPass: () -> Void
     
     @State private var offset = CGSize.zero
-    @State private var color: Color = .black
+    @State private var rotation: Double = 0
+    @State private var isShowingDetails = false
+    @State private var dragAmount = CGSize.zero
     
     var body: some View {
         ZStack {
-            RoundedRectangle(cornerRadius: 20)
-                .fill(.white)
-                .shadow(radius: 10)
+            // Main card
+            RoundedRectangle(cornerRadius: DesignSystem.Layout.cornerRadius)
+                .fill(.ultraThinMaterial)
+                .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 5)
+                .overlay(
+                    RoundedRectangle(cornerRadius: DesignSystem.Layout.cornerRadius)
+                        .stroke(.white.opacity(0.2), lineWidth: 1)
+                )
             
+            // Card content
             VStack(spacing: 0) {
-                if let profileImage = user.profileImageURL {
-                    AsyncImage(url: profileImage) { image in
+                // Profile image section
+                profileImageSection
+                
+                // Profile info section
+                profileInfoSection
+                    .padding(DesignSystem.Layout.padding)
+            }
+            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Layout.cornerRadius))
+            
+            // Swipe feedback overlay
+            swipeFeedbackOverlay
+        }
+        .frame(maxWidth: .infinity)
+        .frame(height: 600)
+        .offset(offset)
+        .rotationEffect(.degrees(rotation))
+        .scaleEffect(isShowingDetails ? 0.95 : 1.0)
+        .animation(DesignSystem.Animation.spring, value: isShowingDetails)
+        .gesture(swipeGesture)
+        .onTapGesture {
+            withAnimation(.spring()) {
+                isShowingDetails = true
+            }
+        }
+        .sheet(isPresented: $isShowingDetails) {
+            ProfileDetailView(user: user, onLike: onLike, onPass: onPass)
+        }
+    }
+    
+    @ViewBuilder
+    private var profileImageSection: some View {
+        ZStack(alignment: .topTrailing) {
+            // Profile image
+            AsyncImage(url: user.profileImageURL) { image in
+                image
+                    .resizable()
+                    .scaledToFill()
+            } placeholder: {
+                ZStack {
+                    LinearGradient(
+                        colors: [Color.blue.opacity(0.3), Color.purple.opacity(0.3)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                    
+                    Image(systemName: "person.fill")
+                        .font(.system(size: 60))
+                        .foregroundColor(.white.opacity(0.8))
+                }
+            }
+            .frame(height: 400)
+            .clipped()
+            
+            // Verification badge
+            if user.verificationStatus == .verified {
+                Image(systemName: "checkmark.seal.fill")
+                    .font(.title2)
+                    .foregroundColor(.blue)
+                    .background(.white)
+                    .clipShape(Circle())
+                    .padding(12)
+            }
+            
+            // Age badge
+            VStack {
+                Spacer()
+                HStack {
+                    Spacer()
+                    
+                    Text("\(calculateAge(from: user.dateOfBirth))")
+                        .font(DesignSystem.Typography.title3)
+                        .fontWeight(.bold)
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(.black.opacity(0.6))
+                        .clipShape(Capsule())
+                        .padding(12)
+                }
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private var profileInfoSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            // Name and location
+            VStack(alignment: .leading, spacing: 4) {
+                Text(user.name)
+                    .font(DesignSystem.Typography.title2)
+                    .fontWeight(.bold)
+                
+                if let coordinates = user.location.coordinates {
+                    HStack(spacing: 4) {
+                        Image(systemName: "location.fill")
+                            .foregroundColor(.blue)
+                        Text("\(formatDistance(to: coordinates)) km away • \(user.location.city)")
+                            .font(DesignSystem.Typography.callout)
+                            .foregroundColor(.secondary)
+                    }
+                }
+            }
+            
+            // Bio preview
+            Text(user.bio)
+                .font(DesignSystem.Typography.body)
+                .lineLimit(2)
+                .foregroundColor(.primary)
+            
+            // Parenting style
+            HStack(spacing: 8) {
+                Image(systemName: "heart.fill")
+                    .foregroundColor(.pink)
+                Text(user.parentingStyle.rawValue.capitalized)
+                    .font(DesignSystem.Typography.callout)
+                    .fontWeight(.medium)
+                    .foregroundColor(.primary)
+            }
+            
+            // Interests preview
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    ForEach(user.interests.prefix(3), id: \.self) { interest in
+                        InterestTag(interest: interest)
+                    }
+                    
+                    if user.interests.count > 3 {
+                        Text("+\(user.interests.count - 3) more")
+                            .font(DesignSystem.Typography.caption)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(.secondary.opacity(0.2))
+                            .foregroundColor(.secondary)
+                            .clipShape(Capsule())
+                    }
+                }
+                .padding(.horizontal, 2)
+            }
+            
+            // Children preview
+            if !user.children.isEmpty {
+                HStack(spacing: 8) {
+                    Image(systemName: "figure.and.child.holdinghands")
+                        .foregroundColor(.orange)
+                    
+                    if user.children.count == 1 {
+                        Text("1 child")
+                    } else {
+                        Text("\(user.children.count) children")
+                    }
+                }
+                .font(DesignSystem.Typography.callout)
+                .foregroundColor(.primary)
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private var swipeFeedbackOverlay: some View {
+        // Like overlay
+        if offset.width > 50 {
+            VStack {
+                Spacer()
+                HStack {
+                    Spacer()
+                    
+                    ZStack {
+                        Circle()
+                            .fill(.green.opacity(0.9))
+                            .frame(width: 80, height: 80)
+                        
+                        Image(systemName: "heart.fill")
+                            .font(.title)
+                            .foregroundColor(.white)
+                    }
+                    .scaleEffect(min(offset.width / 150, 1.2))
+                    .animation(.spring(), value: offset.width)
+                    
+                    Spacer()
+                }
+                Spacer()
+            }
+        }
+        
+        // Pass overlay
+        if offset.width < -50 {
+            VStack {
+                Spacer()
+                HStack {
+                    Spacer()
+                    
+                    ZStack {
+                        Circle()
+                            .fill(.red.opacity(0.9))
+                            .frame(width: 80, height: 80)
+                        
+                        Image(systemName: "xmark")
+                            .font(.title)
+                            .fontWeight(.bold)
+                            .foregroundColor(.white)
+                    }
+                    .scaleEffect(min(abs(offset.width) / 150, 1.2))
+                    .animation(.spring(), value: offset.width)
+                    
+                    Spacer()
+                }
+                Spacer()
+            }
+        }
+    }
+    
+    private var swipeGesture: some Gesture {
+        DragGesture()
+            .onChanged { gesture in
+                offset = gesture.translation
+                rotation = Double(gesture.translation.width / 20)
+                
+                // Haptic feedback for swipe zones
+                if abs(gesture.translation.width) > 100 && abs(dragAmount.width) <= 100 {
+                    let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
+                    impactFeedback.impactOccurred()
+                }
+                
+                dragAmount = gesture.translation
+            }
+            .onEnded { gesture in
+                let threshold: CGFloat = 150
+                
+                if gesture.translation.width > threshold {
+                    // Like action
+                    withAnimation(.spring()) {
+                        offset = CGSize(width: 1000, height: 0)
+                        rotation = 30
+                    }
+                    
+                    let successFeedback = UINotificationFeedbackGenerator()
+                    successFeedback.notificationOccurred(.success)
+                    
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        onLike()
+                    }
+                    
+                } else if gesture.translation.width < -threshold {
+                    // Pass action
+                    withAnimation(.spring()) {
+                        offset = CGSize(width: -1000, height: 0)
+                        rotation = -30
+                    }
+                    
+                    let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+                    impactFeedback.impactOccurred()
+                    
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        onPass()
+                    }
+                    
+                } else {
+                    // Reset position
+                    withAnimation(.spring()) {
+                        offset = .zero
+                        rotation = 0
+                    }
+                }
+                
+                dragAmount = .zero
+            }
+    }
+    
+    private func calculateAge(from date: Date) -> Int {
+        let calendar = Calendar.current
+        let ageComponents = calendar.dateComponents([.year], from: date, to: Date())
+        return ageComponents.year ?? 0
+    }
+    
+    private func formatDistance(to location: User.Location.Coordinates) -> String {
+        // TODO: Implement actual distance calculation based on user's location
+        return "\(Int.random(in: 1...25))"
+    }
+}
+
+struct InterestTag: View {
+    let interest: User.Interest
+    
+    var body: some View {
+        HStack(spacing: 4) {
+            Image(systemName: iconForInterest(interest))
+                .font(.caption)
+            
+            Text(interest.rawValue.replacingOccurrences(of: "([a-z])([A-Z])", with: "$1 $2", options: .regularExpression).capitalized)
+                .font(DesignSystem.Typography.caption)
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
+        .background(.blue.opacity(0.1))
+        .foregroundColor(.blue)
+        .clipShape(Capsule())
+    }
+    
+    private func iconForInterest(_ interest: User.Interest) -> String {
+        switch interest {
+        case .outdoorActivities:
+            return "leaf.fill"
+        case .artsAndCrafts:
+            return "paintbrush.fill"
+        case .sports:
+            return "sportscourt.fill"
+        case .music:
+            return "music.note"
+        case .reading:
+            return "book.fill"
+        case .cooking:
+            return "fork.knife"
+        case .travel:
+            return "airplane"
+        case .technology:
+            return "laptopcomputer"
+        case .nature:
+            return "tree.fill"
+        case .communityService:
+            return "heart.hands"
+        case .education:
+            return "graduationcap.fill"
+        case .healthAndFitness:
+            return "figure.run"
+        }
+    }
+}
+
+struct ProfileDetailView: View {
+    let user: User
+    let onLike: () -> Void
+    let onPass: () -> Void
+    @Environment(\.presentationMode) private var presentationMode
+    
+    var body: some View {
+        NavigationView {
+            ScrollView {
+                VStack(spacing: DesignSystem.Layout.spacing) {
+                    // Profile image
+                    AsyncImage(url: user.profileImageURL) { image in
                         image
                             .resizable()
                             .scaledToFill()
                     } placeholder: {
-                        Color.gray.opacity(0.2)
-                    }
-                    .frame(height: 400)
-                    .clipped()
-                } else {
-                    Image(systemName: "person.fill")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(height: 400)
-                        .foregroundStyle(.gray)
-                }
-                
-                VStack(alignment: .leading, spacing: 12) {
-                    HStack {
-                        Text(user.name)
-                            .font(.title)
-                            .bold()
-                        
-                        Text("\(calculateAge(from: user.dateOfBirth))")
-                            .font(.title2)
-                            .foregroundStyle(.secondary)
-                    }
-                    
-                    if let location = user.location.coordinates {
-                        HStack {
-                            Image(systemName: "mappin.circle.fill")
-                            Text("\(formatDistance(to: location)) km away")
-                        }
-                        .foregroundStyle(.secondary)
-                    }
-                    
-                    Text(user.bio)
-                        .font(.body)
-                        .lineLimit(3)
-                    
-                    HStack {
-                        ForEach(user.interests.prefix(3), id: \.self) { interest in
-                            Text(interest.rawValue.capitalized)
-                                .font(.caption)
-                                .padding(.horizontal, 12)
-                                .padding(.vertical, 6)
-                                .background(.blue.opacity(0.1))
-                                .foregroundStyle(.blue)
-                                .clipShape(Capsule())
-                        }
-                    }
-                    
-                    if !user.children.isEmpty {
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("Children")
-                                .font(.headline)
+                        ZStack {
+                            LinearGradient(
+                                colors: [Color.blue.opacity(0.3), Color.purple.opacity(0.3)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
                             
-                            ForEach(user.children) { child in
-                                HStack {
-                                    Text(child.name)
-                                        .font(.subheadline)
-                                    
-                                    Text("•")
-                                        .foregroundStyle(.secondary)
-                                    
-                                    Text("\(child.age) years old")
-                                        .font(.subheadline)
-                                        .foregroundStyle(.secondary)
+                            Image(systemName: "person.fill")
+                                .font(.system(size: 60))
+                                .foregroundColor(.white.opacity(0.8))
+                        }
+                    }
+                    .frame(height: 300)
+                    .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Layout.cornerRadius))
+                    
+                    // Profile details
+                    VStack(alignment: .leading, spacing: DesignSystem.Layout.spacing) {
+                        // Basic info
+                        VStack(alignment: .leading, spacing: 8) {
+                            HStack {
+                                Text(user.name)
+                                    .font(DesignSystem.Typography.largeTitle)
+                                    .fontWeight(.bold)
+                                
+                                Spacer()
+                                
+                                if user.verificationStatus == .verified {
+                                    HStack(spacing: 4) {
+                                        Image(systemName: "checkmark.seal.fill")
+                                            .foregroundColor(.blue)
+                                        Text("Verified")
+                                            .font(DesignSystem.Typography.caption)
+                                            .foregroundColor(.blue)
+                                    }
+                                }
+                            }
+                            
+                            Text("\(calculateAge(from: user.dateOfBirth)) years old")
+                                .font(DesignSystem.Typography.title3)
+                                .foregroundColor(.secondary)
+                            
+                            if let coordinates = user.location.coordinates {
+                                HStack(spacing: 4) {
+                                    Image(systemName: "location.fill")
+                                        .foregroundColor(.blue)
+                                    Text("\(formatDistance(to: coordinates)) km away in \(user.location.city), \(user.location.state)")
+                                        .font(DesignSystem.Typography.callout)
+                                        .foregroundColor(.secondary)
                                 }
                             }
                         }
+                        .glassCard()
+                        
+                        // Bio
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("About")
+                                .font(DesignSystem.Typography.headline)
+                                .fontWeight(.semibold)
+                            
+                            Text(user.bio)
+                                .font(DesignSystem.Typography.body)
+                        }
+                        .glassCard()
+                        
+                        // Parenting style
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Parenting Style")
+                                .font(DesignSystem.Typography.headline)
+                                .fontWeight(.semibold)
+                            
+                            HStack(spacing: 8) {
+                                Image(systemName: "heart.fill")
+                                    .foregroundColor(.pink)
+                                Text(user.parentingStyle.rawValue.capitalized)
+                                    .font(DesignSystem.Typography.body)
+                            }
+                        }
+                        .glassCard()
+                        
+                        // Children
+                        if !user.children.isEmpty {
+                            VStack(alignment: .leading, spacing: 12) {
+                                Text("Children")
+                                    .font(DesignSystem.Typography.headline)
+                                    .fontWeight(.semibold)
+                                
+                                ForEach(user.children) { child in
+                                    HStack(spacing: 12) {
+                                        Circle()
+                                            .fill(.blue.opacity(0.2))
+                                            .frame(width: 40, height: 40)
+                                            .overlay(
+                                                Text(String(child.name.first ?? "?"))
+                                                    .font(DesignSystem.Typography.headline)
+                                                    .foregroundColor(.blue)
+                                            )
+                                        
+                                        VStack(alignment: .leading, spacing: 2) {
+                                            Text(child.name)
+                                                .font(DesignSystem.Typography.callout)
+                                                .fontWeight(.medium)
+                                            
+                                            Text("\(child.age) years old")
+                                                .font(DesignSystem.Typography.caption)
+                                                .foregroundColor(.secondary)
+                                        }
+                                        
+                                        Spacer()
+                                    }
+                                }
+                            }
+                            .glassCard()
+                        }
+                        
+                        // Interests
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("Interests")
+                                .font(DesignSystem.Typography.headline)
+                                .fontWeight(.semibold)
+                            
+                            LazyVGrid(columns: [
+                                GridItem(.adaptive(minimum: 100, maximum: 150))
+                            ], spacing: 8) {
+                                ForEach(user.interests, id: \.self) { interest in
+                                    InterestTag(interest: interest)
+                                }
+                            }
+                        }
+                        .glassCard()
+                    }
+                    .padding(.horizontal)
+                }
+            }
+            .navigationTitle("Profile")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
+                        presentationMode.wrappedValue.dismiss()
+                    }
+                }
+            }
+            .safeAreaInset(edge: .bottom) {
+                // Action buttons
+                HStack(spacing: DesignSystem.Layout.spacing) {
+                    Button(action: {
+                        presentationMode.wrappedValue.dismiss()
+                        onPass()
+                    }) {
+                        Image(systemName: "xmark")
+                            .font(.title2)
+                            .fontWeight(.bold)
+                            .foregroundColor(.white)
+                            .frame(width: 60, height: 60)
+                            .background(.red)
+                            .clipShape(Circle())
+                            .shadow(radius: 4)
+                    }
+                    
+                    Spacer()
+                    
+                    Button(action: {
+                        presentationMode.wrappedValue.dismiss()
+                        onLike()
+                    }) {
+                        Image(systemName: "heart.fill")
+                            .font(.title2)
+                            .foregroundColor(.white)
+                            .frame(width: 60, height: 60)
+                            .background(.green)
+                            .clipShape(Circle())
+                            .shadow(radius: 4)
                     }
                 }
                 .padding()
+                .background(.ultraThinMaterial)
             }
-            .clipShape(RoundedRectangle(cornerRadius: 20))
-        }
-        .offset(x: offset.width, y: 0)
-        .rotationEffect(.degrees(Double(offset.width / 40)))
-        .gesture(
-            DragGesture()
-                .onChanged { gesture in
-                    offset = gesture.translation
-                    withAnimation {
-                        color = offset.width > 0 ? .green : .red
-                    }
-                }
-                .onEnded { _ in
-                    withAnimation {
-                        swipeCard(width: offset.width)
-                    }
-                }
-        )
-    }
-    
-    private func swipeCard(width: CGFloat) {
-        switch width {
-        case -500...(-150):
-            offset = CGSize(width: -500, height: 0)
-            onPass()
-        case 150...500:
-            offset = CGSize(width: 500, height: 0)
-            onLike()
-        default:
-            offset = .zero
         }
     }
     
@@ -131,12 +554,12 @@ struct MatchCardView: View {
     }
     
     private func formatDistance(to location: User.Location.Coordinates) -> String {
-        // TODO: Implement actual distance calculation
-        return "5"
+        // TODO: Implement actual distance calculation based on user's location
+        return "\(Int.random(in: 1...25))"
     }
 }
 
-#Preview {
+#Preview("Match Card") {
     MatchCardView(
         user: User(
             id: "1",
@@ -146,7 +569,7 @@ struct MatchCardView: View {
             phoneNumber: "+1987654321",
             dateOfBirth: Date().addingTimeInterval(-30 * 365 * 24 * 60 * 60),
             profileImageURL: nil,
-            bio: "Single mother looking for a co-parent. Love outdoor activities and cooking.",
+            bio: "Single mother looking for a co-parent. Love outdoor activities, cooking, and spending quality time with my daughter. Looking for someone who shares similar values and parenting philosophy.",
             location: User.Location(
                 city: "San Jose",
                 state: "CA",
@@ -163,12 +586,47 @@ struct MatchCardView: View {
                 parentingStyles: [.gentle, .authoritative],
                 dealBreakers: []
             ),
-            interests: [.outdoorActivities, .cooking, .music],
+            interests: [.outdoorActivities, .cooking, .music, .reading, .artsAndCrafts],
             verificationStatus: .verified
         ),
         onLike: {},
         onPass: {}
     )
-    .frame(height: 600)
     .padding()
+}
+
+#Preview("Profile Detail") {
+    ProfileDetailView(
+        user: User(
+            id: "1",
+            name: "Sarah Smith",
+            userType: .singleParent,
+            email: "sarah@example.com",
+            phoneNumber: "+1987654321",
+            dateOfBirth: Date().addingTimeInterval(-30 * 365 * 24 * 60 * 60),
+            profileImageURL: nil,
+            bio: "Single mother looking for a co-parent. Love outdoor activities, cooking, and spending quality time with my daughter. Looking for someone who shares similar values and parenting philosophy.",
+            location: User.Location(
+                city: "San Jose",
+                state: "CA",
+                country: "USA",
+                coordinates: User.Location.Coordinates(latitude: 37.3382, longitude: -121.8863)
+            ),
+            parentingStyle: .gentle,
+            children: [
+                User.Child(id: "1", name: "Sophia", age: 6, gender: .female, interests: ["dancing", "art"]),
+                User.Child(id: "2", name: "Emma", age: 4, gender: .female, interests: ["music", "dancing"])
+            ],
+            preferences: User.Preferences(
+                ageRange: 28...42,
+                distance: 30,
+                parentingStyles: [.gentle, .authoritative],
+                dealBreakers: []
+            ),
+            interests: [.outdoorActivities, .cooking, .music, .reading, .artsAndCrafts, .healthAndFitness],
+            verificationStatus: .verified
+        ),
+        onLike: {},
+        onPass: {}
+    )
 } 
