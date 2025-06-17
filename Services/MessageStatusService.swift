@@ -83,4 +83,4 @@ enum MessageStatus {
     case read
     case failed
     case none
-} 
+}

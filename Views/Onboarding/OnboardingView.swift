@@ -96,4 +96,4 @@ struct OnboardingPage {
 
 #Preview {
     OnboardingView()
-} 
+}

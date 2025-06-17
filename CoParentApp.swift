@@ -65,4 +65,4 @@ struct CoParentApp: App {
             await appState.initializeServices()
         }
     }
-} 
+}

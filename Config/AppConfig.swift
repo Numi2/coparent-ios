@@ -11,4 +11,4 @@ enum AppConfig {
         static let maxMessageLength = 1000
         static let maxImageSize = 10 * 1024 * 1024 // 10MB
     }
-} 
+}

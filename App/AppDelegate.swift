@@ -40,4 +40,4 @@ class AppDelegate: NSObject, UIApplicationDelegate {
         }
         completionHandler(.newData)
     }
-} 
+}

@@ -124,4 +124,4 @@ struct User: Identifiable, Codable {
         case verified
         case rejected
     }
-} 
+}
