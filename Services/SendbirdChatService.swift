@@ -248,6 +248,61 @@ class SendbirdChatService {
             throw NSError(domain: "SendbirdChatService", code: -5, userInfo: [NSLocalizedDescriptionKey: "Failed to delete message: \(error.localizedDescription)"])
         }
     }
+    
+    // MARK: - Message Reactions
+    
+    func addReaction(to message: BaseMessage, key: String) async throws {
+        guard SendbirdChat.isInitialized else {
+            throw NSError(domain: "SendbirdChatService", code: -1, userInfo: [NSLocalizedDescriptionKey: "SDK not initialized"])
+        }
+        
+        do {
+            let updatedMessage = try await message.addReaction(key: key)
+            
+            await MainActor.run {
+                if let index = messages.firstIndex(where: { $0.messageId == message.messageId }) {
+                    messages[index] = updatedMessage
+                }
+            }
+        } catch {
+            throw NSError(domain: "SendbirdChatService", code: -6, userInfo: [NSLocalizedDescriptionKey: "Failed to add reaction: \(error.localizedDescription)"])
+        }
+    }
+    
+    func removeReaction(from message: BaseMessage, key: String) async throws {
+        guard SendbirdChat.isInitialized else {
+            throw NSError(domain: "SendbirdChatService", code: -1, userInfo: [NSLocalizedDescriptionKey: "SDK not initialized"])
+        }
+        
+        do {
+            let updatedMessage = try await message.deleteReaction(key: key)
+            
+            await MainActor.run {
+                if let index = messages.firstIndex(where: { $0.messageId == message.messageId }) {
+                    messages[index] = updatedMessage
+                }
+            }
+        } catch {
+            throw NSError(domain: "SendbirdChatService", code: -7, userInfo: [NSLocalizedDescriptionKey: "Failed to remove reaction: \(error.localizedDescription)"])
+        }
+    }
+    
+    func getUserReactionKey(for message: BaseMessage) -> String? {
+        guard let currentUserId = SendbirdChat.currentUser?.userId else { return nil }
+        
+        for reaction in message.reactions {
+            if reaction.userIds.contains(currentUserId) {
+                return reaction.key
+            }
+        }
+        return nil
+    }
+    
+    func hasUserReacted(to message: BaseMessage, with key: String) -> Bool {
+        guard let currentUserId = SendbirdChat.currentUser?.userId else { return false }
+        
+        return message.reactions.first { $0.key == key }?.userIds.contains(currentUserId) ?? false
+    }
 }
 
 // MARK: - ChannelDelegate
@@ -318,6 +373,26 @@ extension SendbirdChatService: GroupChannelDelegate {
         Task { @MainActor in
             if channel.channelUrl == currentChannel?.channelUrl {
                 typingUsers.removeAll { $0 == user.userId }
+            }
+        }
+    }
+    
+    func channel(_ channel: GroupChannel, updatedReaction reactionEvent: ReactionEvent) {
+        Task { @MainActor in
+            if channel.channelUrl == currentChannel?.channelUrl,
+               let index = messages.firstIndex(where: { $0.messageId == reactionEvent.messageId }) {
+                // Fetch the updated message with latest reactions
+                let params = MessageRetrievalParams()
+                params.messageId = reactionEvent.messageId
+                params.includeReactions = true
+                
+                do {
+                    if let updatedMessage = try await channel.getMessage(params: params) {
+                        messages[index] = updatedMessage
+                    }
+                } catch {
+                    print("Failed to fetch updated message with reactions: \(error)")
+                }
             }
         }
     }

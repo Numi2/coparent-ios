@@ -8,6 +8,7 @@ struct MessageBubbleView: View {
     @State private var messageStatusService = MessageStatusService.shared
     @State private var showingEditMessage = false
     @State private var showingDeleteConfirmation = false
+    @State private var showingReactionPicker = false
     @State private var editText = ""
     @State private var toast: ToastData?
     
@@ -34,6 +35,10 @@ struct MessageBubbleView: View {
                 }
             }
             
+            // Message reactions
+            MessageReactionsView(message: message)
+                .padding(.horizontal, 4)
+            
             // Message status
             if isCurrentUser {
                 HStack(spacing: 4) {
@@ -45,6 +50,23 @@ struct MessageBubbleView: View {
             }
         }
         .contextMenu {
+            // Reaction button
+            Button(action: {
+                showingReactionPicker = true
+            }) {
+                Label("Add Reaction", systemImage: "face.smiling")
+            }
+            
+            // Copy button for text messages
+            if let userMessage = message as? UserMessage, userMessage.messageType == .user {
+                Button(action: {
+                    UIPasteboard.general.string = userMessage.message
+                    toast = ToastData.success("Message copied")
+                }) {
+                    Label("Copy", systemImage: "doc.on.doc")
+                }
+            }
+            
             if canEditOrDelete {
                 Button(action: {
                     if let userMessage = message as? UserMessage {
@@ -71,7 +93,7 @@ struct MessageBubbleView: View {
                         do {
                             try await SendbirdChatService.shared.updateMessage(userMessage, with: editText)
                         } catch {
-                            toast = ToastData(message: error.localizedDescription, type: .error)
+                            toast = ToastData.error(error.localizedDescription)
                         }
                     }
                 }
@@ -85,7 +107,7 @@ struct MessageBubbleView: View {
                         do {
                             try await SendbirdChatService.shared.deleteMessage(userMessage)
                         } catch {
-                            toast = ToastData(message: error.localizedDescription, type: .error)
+                            toast = ToastData.error(error.localizedDescription)
                         }
                     }
                 }
@@ -93,7 +115,12 @@ struct MessageBubbleView: View {
         } message: {
             Text("Are you sure you want to delete this message?")
         }
-        .toast(data: $toast)
+        .sheet(isPresented: $showingReactionPicker) {
+            ReactionPickerView(message: message, isPresented: $showingReactionPicker)
+                .presentationDetents([.height(300)])
+                .presentationDragIndicator(.visible)
+        }
+        .toast($toast)
     }
 }
 
